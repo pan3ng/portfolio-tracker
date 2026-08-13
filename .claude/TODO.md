@@ -62,9 +62,13 @@ come back here for the immediate next steps.
       - Built reusable TickerSearch component with keyboard navigation
       - Integrated into all forms (transactions/new, edit, targets)
       - Searches by symbol, name, provider, or category
-- [ ] `supabase gen types typescript` — wire into a package.json script, regenerate
+- [x] `supabase gen types typescript` — wire into a package.json script, regenerate
       after the migration (types don't currently exist as generated code, only as
       hand-written Zod schemas in `packages/schemas`)
+      - Generated database.types.ts from remote Supabase schema
+      - Added `npm run gen:types` script to package.json
+      - Exported Database type from api-client package
+      - Provides full TypeScript type safety for all database operations
 
 ## Known open questions (from architecture doc §6, still unresolved)
 
