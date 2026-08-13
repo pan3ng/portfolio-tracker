@@ -49,10 +49,27 @@ async function fetchQuoteZac(baseTicker: string): Promise<{ priceZac: number; ex
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === "OPTIONS") {
+    return new Response(null, {
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+      },
+    });
+  }
+
   try {
     const { ticker } = await req.json();
     if (!ticker || typeof ticker !== "string") {
-      return new Response(JSON.stringify({ error: "ticker is required" }), { status: 400 });
+      return new Response(JSON.stringify({ error: "ticker is required" }), {
+        status: 400,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+      });
     }
 
     const { priceZac, exchange } = await fetchQuoteZac(ticker.toUpperCase());
@@ -68,9 +85,18 @@ serve(async (req) => {
     };
 
     return new Response(JSON.stringify(body), {
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
     });
   } catch (err) {
-    return new Response(JSON.stringify({ error: String(err) }), { status: 502 });
+    return new Response(JSON.stringify({ error: String(err) }), {
+      status: 502,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
+    });
   }
 });
