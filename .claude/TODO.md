@@ -72,6 +72,15 @@ come back here for the immediate next steps.
 - [ ] Whether unallocated/cash balance is tracked explicitly or treated as an implicit
       remainder against 100% target weight
 
+## Future enhancements (post-MVP1)
+
+- [ ] Enhance portfolio view to show investment cost basis vs current value
+      - Add "Amount Invested" column (shares × price_at_transaction)
+      - Add "Current Value" column (shares × current_price) — already showing
+      - Add "Gain/Loss" column showing absolute and percentage change
+      - Color-code gains (green) and losses (red)
+      - Show total portfolio gain/loss summary at top
+
 ## Deferred (explicitly out of MVP1 — don't build yet)
 
 - One-time CSV bootstrap import
