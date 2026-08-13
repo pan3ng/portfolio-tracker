@@ -43,9 +43,14 @@ come back here for the immediate next steps.
       - Saves to `transactions` table via Supabase client
       - Updated home page to show recent transactions and link to add new ones
       - Added sign-out functionality
-- [ ] Build allocation/portfolio view: derive current holdings from `transactions` +
+- [x] Build allocation/portfolio view: derive current holdings from `transactions` +
       live prices (NOT a stored table — see architecture doc §4), compute current
       weight % per ticker, compare against `targets`, show under/overweight signal
+      - Created `/portfolio` page with live holdings calculation
+      - Fetches current prices for all tickers in parallel
+      - Displays current vs target weights with drift signals
+      - Color-coded rebalancing indicators (underweight/balanced/overweight)
+      - Added navigation links from home page
 - [ ] Build target-weight editing UI — simple field-level editing, validate sum = 100%
       using `validateTargetsSumTo100()` already written in `packages/schemas`
 - [ ] `supabase gen types typescript` — wire into a package.json script, regenerate

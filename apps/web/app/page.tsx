@@ -107,11 +107,14 @@ export default async function Home() {
                       <th className="px-6 py-3 bg-gray-50 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Fees
                       </th>
+                      <th className="px-6 py-3 bg-gray-50 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {transactions.map((tx) => (
-                      <tr key={tx.id}>
+                      <tr key={tx.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {new Date(tx.date).toLocaleDateString()}
                         </td>
@@ -129,6 +132,14 @@ export default async function Home() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
                           R{tx.total_fees.toFixed(2)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                          <Link
+                            href={`/transactions/${tx.id}/edit`}
+                            className="text-indigo-600 hover:text-indigo-900 font-medium"
+                          >
+                            Edit
+                          </Link>
                         </td>
                       </tr>
                     ))}
