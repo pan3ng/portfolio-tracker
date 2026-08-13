@@ -12,15 +12,21 @@ come back here for the immediate next steps.
 
 ## Immediate next actions (Phase 2 — Auth)
 
-- [ ] Add `@supabase/supabase-js` and `@supabase/ssr` to `apps/web`
-- [ ] Create the Supabase client setup in `apps/web` following the SSR pattern for
+- [x] Add `@supabase/supabase-js` and `@supabase/ssr` to `apps/web`
+- [x] Create the Supabase client setup in `apps/web` following the SSR pattern for
       Next.js App Router (separate client for Server Components vs. browser client) —
       use `packages/api-client`'s existing `createSupabaseClient()` factory as the base,
       don't duplicate client creation logic
-- [ ] Build `/login` page: email input, calls `supabase.auth.signInWithOtp({ email })`,
+      - Created `lib/supabase/server.ts` for Server Components
+      - Created `lib/supabase/client.ts` for Client Components
+      - Created `lib/supabase/middleware.ts` for middleware
+- [x] Build `/login` page: email input, calls `supabase.auth.signInWithOtp({ email })`,
       shows a "check your inbox" confirmation state
-- [ ] Add `middleware.ts` to protect routes — redirect unauthenticated requests to
+      - Created `app/login/page.tsx` with email input and magic link request
+      - Created `app/auth/callback/route.ts` to handle magic link redirects
+- [x] Add `middleware.ts` to protect routes — redirect unauthenticated requests to
       `/login`
+      - Created `middleware.ts` at root with auth checking and redirect logic
 - [ ] Test the full magic link flow locally: request link → click email link → land
       authenticated on a protected route
 - [ ] Confirm it also works on the Vercel preview/production URL (redirect URLs are
