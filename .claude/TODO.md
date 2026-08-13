@@ -27,10 +27,10 @@ come back here for the immediate next steps.
 - [x] Add `middleware.ts` to protect routes — redirect unauthenticated requests to
       `/login`
       - Created `middleware.ts` at root with auth checking and redirect logic
-- [ ] Test the full magic link flow locally: request link → click email link → land
-      authenticated on a protected route
-- [ ] Confirm it also works on the Vercel preview/production URL (redirect URLs are
-      already configured in Supabase for this — see architecture doc §7)
+- [x] Test the full magic link flow locally: request link → click email link → land
+      authenticated on a protected route ✅ VERIFIED WORKING
+- [x] Confirm it also works on the Vercel preview/production URL (redirect URLs are
+      already configured in Supabase for this — see architecture doc §7) ✅ VERIFIED WORKING
 
 ## After auth works — Phase 2 continued (core flow)
 
