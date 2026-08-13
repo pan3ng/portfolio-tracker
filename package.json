@@ -1,6 +1,7 @@
 {
   "name": "portfolio-tracker",
   "private": true,
+  "packageManager": "npm@10.9.7",
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
