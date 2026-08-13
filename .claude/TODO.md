@@ -51,8 +51,17 @@ come back here for the immediate next steps.
       - Displays current vs target weights with drift signals
       - Color-coded rebalancing indicators (underweight/balanced/overweight)
       - Added navigation links from home page
-- [ ] Build target-weight editing UI — simple field-level editing, validate sum = 100%
+- [x] Build target-weight editing UI — simple field-level editing, validate sum = 100%
       using `validateTargetsSumTo100()` already written in `packages/schemas`
+      - Created `/targets` page with full CRUD for target allocations
+      - Real-time sum=100% validation with color-coded feedback
+      - Add/remove target rows dynamically
+      - Integrated ticker search/autocomplete
+- [x] Add smart ticker search/autocomplete feature
+      - Created comprehensive JSE ticker database (45+ ETFs and stocks)
+      - Built reusable TickerSearch component with keyboard navigation
+      - Integrated into all forms (transactions/new, edit, targets)
+      - Searches by symbol, name, provider, or category
 - [ ] `supabase gen types typescript` — wire into a package.json script, regenerate
       after the migration (types don't currently exist as generated code, only as
       hand-written Zod schemas in `packages/schemas`)
