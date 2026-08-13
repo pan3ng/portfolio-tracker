@@ -182,10 +182,15 @@ export default function NewTransactionPage() {
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="1000.00"
-                  className="pl-7 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  className="pl-7 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                   disabled={loading || !quote}
                 />
               </div>
+              {!quote && (
+                <p className="mt-1 text-xs text-gray-500">
+                  Please fetch a quote first
+                </p>
+              )}
             </div>
 
             {/* Calculated Shares Display */}
