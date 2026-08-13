@@ -34,9 +34,15 @@ come back here for the immediate next steps.
 
 ## After auth works — Phase 2 continued (core flow)
 
-- [ ] Build transaction-entry form: ticker input → call `get-quote` Edge Function via
+- [x] Build transaction-entry form: ticker input → call `get-quote` Edge Function via
       `fetchQuote()` from `packages/api-client` → show price + calculated shares →
       fee input → confirm → insert into `transactions` table
+      - Created `/transactions/new` page with full transaction entry flow
+      - Integrated with `get-quote` Edge Function for live price fetching
+      - Automatic share calculation based on amount invested
+      - Saves to `transactions` table via Supabase client
+      - Updated home page to show recent transactions and link to add new ones
+      - Added sign-out functionality
 - [ ] Build allocation/portfolio view: derive current holdings from `transactions` +
       live prices (NOT a stored table — see architecture doc §4), compute current
       weight % per ticker, compare against `targets`, show under/overweight signal
