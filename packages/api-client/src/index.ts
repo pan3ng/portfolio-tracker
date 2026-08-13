@@ -20,6 +20,7 @@ export function createSupabaseClient(url: string, anonKey: string): SupabaseClie
 }
 
 export * from "@portfolio-tracker/schemas";
+export * from "./jse-tickers";
 
 /**
  * Calls the get-quote Edge Function (see supabase/functions/get-quote).

@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { fetchQuote, type Quote } from '@portfolio-tracker/api-client'
 import { useRouter } from 'next/navigation'
+import TickerSearch from '@/components/TickerSearch'
 
 export default function NewTransactionPage() {
   const router = useRouter()
@@ -122,26 +123,22 @@ export default function NewTransactionPage() {
                 Ticker Symbol
               </label>
               <div className="mt-1 flex gap-2">
-                <input
-                  id="ticker"
-                  type="text"
+                <TickerSearch
                   value={ticker}
-                  onChange={(e) => setTicker(e.target.value.toUpperCase())}
-                  placeholder="STX40"
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  onChange={setTicker}
                   disabled={loading || fetchingQuote}
                 />
                 <button
                   type="button"
                   onClick={handleFetchQuote}
                   disabled={fetchingQuote || loading}
-                  className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
                 >
                   {fetchingQuote ? 'Fetching...' : 'Get Quote'}
                 </button>
               </div>
               <p className="mt-1 text-xs text-gray-500">
-                JSE ticker without .JO suffix (e.g., STX40, STXNDQ)
+                Search and select a JSE ticker, or type it manually
               </p>
             </div>
 
