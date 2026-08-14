@@ -64,7 +64,11 @@ export default function ImportPage() {
       }
 
       // Parse header
-      const header = lines[0].split(',').map(h => h.trim().toLowerCase())
+      const headerLine = lines[0]
+      if (!headerLine) {
+        throw new Error('CSV header row is empty')
+      }
+      const header = headerLine.split(',').map(h => h.trim().toLowerCase())
       const dateIdx = header.indexOf('date')
       const tickerIdx = header.indexOf('ticker')
       const sharesIdx = header.indexOf('shares')
@@ -83,7 +87,7 @@ export default function ImportPage() {
 
         // Parse date
         const dateStr = cells[dateIdx] || ''
-        let date = dateStr
+        let date: string = dateStr
         if (!dateStr) {
           errors.push('Date is required')
         } else {
@@ -93,7 +97,10 @@ export default function ImportPage() {
             if (isNaN(parsed.getTime())) {
               errors.push('Invalid date format')
             } else {
-              date = parsed.toISOString().split('T')[0]
+              const isoDate = parsed.toISOString().split('T')[0]
+              if (isoDate) {
+                date = isoDate
+              }
             }
           } catch {
             errors.push('Invalid date format')

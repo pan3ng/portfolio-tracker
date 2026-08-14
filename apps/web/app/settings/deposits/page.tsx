@@ -90,6 +90,10 @@ export default function DepositsPage() {
         throw new Error('Please enter a valid amount')
       }
 
+      if (!formData.date) {
+        throw new Error('Date is required')
+      }
+
       if (editingId) {
         // Update existing deposit
         const { error: updateError } = await supabase

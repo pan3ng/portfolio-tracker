@@ -73,13 +73,19 @@ export default function TargetsPage() {
   const updateTarget = (index: number, field: 'ticker' | 'target_weight_pct', value: string | number) => {
     // Find the actual target in allTargets
     const targetToUpdate = targets[index]
+    if (!targetToUpdate) return
+
     const allTargetsIndex = allTargets.indexOf(targetToUpdate)
+    if (allTargetsIndex === -1) return
 
     const updated = [...allTargets]
+    const targetToEdit = updated[allTargetsIndex]
+    if (!targetToEdit) return
+
     if (field === 'ticker') {
-      updated[allTargetsIndex].ticker = (value as string).toUpperCase()
+      targetToEdit.ticker = (value as string).toUpperCase()
     } else {
-      updated[allTargetsIndex].target_weight_pct = typeof value === 'number' ? value : parseFloat(value) || 0
+      targetToEdit.target_weight_pct = typeof value === 'number' ? value : parseFloat(value) || 0
     }
     setAllTargets(updated)
   }

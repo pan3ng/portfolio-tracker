@@ -28,13 +28,13 @@ export default function HistoricalTransactionPage() {
   const supabase = createClient()
 
   // Today's date in YYYY-MM-DD format
-  const today = new Date().toISOString().split('T')[0]
+  const today = new Date().toISOString().split('T')[0] || new Date().toISOString().substring(0, 10)
 
   // Form state
   const [accountType, setAccountType] = useState<'ZAR' | 'USD'>('ZAR')
   const [ticker, setTicker] = useState('')
   const [depositMethod, setDepositMethod] = useState<'card' | 'eft'>('card')
-  const [transactionDate, setTransactionDate] = useState(today)
+  const [transactionDate, setTransactionDate] = useState<string>(today)
   const [amount, setAmount] = useState('')
   const [priceMode, setPriceMode] = useState<'auto' | 'manual'>('auto')
   const [manualPrice, setManualPrice] = useState('')

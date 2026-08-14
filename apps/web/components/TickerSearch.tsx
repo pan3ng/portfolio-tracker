@@ -76,7 +76,10 @@ export default function TickerSearch({
       case 'Enter':
         e.preventDefault()
         if (highlightedIndex >= 0 && highlightedIndex < searchResults.length) {
-          handleSelectTicker(searchResults[highlightedIndex])
+          const selectedTicker = searchResults[highlightedIndex]
+          if (selectedTicker) {
+            handleSelectTicker(selectedTicker)
+          }
         }
         break
       case 'Escape':
