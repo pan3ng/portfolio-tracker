@@ -224,36 +224,36 @@ export default function ImportPage() {
   const validRowsCount = parsedRows.filter(r => r.valid).length
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Import Transactions</h1>
-            <p className="mt-2 text-sm text-gray-600">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Import Transactions</h1>
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
               Upload a CSV file to bulk import historical transactions
             </p>
           </div>
           <Link
             href="/settings"
-            className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+            className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
           >
             Back to Settings
           </Link>
         </div>
 
-        <div className="bg-white shadow rounded-lg p-6 space-y-6">
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 space-y-6">
           {/* Template Download */}
-          <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+          <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-md p-4">
             <div className="flex justify-between items-center">
               <div>
-                <h3 className="text-sm font-medium text-blue-900">Need a template?</h3>
-                <p className="mt-1 text-sm text-blue-700">
+                <h3 className="text-sm font-medium text-blue-900 dark:text-blue-100">Need a template?</h3>
+                <p className="mt-1 text-sm text-blue-700 dark:text-blue-300">
                   Download our CSV template with example data to get started
                 </p>
               </div>
               <button
                 onClick={downloadTemplate}
-                className="px-4 py-2 border border-blue-300 text-sm font-medium rounded-md text-blue-700 bg-white hover:bg-blue-50"
+                className="px-4 py-2 border border-blue-300 dark:border-blue-600 text-sm font-medium rounded-md text-blue-700 dark:text-blue-300 bg-white dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900/50"
               >
                 Download Template
               </button>
@@ -262,7 +262,7 @@ export default function ImportPage() {
 
           {/* Account Type Selector */}
           <div>
-            <label htmlFor="accountType" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="accountType" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Target Account
             </label>
             <select
@@ -270,19 +270,19 @@ export default function ImportPage() {
               value={accountType}
               onChange={(e) => setAccountType(e.target.value as 'ZAR' | 'USD')}
               disabled={importing || parsing}
-              className="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
             >
               <option value="ZAR">ZAR (South African Rand)</option>
               <option value="USD">USD (US Dollar)</option>
             </select>
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               All imported transactions will be added to this account
             </p>
           </div>
 
           {/* File Upload */}
           <div>
-            <label htmlFor="csv-file" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="csv-file" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               CSV File
             </label>
             <div className="mt-1 flex items-center gap-3">
@@ -308,15 +308,15 @@ export default function ImportPage() {
                 {parsing ? 'Parsing...' : 'Parse CSV'}
               </button>
             </div>
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               Expected columns: Date, Ticker, Shares, Price, Total_Fees (optional)
             </p>
           </div>
 
           {/* CSV Format Info */}
-          <div className="bg-gray-50 rounded-md p-4">
-            <h3 className="text-sm font-medium text-gray-900 mb-2">CSV Format Requirements</h3>
-            <ul className="list-disc list-inside space-y-1 text-sm text-gray-700">
+          <div className="bg-gray-50 dark:bg-gray-900 rounded-md p-4">
+            <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">CSV Format Requirements</h3>
+            <ul className="list-disc list-inside space-y-1 text-sm text-gray-700 dark:text-gray-300">
               <li><strong>Date:</strong> YYYY-MM-DD format (e.g., 2024-01-15)</li>
               <li><strong>Ticker:</strong> JSE ticker symbol without .JO suffix (e.g., ASPEN, NPN)</li>
               <li><strong>Shares:</strong> Number of shares purchased (e.g., 100.5)</li>
@@ -327,15 +327,15 @@ export default function ImportPage() {
 
           {/* Error Display */}
           {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <p className="text-sm text-red-800">{error}</p>
+            <div className="rounded-md bg-red-50 dark:bg-red-900/20 p-4">
+              <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
             </div>
           )}
 
           {/* Success Display */}
           {success && (
-            <div className="rounded-md bg-green-50 p-4">
-              <p className="text-sm text-green-800">{success}</p>
+            <div className="rounded-md bg-green-50 dark:bg-green-900/20 p-4">
+              <p className="text-sm text-green-800 dark:text-green-200">{success}</p>
             </div>
           )}
 
@@ -353,7 +353,7 @@ export default function ImportPage() {
                     setError(null)
                   }}
                   disabled={importing}
-                  className="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
                 >
                   Clear
                 </button>

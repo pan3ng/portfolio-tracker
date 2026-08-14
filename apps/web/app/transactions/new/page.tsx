@@ -178,11 +178,11 @@ export default function NewTransactionPage() {
 
   if (loadingSettings) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-2xl mx-auto">
           <div className="text-center">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-            <p className="mt-2 text-sm text-gray-600">Loading...</p>
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Loading...</p>
           </div>
         </div>
       </div>
@@ -190,20 +190,20 @@ export default function NewTransactionPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Add Transaction</h1>
-          <p className="mt-2 text-sm text-gray-600">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Add Transaction</h1>
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
             Record a new investment transaction
           </p>
         </div>
 
-        <div className="bg-white shadow rounded-lg p-6">
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Account Type Selector */}
             <div>
-              <label htmlFor="accountType" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="accountType" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Account
               </label>
               <select
@@ -211,19 +211,19 @@ export default function NewTransactionPage() {
                 value={accountType}
                 onChange={(e) => setAccountType(e.target.value as 'ZAR' | 'USD')}
                 disabled={loading}
-                className="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+                className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
               >
                 <option value="ZAR">ZAR (South African Rand)</option>
                 <option value="USD">USD (US Dollar)</option>
               </select>
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 Select which account this investment belongs to
               </p>
             </div>
 
             {/* Ticker Input */}
             <div>
-              <label htmlFor="ticker" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="ticker" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Ticker Symbol
               </label>
               <div className="mt-1 flex gap-2">
@@ -241,26 +241,26 @@ export default function NewTransactionPage() {
                   {fetchingQuote ? 'Fetching...' : 'Get Quote'}
                 </button>
               </div>
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 Search and select a ticker, or type it manually
               </p>
             </div>
 
             {/* Quote Display */}
             {quote && (
-              <div className="bg-green-50 border border-green-200 rounded-md p-4">
+              <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md p-4">
                 <div className="flex justify-between items-center">
                   <div>
-                    <p className="text-sm font-medium text-green-900">{quote.ticker}</p>
-                    <p className="text-xs text-green-700">
+                    <p className="text-sm font-medium text-green-900 dark:text-green-100">{quote.ticker}</p>
+                    <p className="text-xs text-green-700 dark:text-green-300">
                       Fetched {new Date(quote.fetched_at).toLocaleTimeString()}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-2xl font-bold text-green-900">
+                    <p className="text-2xl font-bold text-green-900 dark:text-green-100">
                       R{quote.price_zar.toFixed(2)}
                     </p>
-                    <p className="text-xs text-green-700">per share</p>
+                    <p className="text-xs text-green-700 dark:text-green-300">per share</p>
                   </div>
                 </div>
               </div>
@@ -268,12 +268,12 @@ export default function NewTransactionPage() {
 
             {/* Amount Input */}
             <div>
-              <label htmlFor="amount" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="amount" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Amount to Invest ({accountType})
               </label>
               <div className="mt-1 relative rounded-md shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <span className="text-gray-500 sm:text-sm">R</span>
+                  <span className="text-gray-500 dark:text-gray-400 sm:text-sm">R</span>
                 </div>
                 <input
                   id="amount"
@@ -283,12 +283,12 @@ export default function NewTransactionPage() {
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="1000.00"
-                  className="pl-7 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  className="pl-7 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed"
                   disabled={loading || !quote}
                 />
               </div>
               {!quote && (
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                   Please fetch a quote first
                 </p>
               )}
@@ -296,7 +296,7 @@ export default function NewTransactionPage() {
 
             {/* Deposit Method Selector */}
             <div>
-              <label htmlFor="depositMethod" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="depositMethod" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Deposit Method
               </label>
               <select
@@ -304,28 +304,28 @@ export default function NewTransactionPage() {
                 value={depositMethod}
                 onChange={(e) => setDepositMethod(e.target.value as 'card' | 'eft')}
                 disabled={loading}
-                className="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+                className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
               >
                 <option value="card">Card ({userSettings.default_card_deposit_pct}% fee)</option>
                 <option value="eft">EFT ({userSettings.default_eft_deposit_pct}% fee)</option>
               </select>
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 How did you deposit funds for this investment?
               </p>
             </div>
 
             {/* Calculated Shares Display */}
             {quote && amount && shares > 0 && (
-              <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-blue-900">
+                  <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
                     Shares to purchase:
                   </span>
-                  <span className="text-lg font-bold text-blue-900">
+                  <span className="text-lg font-bold text-blue-900 dark:text-blue-100">
                     {shares.toFixed(6)}
                   </span>
                 </div>
-                <p className="mt-1 text-xs text-blue-700">
+                <p className="mt-1 text-xs text-blue-700 dark:text-blue-300">
                   R{amount} ÷ R{quote.price_zar.toFixed(2)} = {shares.toFixed(6)} shares
                 </p>
               </div>
@@ -367,8 +367,8 @@ export default function NewTransactionPage() {
 
             {/* Error Display */}
             {error && (
-              <div className="rounded-md bg-red-50 p-4">
-                <p className="text-sm text-red-800">{error}</p>
+              <div className="rounded-md bg-red-50 dark:bg-red-900/20 p-4">
+                <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
               </div>
             )}
 
@@ -377,7 +377,7 @@ export default function NewTransactionPage() {
               <button
                 type="button"
                 onClick={() => router.push('/')}
-                className="flex-1 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                className="flex-1 py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               >
                 Cancel
               </button>

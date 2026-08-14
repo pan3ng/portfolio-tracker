@@ -95,11 +95,11 @@ export default function TransactionsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-            <p className="mt-2 text-sm text-gray-600">Loading transactions...</p>
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Loading transactions...</p>
           </div>
         </div>
       </div>
@@ -108,10 +108,10 @@ export default function TransactionsPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="rounded-md bg-red-50 p-4">
-            <p className="text-sm text-red-800">{error}</p>
+          <div className="rounded-md bg-red-50 dark:bg-red-900/20 p-4">
+            <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
           </div>
         </div>
       </div>
@@ -119,20 +119,20 @@ export default function TransactionsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">All Transactions</h1>
-            <p className="mt-1 text-sm text-gray-600">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">All Transactions</h1>
+            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
               Complete transaction history with filters
             </p>
           </div>
           <div className="flex gap-3">
             <Link
               href="/"
-              className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+              className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
             >
               Back to Portfolio
             </Link>
@@ -146,18 +146,18 @@ export default function TransactionsPage() {
         </div>
 
         {/* Filters */}
-        <div className="bg-white shadow rounded-lg p-4 mb-6">
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Account Filter */}
             <div>
-              <label htmlFor="accountFilter" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="accountFilter" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Account
               </label>
               <select
                 id="accountFilter"
                 value={accountFilter}
                 onChange={(e) => setAccountFilter(e.target.value as AccountFilter)}
-                className="block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+                className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
               >
                 <option value="all">All Accounts</option>
                 <option value="ZAR">ZAR</option>
@@ -167,7 +167,7 @@ export default function TransactionsPage() {
 
             {/* Ticker Filter */}
             <div>
-              <label htmlFor="tickerFilter" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="tickerFilter" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Ticker
               </label>
               <input
@@ -176,13 +176,13 @@ export default function TransactionsPage() {
                 value={tickerFilter}
                 onChange={(e) => setTickerFilter(e.target.value)}
                 placeholder="Search by ticker..."
-                className="block w-full rounded-md border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+                className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
               />
             </div>
 
             {/* Tag Filter */}
             <div>
-              <label htmlFor="tagFilter" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="tagFilter" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Tag
               </label>
               <input
@@ -191,21 +191,21 @@ export default function TransactionsPage() {
                 value={tagFilter}
                 onChange={(e) => setTagFilter(e.target.value)}
                 placeholder="Search by tag..."
-                className="block w-full rounded-md border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+                className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
               />
             </div>
           </div>
 
           {/* Results count */}
-          <div className="mt-3 text-sm text-gray-600">
+          <div className="mt-3 text-sm text-gray-600 dark:text-gray-400">
             Showing {filteredTransactions.length} of {transactions.length} transactions
           </div>
         </div>
 
         {/* Transactions Table */}
         {filteredTransactions.length === 0 ? (
-          <div className="bg-white shadow rounded-lg p-12 text-center">
-            <p className="text-gray-500">No transactions found matching your filters.</p>
+          <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-12 text-center">
+            <p className="text-gray-500 dark:text-gray-400">No transactions found matching your filters.</p>
             {(accountFilter !== 'all' || tickerFilter || tagFilter) && (
               <button
                 onClick={() => {
@@ -213,50 +213,50 @@ export default function TransactionsPage() {
                   setTickerFilter('')
                   setTagFilter('')
                 }}
-                className="mt-4 text-indigo-600 hover:text-indigo-800 font-medium"
+                className="mt-4 text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium"
               >
                 Clear filters
               </button>
             )}
           </div>
         ) : (
-          <div className="bg-white shadow rounded-lg overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+          <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-900">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Date
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Ticker
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Account
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Tags
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Shares
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Price
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Amount
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Total Fees
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Total Cost
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {filteredTransactions.map((tx) => {
                   const isExpanded = expandedRows.has(tx.id)
                   const investmentAmount = tx.shares * tx.price_at_transaction
@@ -265,15 +265,15 @@ export default function TransactionsPage() {
 
                   return (
                     <>
-                      <tr key={tx.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <tr key={tx.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                           {new Date(tx.date).toLocaleDateString()}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
                           {tx.ticker}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
                             {tx.account_type || 'ZAR'}
                           </span>
                         </td>
@@ -284,35 +284,35 @@ export default function TransactionsPage() {
                                 <Tag key={tag} label={tag} variant="primary" />
                               ))
                             ) : (
-                              <span className="text-xs text-gray-400">-</span>
+                              <span className="text-xs text-gray-400 dark:text-gray-500">-</span>
                             )}
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 text-right">
                           {tx.shares.toFixed(6)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 text-right">
                           R{tx.price_at_transaction.toFixed(2)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 text-right">
                           R{investmentAmount.toFixed(2)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
                           <button
                             onClick={() => toggleRowExpansion(tx.id)}
-                            className="text-indigo-600 hover:text-indigo-900 font-medium"
+                            className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 font-medium"
                           >
                             R{totalFees.toFixed(2)}
                             {isExpanded ? ' ▼' : ' ▶'}
                           </button>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100 text-right">
                           R{totalCost.toFixed(2)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 text-right">
                           <Link
                             href={`/transactions/${tx.id}/edit`}
-                            className="text-indigo-600 hover:text-indigo-900 font-medium"
+                            className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 font-medium"
                           >
                             Edit
                           </Link>
@@ -321,28 +321,28 @@ export default function TransactionsPage() {
 
                       {/* Expanded Fee Breakdown Row */}
                       {isExpanded && (
-                        <tr className="bg-gray-50">
+                        <tr className="bg-gray-50 dark:bg-gray-900">
                           <td colSpan={10} className="px-6 py-4">
                             <div className="text-sm space-y-4">
                               {/* Fee Breakdown */}
                               <div>
-                                <h4 className="font-medium text-gray-900 mb-2">Fee Breakdown</h4>
+                                <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2">Fee Breakdown</h4>
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                   <div>
-                                    <span className="text-gray-600">Commission:</span>
-                                    <span className="ml-2 font-medium">R{(tx.commission_fee || 0).toFixed(2)}</span>
+                                    <span className="text-gray-600 dark:text-gray-400">Commission:</span>
+                                    <span className="ml-2 font-medium text-gray-900 dark:text-gray-100">R{(tx.commission_fee || 0).toFixed(2)}</span>
                                   </div>
                                   <div>
-                                    <span className="text-gray-600">Deposit ({tx.deposit_method || 'card'}):</span>
-                                    <span className="ml-2 font-medium">R{(tx.deposit_fee || 0).toFixed(2)}</span>
+                                    <span className="text-gray-600 dark:text-gray-400">Deposit ({tx.deposit_method || 'card'}):</span>
+                                    <span className="ml-2 font-medium text-gray-900 dark:text-gray-100">R{(tx.deposit_fee || 0).toFixed(2)}</span>
                                   </div>
                                   <div>
-                                    <span className="text-gray-600">FX Fee:</span>
-                                    <span className="ml-2 font-medium">R{(tx.fx_fee || 0).toFixed(2)}</span>
+                                    <span className="text-gray-600 dark:text-gray-400">FX Fee:</span>
+                                    <span className="ml-2 font-medium text-gray-900 dark:text-gray-100">R{(tx.fx_fee || 0).toFixed(2)}</span>
                                   </div>
                                   <div>
-                                    <span className="text-gray-600">Other:</span>
-                                    <span className="ml-2 font-medium">R{(tx.other_fees || 0).toFixed(2)}</span>
+                                    <span className="text-gray-600 dark:text-gray-400">Other:</span>
+                                    <span className="ml-2 font-medium text-gray-900 dark:text-gray-100">R{(tx.other_fees || 0).toFixed(2)}</span>
                                   </div>
                                 </div>
                               </div>
@@ -350,8 +350,8 @@ export default function TransactionsPage() {
                               {/* Notes */}
                               {tx.notes && (
                                 <div>
-                                  <h4 className="font-medium text-gray-900 mb-1">Notes</h4>
-                                  <p className="text-gray-700">{tx.notes}</p>
+                                  <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-1">Notes</h4>
+                                  <p className="text-gray-700 dark:text-gray-300">{tx.notes}</p>
                                 </div>
                               )}
                             </div>
