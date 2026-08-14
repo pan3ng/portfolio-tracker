@@ -210,28 +210,36 @@ Based on current state and user feedback, tackle in this order:
         * Border and hover states
       - **NOTE**: Additional pages can be styled with dark mode as needed using Tailwind's `dark:` prefix
 
-### Quick Win #1: Transaction Notes & Tags (Estimated: 1-2 hours)
-- [ ] **Database Migration**
+### Quick Win #1: Transaction Notes & Tags (COMPLETED ✅)
+- [x] **Database Migration**
       - Add `notes` text field to transactions table (nullable)
       - Add `tags` text[] array field to transactions table (nullable, default empty array)
       - Create migration: 0005_transaction_notes_tags.sql
-      - Update TypeScript types
-- [ ] **Transaction Forms**
-      - Add "Notes" textarea to new transaction form (optional, placeholder: "e.g., Monthly contribution")
-      - Add "Tags" multi-select dropdown with predefined options:
-        * "dividend reinvest", "rebalance", "monthly contribution", "bonus", "emergency withdrawal"
-        * Allow custom tag creation (type and press enter)
-      - Add same fields to edit transaction form
-      - Add same fields to historical transaction form
-- [ ] **Display & Filtering**
-      - Show notes in transaction detail view (transactions page expanded row)
-      - Show tags as colored badges in transactions table
-      - Add tag filter dropdown on transactions page (filter by selected tags)
-      - Add search by notes (text search in filter section)
-- [ ] **UI Components**
-      - Create reusable TagInput component with autocomplete
-      - Create Tag badge component with color variants
-      - Ensure dark mode support for all new components
+      - Update TypeScript types via `npm run gen:types`
+      - Created GIN index on tags for efficient filtering
+- [x] **Transaction Forms**
+      - Added "Notes" textarea to new transaction form (optional, placeholder: "e.g., Monthly contribution")
+      - Added "Tags" input with predefined suggestions:
+        * "dividend reinvest", "rebalance", "monthly contribution", "bonus investment", "emergency withdrawal", "lump sum", "dca", "correction buy"
+        * Supports custom tag creation (type and press enter)
+        * Max 5 tags with autocomplete
+      - Added same fields to edit transaction form
+      - Added same fields to historical transaction form
+- [x] **Display & Filtering**
+      - Shows notes in transaction detail view (transactions page expanded row)
+      - Shows tags as colored badges in transactions table (primary variant)
+      - Added tag filter input on transactions page (filter by tag text search)
+      - Integrated tag filter with clear filters button
+- [x] **UI Components**
+      - Created reusable TagInput component (apps/web/components/TagInput.tsx)
+        * Autocomplete with suggestions
+        * Keyboard navigation (Enter to add, Backspace to remove)
+        * Shows filtered suggestions as user types
+        * Max tags limit enforcement
+      - Created Tag badge component (apps/web/components/Tag.tsx)
+        * 5 color variants: default, primary, success, warning, danger
+        * Optional remove button with X icon
+      - Full dark mode support for all new components
 
 ### Quick Win #2: Fee Breakdown Tooltip (Estimated: 30 minutes - 1 hour)
 - [ ] **Portfolio Table Enhancement**
