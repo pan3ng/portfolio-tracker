@@ -123,11 +123,11 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto">
           <div className="text-center">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-            <p className="mt-2 text-sm text-gray-600">Loading settings...</p>
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Loading settings...</p>
           </div>
         </div>
       </div>
@@ -153,14 +153,14 @@ export default function SettingsPage() {
         </div>
 
         {error && (
-          <div className="mb-6 rounded-md bg-red-50 p-4">
-            <p className="text-sm text-red-800">{error}</p>
+          <div className="mb-6 rounded-md bg-red-50 dark:bg-red-900/20 p-4">
+            <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
           </div>
         )}
 
         {successMessage && (
-          <div className="mb-6 rounded-md bg-green-50 p-4">
-            <p className="text-sm text-green-800">{successMessage}</p>
+          <div className="mb-6 rounded-md bg-green-50 dark:bg-green-900/20 p-4">
+            <p className="text-sm text-green-800 dark:text-green-200">{successMessage}</p>
           </div>
         )}
 
@@ -174,7 +174,7 @@ export default function SettingsPage() {
           <div className="space-y-6">
             {/* Commission Percentage */}
             <div>
-              <label htmlFor="commission" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="commission" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Commission (%)
               </label>
               <div className="mt-1 relative rounded-md shadow-sm">
@@ -186,20 +186,20 @@ export default function SettingsPage() {
                   max="100"
                   value={settings.default_commission_pct}
                   onChange={(e) => setSettings({ ...settings, default_commission_pct: parseFloat(e.target.value) || 0 })}
-                  className="block w-full rounded-md border-gray-300 pr-12 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 pr-12 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                 />
                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                  <span className="text-gray-500 sm:text-sm">%</span>
+                  <span className="text-gray-500 dark:text-gray-400 sm:text-sm">%</span>
                 </div>
               </div>
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 Typical value: 0.25% (EasyEquities standard)
               </p>
             </div>
 
             {/* Card Deposit Percentage */}
             <div>
-              <label htmlFor="cardDeposit" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="cardDeposit" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Card Deposit Fee (%)
               </label>
               <div className="mt-1 relative rounded-md shadow-sm">
@@ -211,20 +211,20 @@ export default function SettingsPage() {
                   max="100"
                   value={settings.default_card_deposit_pct}
                   onChange={(e) => setSettings({ ...settings, default_card_deposit_pct: parseFloat(e.target.value) || 0 })}
-                  className="block w-full rounded-md border-gray-300 pr-12 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 pr-12 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                 />
                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                  <span className="text-gray-500 sm:text-sm">%</span>
+                  <span className="text-gray-500 dark:text-gray-400 sm:text-sm">%</span>
                 </div>
               </div>
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 Typical range: 1-2% (varies by card provider)
               </p>
             </div>
 
             {/* EFT Deposit Percentage */}
             <div>
-              <label htmlFor="eftDeposit" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="eftDeposit" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 EFT Deposit Fee (%)
               </label>
               <div className="mt-1 relative rounded-md shadow-sm">
@@ -236,20 +236,20 @@ export default function SettingsPage() {
                   max="100"
                   value={settings.default_eft_deposit_pct}
                   onChange={(e) => setSettings({ ...settings, default_eft_deposit_pct: parseFloat(e.target.value) || 0 })}
-                  className="block w-full rounded-md border-gray-300 pr-12 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 pr-12 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                 />
                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                  <span className="text-gray-500 sm:text-sm">%</span>
+                  <span className="text-gray-500 dark:text-gray-400 sm:text-sm">%</span>
                 </div>
               </div>
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 Typical value: 0% (EFT deposits are usually free)
               </p>
             </div>
 
             {/* FX Percentage */}
             <div>
-              <label htmlFor="fx" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="fx" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Foreign Exchange Fee (%)
               </label>
               <div className="mt-1 relative rounded-md shadow-sm">
@@ -261,13 +261,13 @@ export default function SettingsPage() {
                   max="100"
                   value={settings.default_fx_pct}
                   onChange={(e) => setSettings({ ...settings, default_fx_pct: parseFloat(e.target.value) || 0 })}
-                  className="block w-full rounded-md border-gray-300 pr-12 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 pr-12 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                 />
                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                  <span className="text-gray-500 sm:text-sm">%</span>
+                  <span className="text-gray-500 dark:text-gray-400 sm:text-sm">%</span>
                 </div>
               </div>
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 Typical value: 0.5% (for USD transactions)
               </p>
             </div>
@@ -279,7 +279,7 @@ export default function SettingsPage() {
           <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Appearance</h2>
 
           <div>
-            <label htmlFor="theme" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="theme" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Theme
             </label>
             <select
@@ -290,13 +290,13 @@ export default function SettingsPage() {
                 setSettings({ ...settings, theme: newTheme })
                 setAppTheme(newTheme) // Apply theme immediately
               }}
-              className="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
             >
               <option value="system">System (Auto)</option>
               <option value="light">Light</option>
               <option value="dark">Dark</option>
             </select>
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               Choose your preferred color theme
             </p>
           </div>
@@ -308,8 +308,8 @@ export default function SettingsPage() {
           <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Data Management</h2>
           <div className="space-y-4">
             <div>
-              <h3 className="text-sm font-medium text-gray-900 mb-1">Manage Cash Deposits</h3>
-              <p className="text-xs text-gray-600 mb-3">
+              <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Manage Cash Deposits</h3>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
                 Track cash deposited into your accounts to calculate uninvested capital
               </p>
               <Link
@@ -319,26 +319,26 @@ export default function SettingsPage() {
                 Manage Deposits
               </Link>
             </div>
-            <div className="border-t pt-4">
-              <h3 className="text-sm font-medium text-gray-900 mb-1">Import Historical Transactions</h3>
-              <p className="text-xs text-gray-600 mb-3">
+            <div className="border-t dark:border-gray-700 pt-4">
+              <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Import Historical Transactions</h3>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
                 Bulk import your historical positions from a CSV file
               </p>
               <Link
                 href="/settings/import"
-                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 Import from CSV
               </Link>
             </div>
-            <div className="border-t pt-4">
-              <h3 className="text-sm font-medium text-gray-900 mb-1">Add Single Historical Position</h3>
-              <p className="text-xs text-gray-600 mb-3">
+            <div className="border-t dark:border-gray-700 pt-4">
+              <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Add Single Historical Position</h3>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
                 Manually add a historical transaction with custom date and price
               </p>
               <Link
                 href="/transactions/new/historical"
-                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 Add Historical Position
               </Link>
@@ -350,15 +350,15 @@ export default function SettingsPage() {
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-6 opacity-50">
           <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Future Features</h2>
           <div className="space-y-4">
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-gray-600 dark:text-gray-400">
               <h3 className="font-medium mb-1">Notifications (Coming Soon)</h3>
               <p className="text-xs">Email alerts for rebalancing signals and portfolio milestones</p>
             </div>
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-gray-600 dark:text-gray-400">
               <h3 className="font-medium mb-1">Data Export (Coming Soon)</h3>
               <p className="text-xs">Export your portfolio data to CSV format</p>
             </div>
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-gray-600 dark:text-gray-400">
               <h3 className="font-medium mb-1">Account Management (Coming Soon)</h3>
               <p className="text-xs">Manage your connected accounts and data retention preferences</p>
             </div>
