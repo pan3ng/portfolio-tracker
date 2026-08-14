@@ -97,26 +97,35 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      const { error } = await supabase
+      // Only update the theme column for an existing row, so we don't
+      // clobber the user's saved fee percentages with hardcoded defaults.
+      const { data: updated, error: updateError } = await supabase
         .from('user_settings')
-        .upsert(
-          {
+        .update({ theme: newTheme })
+        .eq('user_id', user.id)
+        .select('user_id')
+
+      if (updateError) {
+        console.error('Failed to save theme:', updateError)
+        return
+      }
+
+      if (updated && updated.length === 0) {
+        // No existing row for this user yet, insert one with defaults.
+        const { error: insertError } = await supabase
+          .from('user_settings')
+          .insert({
             user_id: user.id,
             theme: newTheme,
-            // Provide defaults for required fields in case of INSERT
             default_commission_pct: 0.25,
             default_card_deposit_pct: 2.0,
             default_eft_deposit_pct: 0.0,
             default_fx_pct: 0.5,
-          },
-          {
-            onConflict: 'user_id',
-            ignoreDuplicates: false,
-          }
-        )
+          })
 
-      if (error) {
-        console.error('Failed to save theme:', error)
+        if (insertError) {
+          console.error('Failed to save theme:', insertError)
+        }
       }
     } catch (err) {
       console.error('Failed to save theme:', err)

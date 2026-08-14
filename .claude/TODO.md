@@ -199,7 +199,6 @@ Based on current state and user feedback, tackle in this order:
         * Listens to system preference changes
         * Applies dark class to html element
       - Configured Tailwind CSS for class-based dark mode
-        * Updated tailwind.config.ts with darkMode: 'class'
         * Updated globals.css for dark theme support
       - Wired up theme switching in Settings page
         * Real-time theme changes
@@ -209,6 +208,13 @@ Based on current state and user feedback, tackle in this order:
         * Text colors (dark:text-gray-100, dark:text-gray-400)
         * Border and hover states
       - **NOTE**: Additional pages can be styled with dark mode as needed using Tailwind's `dark:` prefix
+      - **FIX (2026-08-14)**: Manual Light/Dark selection had no visual effect — the project
+        runs Tailwind v4, which defaults `dark:` to the `prefers-color-scheme` media query and
+        ignores `darkMode: 'class'` in tailwind.config.ts unless the config is loaded via
+        `@config`. Added `@custom-variant dark (&:where(.dark, .dark *));` to globals.css to
+        opt into class-based dark mode so ThemeProvider's `.dark` class toggle actually applies.
+        Also fixed the theme-save upsert in ThemeProvider.tsx, which was overwriting the user's
+        saved fee percentages with hardcoded defaults on every theme change.
 
 ### Quick Win #1: Transaction Notes & Tags (COMPLETED ✅)
 - [x] **Database Migration**

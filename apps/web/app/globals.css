@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Tailwind v4 defaults `dark:` to the prefers-color-scheme media query.
+   Opt into class-based dark mode so ThemeProvider's manual light/dark
+   selection (toggling `.dark` on <html>) actually takes effect. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* Default light theme */
 :root {
   --background: #ffffff;
