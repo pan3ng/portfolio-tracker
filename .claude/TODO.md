@@ -209,28 +209,169 @@ Based on current state and user feedback, tackle in this order:
         * Text colors (dark:text-gray-100, dark:text-gray-400)
         * Border and hover states
       - **NOTE**: Additional pages can be styled with dark mode as needed using Tailwind's `dark:` prefix
-- [ ] **NEW**: Transaction notes/tags
-      - Add optional notes field to transactions
-      - Add tags for categorization (e.g., "dividend reinvest", "rebalance")
-      - Filter transactions by tags
+
+### Quick Win #1: Transaction Notes & Tags (Estimated: 1-2 hours)
+- [ ] **Database Migration**
+      - Add `notes` text field to transactions table (nullable)
+      - Add `tags` text[] array field to transactions table (nullable, default empty array)
+      - Create migration: 0005_transaction_notes_tags.sql
+      - Update TypeScript types
+- [ ] **Transaction Forms**
+      - Add "Notes" textarea to new transaction form (optional, placeholder: "e.g., Monthly contribution")
+      - Add "Tags" multi-select dropdown with predefined options:
+        * "dividend reinvest", "rebalance", "monthly contribution", "bonus", "emergency withdrawal"
+        * Allow custom tag creation (type and press enter)
+      - Add same fields to edit transaction form
+      - Add same fields to historical transaction form
+- [ ] **Display & Filtering**
+      - Show notes in transaction detail view (transactions page expanded row)
+      - Show tags as colored badges in transactions table
+      - Add tag filter dropdown on transactions page (filter by selected tags)
+      - Add search by notes (text search in filter section)
+- [ ] **UI Components**
+      - Create reusable TagInput component with autocomplete
+      - Create Tag badge component with color variants
+      - Ensure dark mode support for all new components
+
+### Quick Win #2: Fee Breakdown Tooltip (Estimated: 30 minutes - 1 hour)
+- [ ] **Portfolio Table Enhancement**
+      - Add info icon (ⓘ) next to "Total Cost" or "Fees" column in holdings table
+      - On hover, show tooltip with fee breakdown per ticker:
+        * Commission fees: R X.XX
+        * Deposit fees: R X.XX
+        * FX fees: R X.XX
+        * Other fees: R X.XX
+        * Total fees: R X.XX (sum)
+      - Calculate fees per ticker by summing from all transactions for that ticker
+      - Use Headless UI Tooltip or similar library for accessible tooltip
+      - Ensure responsive (click to show on mobile)
+      - Add dark mode styling
+
+### Medium Effort #3: Dashboard Improvements (Estimated: 3-4 hours)
+- [ ] **Quick Stats Cards** (add to top of portfolio page, above holdings table)
+      - Card 1: Today's Change
+        * Calculate: (Current Value - Previous Day Value)
+        * Show: R X.XX (+/-X.XX%)
+        * Color code: green for positive, red for negative
+        * Note: Requires storing/calculating previous day value (could use transactions dated before today as proxy)
+      - Card 2: Cash Available
+        * Show uninvested capital prominently
+        * Include quick link to "Add Deposit" or "Invest Now"
+      - Card 3: Rebalancing Status
+        * Show ticker with largest drift % (positive or negative)
+        * Example: "STXNDQ is 5.2% overweight" or "Target allocation met ✓"
+        * Link to targets page
+      - Card 4: Activity Summary
+        * Days since last transaction
+        * Total transactions this month
+        * Link to "Add Transaction"
+- [ ] **Visual Improvements**
+      - Better card design with icons, shadows, hover effects
+      - Improved typography hierarchy (bigger headings, consistent spacing)
+      - More whitespace between sections
+      - Responsive grid layout (2x2 on desktop, stacked on mobile)
+- [ ] **Quick Actions Section**
+      - Add prominent button row below stats cards:
+        * "Add Transaction" (primary button, indigo)
+        * "View Reports" (secondary button, when implemented)
+        * "Calculate Rebalance" (secondary button, when implemented)
+      - Sticky on scroll for easy access?
+
+### Medium Effort #4: About Page (Estimated: 1-2 hours)
+- [ ] **Create /about Page**
+      - Route: apps/web/app/about/page.tsx
+      - Responsive layout with good typography
+      - Dark mode support
+- [ ] **Content Sections**
+      - Hero section:
+        * Headline: "Fee-aware portfolio tracking for JSE investors"
+        * Subheading: Brief value proposition
+      - Mission section:
+        * "Our Mission" heading
+        * Text: Help South African investors maintain target allocations effortlessly
+        * Explain the rebalancing problem and our solution
+      - Features section:
+        * "Key Features" heading
+        * Cards or list with icons:
+          - JSE-specific ticker database (45+ ETFs/stocks)
+          - Dual account support (ZAR/USD)
+          - Fee-aware cost basis calculations
+          - Intelligent rebalancing signals
+          - Uninvested capital tracking
+          - Dark mode support
+      - Privacy & Security section:
+        * Row-level security (users only see their own data)
+        * No third-party data sharing
+        * Data stored in secure Supabase database
+        * Open source codebase (if applicable)
+      - Getting Started section:
+        * Quick guide: Sign up → Add deposit → Add transaction → Set targets
+        * Link to first transaction form
+- [ ] **Navigation**
+      - Add "About" link to main navigation
+      - Add to footer (when footer exists)
+      - Update metadata for SEO (title, description)
 
 ### Medium-term
-- [ ] Portfolio performance charts
-      - Historical value over time
-      - Profit/loss trend graph
-      - Performance per ticker comparison
-- [ ] Export functionality
-      - Export transactions to CSV
-      - Export portfolio summary to PDF
-      - Tax reporting format
-- [ ] **NEW**: Dividend tracking
-      - Add dividend_amount field to transactions (optional)
-      - Track total dividends received per ticker
-      - Show dividend yield in portfolio view
-- [ ] **NEW**: Rebalancing calculator
-      - Given current drift and target weights, calculate exact shares to buy/sell
-      - Consider fees in rebalancing suggestions
-      - One-click rebalancing plan generation
+- [ ] **Larger Feature #5: Portfolio Performance Charts** (Estimated: 1-2 days)
+      - Chart Library Setup:
+        * Install Recharts or Chart.js
+        * Create reusable chart components
+      - Historical Value Chart:
+        * Line chart showing portfolio value over time
+        * Calculate daily values based on transaction history + price data
+        * Option to filter by date range (1M, 3M, 6M, 1Y, All)
+        * Show today's value vs starting value
+      - Profit/Loss Trends:
+        * Separate chart for total P/L over time
+        * Show both absolute (rand) and percentage
+        * Highlight positive/negative periods
+      - Performance Per Ticker:
+        * Bar chart showing P/L % per ticker
+        * Sort by performance (best to worst)
+        * Color code: green for gains, red for losses
+- [ ] **Larger Feature #6: Export Functionality** (Estimated: 2-3 hours)
+      - CSV Export:
+        * Export all transactions to CSV
+        * Include all fields: date, ticker, shares, price, fees, notes, tags
+        * Export portfolio summary (holdings, cost basis, current value, P/L)
+        * Add "Export" button to transactions page and portfolio page
+      - PDF Export (Optional - more complex):
+        * Generate PDF report with portfolio summary
+        * Include: holdings table, key metrics, charts (if available)
+        * Use library like react-pdf or jsPDF
+      - Tax Reporting Format:
+        * CSV format suitable for tax reporting
+        * Include: CGT calculations, dividends received (when implemented)
+        * Group by tax year
+- [ ] **Larger Feature #7: Dividend Tracking** (Estimated: 1 day)
+      - Database Schema:
+        * Add `dividend_amount` decimal field to transactions (nullable)
+        * Add `transaction_type` enum: 'buy', 'dividend' (default 'buy')
+        * Create migration: 0006_dividend_tracking.sql
+      - Dividend Entry:
+        * Add "Record Dividend" form (separate from regular transactions)
+        * Fields: ticker, date, dividend amount (ZAR)
+        * Link dividends to existing holdings
+      - Display:
+        * Show total dividends received per ticker in portfolio table
+        * Calculate dividend yield: (Total Dividends / Cost Basis) × 100
+        * Add "Dividends" tab to portfolio page
+        * Show dividend history timeline
+- [ ] **Larger Feature #8: Rebalancing Calculator** (Estimated: 1-2 days)
+      - Algorithm:
+        * Calculate drift for each ticker: (Current % - Target %)
+        * Determine trades needed to minimize drift
+        * Consider: Available cash, transaction fees, minimum trade sizes
+        * Optimize for minimal transactions
+      - UI:
+        * "Calculate Rebalance" button on portfolio page
+        * Modal/page showing recommended trades:
+          - Ticker, Action (Buy/Sell), Shares, Estimated cost (including fees)
+          - Total cash needed or released
+          - Post-rebalance allocation preview
+        * Option to execute trades manually (just shows suggestions)
+        * Export rebalance plan to CSV/PDF
 
 ### Long-term
 - [ ] One-time CSV bootstrap import
