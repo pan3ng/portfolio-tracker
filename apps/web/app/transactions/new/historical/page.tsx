@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation'
 import TickerSearch from '@/components/TickerSearch'
 import DatePicker from '@/components/DatePicker'
 import FeeBreakdown, { type FeeBreakdownData } from '@/components/FeeBreakdown'
+import TagInput from '@/components/TagInput'
 
 interface UserSettings {
   default_commission_pct: number
@@ -36,6 +37,8 @@ export default function HistoricalTransactionPage() {
   const [depositMethod, setDepositMethod] = useState<'card' | 'eft'>('card')
   const [transactionDate, setTransactionDate] = useState<string>(today)
   const [amount, setAmount] = useState('')
+  const [notes, setNotes] = useState('')
+  const [tags, setTags] = useState<string[]>([])
   const [priceMode, setPriceMode] = useState<'auto' | 'manual'>('auto')
   const [manualPrice, setManualPrice] = useState('')
   const [quote, setQuote] = useState<Quote | null>(null)
@@ -178,6 +181,8 @@ export default function HistoricalTransactionPage() {
           deposit_fee: feeData.depositFee,
           fx_fee: feeData.fxFee,
           other_fees: feeData.otherFees,
+          notes: notes.trim() || null,
+          tags: tags.length > 0 ? tags : null,
         })
 
       if (insertError) throw insertError
@@ -426,6 +431,28 @@ export default function HistoricalTransactionPage() {
                 showExpanded={true}
               />
             )}
+
+            {/* Notes Field */}
+            <div>
+              <label htmlFor="notes" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Notes (optional)
+              </label>
+              <textarea
+                id="notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={3}
+                placeholder="e.g., Historical position from previous broker"
+                className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+              />
+            </div>
+
+            {/* Tags Input */}
+            <TagInput
+              tags={tags}
+              onChange={setTags}
+              placeholder="Add tags to categorize this transaction..."
+            />
 
             {/* Error Display */}
             {error && (

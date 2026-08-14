@@ -84,9 +84,11 @@ export type Database = {
           deposit_method: string | null
           fx_fee: number | null
           id: string
+          notes: string | null
           other_fees: number | null
           price_at_transaction: number
           shares: number
+          tags: string[] | null
           ticker: string
           total_fees: number
           user_id: string
@@ -100,9 +102,11 @@ export type Database = {
           deposit_method?: string | null
           fx_fee?: number | null
           id?: string
+          notes?: string | null
           other_fees?: number | null
           price_at_transaction: number
           shares: number
+          tags?: string[] | null
           ticker: string
           total_fees?: number
           user_id: string
@@ -116,9 +120,11 @@ export type Database = {
           deposit_method?: string | null
           fx_fee?: number | null
           id?: string
+          notes?: string | null
           other_fees?: number | null
           price_at_transaction?: number
           shares?: number
+          tags?: string[] | null
           ticker?: string
           total_fees?: number
           user_id?: string

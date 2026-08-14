@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
+import Tag from '@/components/Tag'
 
 type AccountFilter = 'all' | 'ZAR' | 'USD'
 
@@ -18,6 +19,7 @@ export default function TransactionsPage() {
   // Filters
   const [accountFilter, setAccountFilter] = useState<AccountFilter>('all')
   const [tickerFilter, setTickerFilter] = useState('')
+  const [tagFilter, setTagFilter] = useState('')
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
 
   useEffect(() => {
@@ -26,7 +28,7 @@ export default function TransactionsPage() {
 
   useEffect(() => {
     applyFilters()
-  }, [accountFilter, tickerFilter, transactions])
+  }, [accountFilter, tickerFilter, tagFilter, transactions])
 
   const loadTransactions = async () => {
     setLoading(true)
@@ -60,6 +62,14 @@ export default function TransactionsPage() {
     if (tickerFilter.trim()) {
       const searchTerm = tickerFilter.trim().toUpperCase()
       filtered = filtered.filter(tx => tx.ticker.toUpperCase().includes(searchTerm))
+    }
+
+    // Tag filter
+    if (tagFilter.trim()) {
+      const searchTag = tagFilter.trim().toLowerCase()
+      filtered = filtered.filter(tx =>
+        tx.tags && tx.tags.some((tag: string) => tag.toLowerCase().includes(searchTag))
+      )
     }
 
     setFilteredTransactions(filtered)
@@ -137,7 +147,7 @@ export default function TransactionsPage() {
 
         {/* Filters */}
         <div className="bg-white shadow rounded-lg p-4 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Account Filter */}
             <div>
               <label htmlFor="accountFilter" className="block text-sm font-medium text-gray-700 mb-1">
@@ -169,6 +179,21 @@ export default function TransactionsPage() {
                 className="block w-full rounded-md border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
               />
             </div>
+
+            {/* Tag Filter */}
+            <div>
+              <label htmlFor="tagFilter" className="block text-sm font-medium text-gray-700 mb-1">
+                Tag
+              </label>
+              <input
+                id="tagFilter"
+                type="text"
+                value={tagFilter}
+                onChange={(e) => setTagFilter(e.target.value)}
+                placeholder="Search by tag..."
+                className="block w-full rounded-md border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+              />
+            </div>
           </div>
 
           {/* Results count */}
@@ -181,11 +206,12 @@ export default function TransactionsPage() {
         {filteredTransactions.length === 0 ? (
           <div className="bg-white shadow rounded-lg p-12 text-center">
             <p className="text-gray-500">No transactions found matching your filters.</p>
-            {(accountFilter !== 'all' || tickerFilter) && (
+            {(accountFilter !== 'all' || tickerFilter || tagFilter) && (
               <button
                 onClick={() => {
                   setAccountFilter('all')
                   setTickerFilter('')
+                  setTagFilter('')
                 }}
                 className="mt-4 text-indigo-600 hover:text-indigo-800 font-medium"
               >
@@ -206,6 +232,9 @@ export default function TransactionsPage() {
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Account
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Tags
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Shares
@@ -248,6 +277,17 @@ export default function TransactionsPage() {
                             {tx.account_type || 'ZAR'}
                           </span>
                         </td>
+                        <td className="px-6 py-4">
+                          <div className="flex flex-wrap gap-1">
+                            {tx.tags && tx.tags.length > 0 ? (
+                              tx.tags.map((tag: string) => (
+                                <Tag key={tag} label={tag} variant="primary" />
+                              ))
+                            ) : (
+                              <span className="text-xs text-gray-400">-</span>
+                            )}
+                          </div>
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
                           {tx.shares.toFixed(6)}
                         </td>
@@ -282,27 +322,38 @@ export default function TransactionsPage() {
                       {/* Expanded Fee Breakdown Row */}
                       {isExpanded && (
                         <tr className="bg-gray-50">
-                          <td colSpan={9} className="px-6 py-4">
-                            <div className="text-sm">
-                              <h4 className="font-medium text-gray-900 mb-2">Fee Breakdown</h4>
-                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                <div>
-                                  <span className="text-gray-600">Commission:</span>
-                                  <span className="ml-2 font-medium">R{(tx.commission_fee || 0).toFixed(2)}</span>
-                                </div>
-                                <div>
-                                  <span className="text-gray-600">Deposit ({tx.deposit_method || 'card'}):</span>
-                                  <span className="ml-2 font-medium">R{(tx.deposit_fee || 0).toFixed(2)}</span>
-                                </div>
-                                <div>
-                                  <span className="text-gray-600">FX Fee:</span>
-                                  <span className="ml-2 font-medium">R{(tx.fx_fee || 0).toFixed(2)}</span>
-                                </div>
-                                <div>
-                                  <span className="text-gray-600">Other:</span>
-                                  <span className="ml-2 font-medium">R{(tx.other_fees || 0).toFixed(2)}</span>
+                          <td colSpan={10} className="px-6 py-4">
+                            <div className="text-sm space-y-4">
+                              {/* Fee Breakdown */}
+                              <div>
+                                <h4 className="font-medium text-gray-900 mb-2">Fee Breakdown</h4>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                  <div>
+                                    <span className="text-gray-600">Commission:</span>
+                                    <span className="ml-2 font-medium">R{(tx.commission_fee || 0).toFixed(2)}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-gray-600">Deposit ({tx.deposit_method || 'card'}):</span>
+                                    <span className="ml-2 font-medium">R{(tx.deposit_fee || 0).toFixed(2)}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-gray-600">FX Fee:</span>
+                                    <span className="ml-2 font-medium">R{(tx.fx_fee || 0).toFixed(2)}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-gray-600">Other:</span>
+                                    <span className="ml-2 font-medium">R{(tx.other_fees || 0).toFixed(2)}</span>
+                                  </div>
                                 </div>
                               </div>
+
+                              {/* Notes */}
+                              {tx.notes && (
+                                <div>
+                                  <h4 className="font-medium text-gray-900 mb-1">Notes</h4>
+                                  <p className="text-gray-700">{tx.notes}</p>
+                                </div>
+                              )}
                             </div>
                           </td>
                         </tr>

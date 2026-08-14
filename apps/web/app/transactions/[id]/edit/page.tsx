@@ -7,6 +7,7 @@ import { fetchQuote, type Quote } from '@portfolio-tracker/api-client'
 import { useRouter, useParams } from 'next/navigation'
 import TickerSearch from '@/components/TickerSearch'
 import FeeBreakdown, { type FeeBreakdownData } from '@/components/FeeBreakdown'
+import TagInput from '@/components/TagInput'
 
 interface UserSettings {
   default_commission_pct: number
@@ -32,6 +33,8 @@ export default function EditTransactionPage() {
   const [amount, setAmount] = useState('')
   const [accountType, setAccountType] = useState<'ZAR' | 'USD'>('ZAR')
   const [depositMethod, setDepositMethod] = useState<'card' | 'eft'>('card')
+  const [notes, setNotes] = useState('')
+  const [tags, setTags] = useState<string[]>([])
   const [quote, setQuote] = useState<Quote | null>(null)
   const [feeData, setFeeData] = useState<FeeBreakdownData>({
     commissionFee: 0,
@@ -109,6 +112,8 @@ export default function EditTransactionPage() {
       setAmount((data.shares * data.price_at_transaction).toFixed(2))
       setAccountType(data.account_type || 'ZAR')
       setDepositMethod(data.deposit_method || 'card')
+      setNotes(data.notes || '')
+      setTags(data.tags || [])
 
       // Set fee data from individual fields
       setFeeData({
@@ -196,6 +201,8 @@ export default function EditTransactionPage() {
           fx_fee: feeData.fxFee,
           other_fees: feeData.otherFees,
           total_fees: feeData.totalFees,
+          notes: notes.trim() || null,
+          tags: tags.length > 0 ? tags : null,
         })
         .eq('id', transactionId)
 
@@ -401,6 +408,28 @@ export default function EditTransactionPage() {
                 showExpanded={true}
               />
             )}
+
+            {/* Notes Field */}
+            <div>
+              <label htmlFor="notes" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Notes (optional)
+              </label>
+              <textarea
+                id="notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={3}
+                placeholder="e.g., Monthly contribution, Rebalancing trade, etc."
+                className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+              />
+            </div>
+
+            {/* Tags Input */}
+            <TagInput
+              tags={tags}
+              onChange={setTags}
+              placeholder="Add tags to categorize this transaction..."
+            />
 
             {/* Error Display */}
             {error && (
