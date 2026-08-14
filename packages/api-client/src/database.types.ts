@@ -14,8 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      deposits: {
+        Row: {
+          account_type: string
+          amount: number
+          created_at: string
+          date: string
+          description: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_type: string
+          amount: number
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_type?: string
+          amount?: number
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       targets: {
         Row: {
+          account_type: string | null
           created_at: string
           id: string
           target_weight_pct: number
@@ -23,6 +57,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          account_type?: string | null
           created_at?: string
           id?: string
           target_weight_pct: number
@@ -30,6 +65,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          account_type?: string | null
           created_at?: string
           id?: string
           target_weight_pct?: number
@@ -40,9 +76,15 @@ export type Database = {
       }
       transactions: {
         Row: {
+          account_type: string | null
+          commission_fee: number | null
           created_at: string
           date: string
+          deposit_fee: number | null
+          deposit_method: string | null
+          fx_fee: number | null
           id: string
+          other_fees: number | null
           price_at_transaction: number
           shares: number
           ticker: string
@@ -50,9 +92,15 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          account_type?: string | null
+          commission_fee?: number | null
           created_at?: string
           date: string
+          deposit_fee?: number | null
+          deposit_method?: string | null
+          fx_fee?: number | null
           id?: string
+          other_fees?: number | null
           price_at_transaction: number
           shares: number
           ticker: string
@@ -60,13 +108,52 @@ export type Database = {
           user_id: string
         }
         Update: {
+          account_type?: string | null
+          commission_fee?: number | null
           created_at?: string
           date?: string
+          deposit_fee?: number | null
+          deposit_method?: string | null
+          fx_fee?: number | null
           id?: string
+          other_fees?: number | null
           price_at_transaction?: number
           shares?: number
           ticker?: string
           total_fees?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_settings: {
+        Row: {
+          created_at: string
+          default_card_deposit_pct: number
+          default_commission_pct: number
+          default_eft_deposit_pct: number
+          default_fx_pct: number
+          theme: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          default_card_deposit_pct?: number
+          default_commission_pct?: number
+          default_eft_deposit_pct?: number
+          default_fx_pct?: number
+          theme?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          default_card_deposit_pct?: number
+          default_commission_pct?: number
+          default_eft_deposit_pct?: number
+          default_fx_pct?: number
+          theme?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []

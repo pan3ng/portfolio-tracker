@@ -1,23 +1,88 @@
-// File: app/transactions/new/page.tsx
+// File: apps/web/app/transactions/new/page.tsx
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { fetchQuote, type Quote } from '@portfolio-tracker/api-client'
 import { useRouter } from 'next/navigation'
 import TickerSearch from '@/components/TickerSearch'
+import FeeBreakdown, { type FeeBreakdownData } from '@/components/FeeBreakdown'
+
+interface UserSettings {
+  default_commission_pct: number
+  default_card_deposit_pct: number
+  default_eft_deposit_pct: number
+  default_fx_pct: number
+}
+
+const DEFAULT_SETTINGS: UserSettings = {
+  default_commission_pct: 0.25,
+  default_card_deposit_pct: 2.0,
+  default_eft_deposit_pct: 0.0,
+  default_fx_pct: 0.5,
+}
 
 export default function NewTransactionPage() {
   const router = useRouter()
   const supabase = createClient()
 
+  // Form state
+  const [accountType, setAccountType] = useState<'ZAR' | 'USD'>('ZAR')
   const [ticker, setTicker] = useState('')
+  const [depositMethod, setDepositMethod] = useState<'card' | 'eft'>('card')
   const [amount, setAmount] = useState('')
-  const [fees, setFees] = useState('')
   const [quote, setQuote] = useState<Quote | null>(null)
+  const [feeData, setFeeData] = useState<FeeBreakdownData>({
+    commissionFee: 0,
+    depositFee: 0,
+    fxFee: 0,
+    otherFees: 0,
+    totalFees: 0,
+  })
+
+  // User settings
+  const [userSettings, setUserSettings] = useState<UserSettings>(DEFAULT_SETTINGS)
+
+  // UI state
   const [loading, setLoading] = useState(false)
   const [fetchingQuote, setFetchingQuote] = useState(false)
+  const [loadingSettings, setLoadingSettings] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // Load user settings on mount
+  useEffect(() => {
+    loadUserSettings()
+  }, [])
+
+  const loadUserSettings = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data, error: fetchError } = await supabase
+        .from('user_settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .single()
+
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        console.error('Error loading settings:', fetchError)
+      }
+
+      if (data) {
+        setUserSettings({
+          default_commission_pct: data.default_commission_pct,
+          default_card_deposit_pct: data.default_card_deposit_pct,
+          default_eft_deposit_pct: data.default_eft_deposit_pct,
+          default_fx_pct: data.default_fx_pct,
+        })
+      }
+    } catch (err) {
+      console.error('Failed to load user settings:', err)
+    } finally {
+      setLoadingSettings(false)
+    }
+  }
 
   const handleFetchQuote = async () => {
     if (!ticker.trim()) {
@@ -59,14 +124,8 @@ export default function NewTransactionPage() {
       }
 
       const amountNum = parseFloat(amount)
-      const feesNum = parseFloat(fees || '0')
-
       if (isNaN(amountNum) || amountNum <= 0) {
         throw new Error('Please enter a valid amount')
-      }
-
-      if (isNaN(feesNum) || feesNum < 0) {
-        throw new Error('Please enter a valid fee amount')
       }
 
       const shares = calculateShares()
@@ -80,7 +139,7 @@ export default function NewTransactionPage() {
         throw new Error('Not authenticated')
       }
 
-      // Insert transaction
+      // Insert transaction with fee breakdown
       const { error: insertError } = await supabase
         .from('transactions')
         .insert({
@@ -89,7 +148,13 @@ export default function NewTransactionPage() {
           date: new Date().toISOString(),
           shares: shares,
           price_at_transaction: quote.price_zar,
-          total_fees: feesNum,
+          account_type: accountType,
+          deposit_method: depositMethod,
+          commission_fee: feeData.commissionFee,
+          deposit_fee: feeData.depositFee,
+          fx_fee: feeData.fxFee,
+          other_fees: feeData.otherFees,
+          total_fees: feeData.totalFees, // Kept for backward compatibility
         })
 
       if (insertError) throw insertError
@@ -104,10 +169,24 @@ export default function NewTransactionPage() {
   }
 
   const shares = calculateShares()
+  const investmentAmount = parseFloat(amount) || 0
+
+  if (loadingSettings) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-2xl mx-auto">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+            <p className="mt-2 text-sm text-gray-600">Loading...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md mx-auto">
+      <div className="max-w-2xl mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Add Transaction</h1>
           <p className="mt-2 text-sm text-gray-600">
@@ -117,6 +196,26 @@ export default function NewTransactionPage() {
 
         <div className="bg-white shadow rounded-lg p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Account Type Selector */}
+            <div>
+              <label htmlFor="accountType" className="block text-sm font-medium text-gray-700">
+                Account
+              </label>
+              <select
+                id="accountType"
+                value={accountType}
+                onChange={(e) => setAccountType(e.target.value as 'ZAR' | 'USD')}
+                disabled={loading}
+                className="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+              >
+                <option value="ZAR">ZAR (South African Rand)</option>
+                <option value="USD">USD (US Dollar)</option>
+              </select>
+              <p className="mt-1 text-xs text-gray-500">
+                Select which account this investment belongs to
+              </p>
+            </div>
+
             {/* Ticker Input */}
             <div>
               <label htmlFor="ticker" className="block text-sm font-medium text-gray-700">
@@ -138,7 +237,7 @@ export default function NewTransactionPage() {
                 </button>
               </div>
               <p className="mt-1 text-xs text-gray-500">
-                Search and select a JSE ticker, or type it manually
+                Search and select a ticker, or type it manually
               </p>
             </div>
 
@@ -165,7 +264,7 @@ export default function NewTransactionPage() {
             {/* Amount Input */}
             <div>
               <label htmlFor="amount" className="block text-sm font-medium text-gray-700">
-                Amount to Invest (ZAR)
+                Amount to Invest ({accountType})
               </label>
               <div className="mt-1 relative rounded-md shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -190,6 +289,26 @@ export default function NewTransactionPage() {
               )}
             </div>
 
+            {/* Deposit Method Selector */}
+            <div>
+              <label htmlFor="depositMethod" className="block text-sm font-medium text-gray-700">
+                Deposit Method
+              </label>
+              <select
+                id="depositMethod"
+                value={depositMethod}
+                onChange={(e) => setDepositMethod(e.target.value as 'card' | 'eft')}
+                disabled={loading}
+                className="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+              >
+                <option value="card">Card ({userSettings.default_card_deposit_pct}% fee)</option>
+                <option value="eft">EFT ({userSettings.default_eft_deposit_pct}% fee)</option>
+              </select>
+              <p className="mt-1 text-xs text-gray-500">
+                How did you deposit funds for this investment?
+              </p>
+            </div>
+
             {/* Calculated Shares Display */}
             {quote && amount && shares > 0 && (
               <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
@@ -207,31 +326,17 @@ export default function NewTransactionPage() {
               </div>
             )}
 
-            {/* Fees Input */}
-            <div>
-              <label htmlFor="fees" className="block text-sm font-medium text-gray-700">
-                Transaction Fees (ZAR)
-              </label>
-              <div className="mt-1 relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <span className="text-gray-500 sm:text-sm">R</span>
-                </div>
-                <input
-                  id="fees"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={fees}
-                  onChange={(e) => setFees(e.target.value)}
-                  placeholder="0.00"
-                  className="pl-7 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  disabled={loading}
-                />
-              </div>
-              <p className="mt-1 text-xs text-gray-500">
-                Optional - leave blank if no fees
-              </p>
-            </div>
+            {/* Fee Breakdown Component */}
+            {investmentAmount > 0 && (
+              <FeeBreakdown
+                investmentAmount={investmentAmount}
+                depositMethod={depositMethod}
+                accountType={accountType}
+                userSettings={userSettings}
+                onChange={setFeeData}
+                showExpanded={true}
+              />
+            )}
 
             {/* Error Display */}
             {error && (

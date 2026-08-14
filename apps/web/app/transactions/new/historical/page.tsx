@@ -1,11 +1,12 @@
-// File: apps/web/app/transactions/[id]/edit/page.tsx
+// File: apps/web/app/transactions/new/historical/page.tsx
 'use client'
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { fetchQuote, type Quote } from '@portfolio-tracker/api-client'
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import TickerSearch from '@/components/TickerSearch'
+import DatePicker from '@/components/DatePicker'
 import FeeBreakdown, { type FeeBreakdownData } from '@/components/FeeBreakdown'
 
 interface UserSettings {
@@ -22,16 +23,21 @@ const DEFAULT_SETTINGS: UserSettings = {
   default_fx_pct: 0.5,
 }
 
-export default function EditTransactionPage() {
+export default function HistoricalTransactionPage() {
   const router = useRouter()
-  const params = useParams()
   const supabase = createClient()
-  const transactionId = params.id as string
 
-  const [ticker, setTicker] = useState('')
-  const [amount, setAmount] = useState('')
+  // Today's date in YYYY-MM-DD format
+  const today = new Date().toISOString().split('T')[0]
+
+  // Form state
   const [accountType, setAccountType] = useState<'ZAR' | 'USD'>('ZAR')
+  const [ticker, setTicker] = useState('')
   const [depositMethod, setDepositMethod] = useState<'card' | 'eft'>('card')
+  const [transactionDate, setTransactionDate] = useState(today)
+  const [amount, setAmount] = useState('')
+  const [priceMode, setPriceMode] = useState<'auto' | 'manual'>('auto')
+  const [manualPrice, setManualPrice] = useState('')
   const [quote, setQuote] = useState<Quote | null>(null)
   const [feeData, setFeeData] = useState<FeeBreakdownData>({
     commissionFee: 0,
@@ -40,24 +46,20 @@ export default function EditTransactionPage() {
     otherFees: 0,
     totalFees: 0,
   })
-  const [loading, setLoading] = useState(false)
-  const [fetchingQuote, setFetchingQuote] = useState(false)
-  const [loadingTransaction, setLoadingTransaction] = useState(true)
-  const [loadingSettings, setLoadingSettings] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [deleting, setDeleting] = useState(false)
 
   // User settings
   const [userSettings, setUserSettings] = useState<UserSettings>(DEFAULT_SETTINGS)
 
-  // Original transaction data
-  const [originalPrice, setOriginalPrice] = useState(0)
-  const [originalShares, setOriginalShares] = useState(0)
+  // UI state
+  const [loading, setLoading] = useState(false)
+  const [fetchingQuote, setFetchingQuote] = useState(false)
+  const [loadingSettings, setLoadingSettings] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
+  // Load user settings on mount
   useEffect(() => {
     loadUserSettings()
-    loadTransaction()
-  }, [transactionId])
+  }, [])
 
   const loadUserSettings = async () => {
     try {
@@ -89,49 +91,6 @@ export default function EditTransactionPage() {
     }
   }
 
-  const loadTransaction = async () => {
-    setLoadingTransaction(true)
-    setError(null)
-
-    try {
-      const { data, error: fetchError } = await supabase
-        .from('transactions')
-        .select('*')
-        .eq('id', transactionId)
-        .single()
-
-      if (fetchError) throw fetchError
-      if (!data) throw new Error('Transaction not found')
-
-      setTicker(data.ticker)
-      setOriginalPrice(data.price_at_transaction)
-      setOriginalShares(data.shares)
-      setAmount((data.shares * data.price_at_transaction).toFixed(2))
-      setAccountType(data.account_type || 'ZAR')
-      setDepositMethod(data.deposit_method || 'card')
-
-      // Set fee data from individual fields
-      setFeeData({
-        commissionFee: data.commission_fee || 0,
-        depositFee: data.deposit_fee || 0,
-        fxFee: data.fx_fee || 0,
-        otherFees: data.other_fees || 0,
-        totalFees: (data.commission_fee || 0) + (data.deposit_fee || 0) + (data.fx_fee || 0) + (data.other_fees || 0),
-      })
-
-      // Set the quote to the original price
-      setQuote({
-        ticker: data.ticker,
-        price_zar: data.price_at_transaction,
-        fetched_at: data.date,
-      })
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load transaction')
-    } finally {
-      setLoadingTransaction(false)
-    }
-  }
-
   const handleFetchQuote = async () => {
     if (!ticker.trim()) {
       setError('Please enter a ticker')
@@ -146,6 +105,7 @@ export default function EditTransactionPage() {
       const quoteData = await fetchQuote(supabase, tickerUpper)
       setQuote(quoteData)
       setTicker(tickerUpper)
+      setPriceMode('auto') // Switch to auto mode when quote is fetched
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch quote')
       setQuote(null)
@@ -154,11 +114,20 @@ export default function EditTransactionPage() {
     }
   }
 
+  const getCurrentPrice = () => {
+    if (priceMode === 'manual') {
+      const price = parseFloat(manualPrice)
+      return isNaN(price) ? 0 : price
+    }
+    return quote?.price_zar || 0
+  }
+
   const calculateShares = () => {
-    if (!quote || !amount) return 0
+    const price = getCurrentPrice()
+    if (!price || !amount) return 0
     const amountNum = parseFloat(amount)
     if (isNaN(amountNum) || amountNum <= 0) return 0
-    return amountNum / quote.price_zar
+    return amountNum / price
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -167,8 +136,14 @@ export default function EditTransactionPage() {
     setError(null)
 
     try {
-      if (!quote) {
-        throw new Error('Please fetch a quote first')
+      const price = getCurrentPrice()
+
+      if (!ticker.trim()) {
+        throw new Error('Please enter a ticker')
+      }
+
+      if (!price || price <= 0) {
+        throw new Error('Please provide a valid price (fetch quote or enter manually)')
       }
 
       const amountNum = parseFloat(amount)
@@ -182,66 +157,50 @@ export default function EditTransactionPage() {
         throw new Error('Invalid share calculation')
       }
 
-      // Update transaction with fee breakdown
-      const { error: updateError } = await supabase
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        throw new Error('Not authenticated')
+      }
+
+      // Insert transaction with custom date and all fee breakdowns
+      const { error: insertError } = await supabase
         .from('transactions')
-        .update({
-          ticker: ticker,
+        .insert({
+          user_id: user.id,
+          ticker: ticker.toUpperCase(),
           shares: shares,
-          price_at_transaction: quote.price_zar,
+          price_at_transaction: price,
+          date: transactionDate, // Custom historical date
           account_type: accountType,
           deposit_method: depositMethod,
           commission_fee: feeData.commissionFee,
           deposit_fee: feeData.depositFee,
           fx_fee: feeData.fxFee,
           other_fees: feeData.otherFees,
-          total_fees: feeData.totalFees,
         })
-        .eq('id', transactionId)
 
-      if (updateError) throw updateError
+      if (insertError) throw insertError
 
       router.push('/')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update transaction')
+      setError(err instanceof Error ? err.message : 'Failed to create transaction')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this transaction? This action cannot be undone.')) {
-      return
-    }
-
-    setDeleting(true)
-    setError(null)
-
-    try {
-      const { error: deleteError } = await supabase
-        .from('transactions')
-        .delete()
-        .eq('id', transactionId)
-
-      if (deleteError) throw deleteError
-
-      router.push('/')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete transaction')
-      setDeleting(false)
-    }
-  }
-
   const shares = calculateShares()
+  const currentPrice = getCurrentPrice()
   const investmentAmount = parseFloat(amount) || 0
 
-  if (loadingTransaction || loadingSettings) {
+  if (loadingSettings) {
     return (
       <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-2xl mx-auto">
           <div className="text-center">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-            <p className="mt-2 text-sm text-gray-600">Loading transaction...</p>
+            <p className="mt-2 text-sm text-gray-600">Loading settings...</p>
           </div>
         </div>
       </div>
@@ -252,14 +211,23 @@ export default function EditTransactionPage() {
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Edit Transaction</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Add Historical Position</h1>
           <p className="mt-2 text-sm text-gray-600">
-            Update transaction details or delete it
+            Enter a historical transaction with a custom date and price
           </p>
         </div>
 
         <div className="bg-white shadow rounded-lg p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Transaction Date */}
+            <DatePicker
+              value={transactionDate}
+              onChange={setTransactionDate}
+              label="Transaction Date"
+              maxDate={today}
+              disabled={loading}
+            />
+
             {/* Account Type Selector */}
             <div>
               <label htmlFor="accountType" className="block text-sm font-medium text-gray-700">
@@ -269,7 +237,7 @@ export default function EditTransactionPage() {
                 id="accountType"
                 value={accountType}
                 onChange={(e) => setAccountType(e.target.value as 'ZAR' | 'USD')}
-                disabled={loading || deleting}
+                disabled={loading}
                 className="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
               >
                 <option value="ZAR">ZAR (South African Rand)</option>
@@ -289,30 +257,61 @@ export default function EditTransactionPage() {
                 <TickerSearch
                   value={ticker}
                   onChange={setTicker}
-                  disabled={loading || fetchingQuote || deleting}
+                  disabled={loading || fetchingQuote}
                 />
                 <button
                   type="button"
                   onClick={handleFetchQuote}
-                  disabled={fetchingQuote || loading || deleting}
+                  disabled={fetchingQuote || loading}
                   className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
                 >
                   {fetchingQuote ? 'Fetching...' : 'Get Quote'}
                 </button>
               </div>
               <p className="mt-1 text-xs text-gray-500">
-                Search for a ticker or click "Get Quote" to update the price
+                Search for a ticker or enter it manually
               </p>
             </div>
 
-            {/* Quote Display */}
-            {quote && (
+            {/* Price Mode Toggle */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Price Source
+              </label>
+              <div className="flex gap-4">
+                <label className="inline-flex items-center">
+                  <input
+                    type="radio"
+                    value="auto"
+                    checked={priceMode === 'auto'}
+                    onChange={(e) => setPriceMode(e.target.value as 'auto' | 'manual')}
+                    disabled={loading}
+                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300"
+                  />
+                  <span className="ml-2 text-sm text-gray-700">Current Market Price</span>
+                </label>
+                <label className="inline-flex items-center">
+                  <input
+                    type="radio"
+                    value="manual"
+                    checked={priceMode === 'manual'}
+                    onChange={(e) => setPriceMode(e.target.value as 'auto' | 'manual')}
+                    disabled={loading}
+                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300"
+                  />
+                  <span className="ml-2 text-sm text-gray-700">Manual (Historical) Price</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Quote Display (Auto Mode) */}
+            {priceMode === 'auto' && quote && (
               <div className="bg-green-50 border border-green-200 rounded-md p-4">
                 <div className="flex justify-between items-center">
                   <div>
                     <p className="text-sm font-medium text-green-900">{quote.ticker}</p>
                     <p className="text-xs text-green-700">
-                      Price from {new Date(quote.fetched_at).toLocaleString()}
+                      Current price from {new Date(quote.fetched_at).toLocaleString()}
                     </p>
                   </div>
                   <div className="text-right">
@@ -325,10 +324,38 @@ export default function EditTransactionPage() {
               </div>
             )}
 
+            {/* Manual Price Input (Manual Mode) */}
+            {priceMode === 'manual' && (
+              <div>
+                <label htmlFor="manualPrice" className="block text-sm font-medium text-gray-700">
+                  Historical Price per Share (ZAR)
+                </label>
+                <div className="mt-1 relative rounded-md shadow-sm">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <span className="text-gray-500 sm:text-sm">R</span>
+                  </div>
+                  <input
+                    id="manualPrice"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={manualPrice}
+                    onChange={(e) => setManualPrice(e.target.value)}
+                    placeholder="100.00"
+                    className="pl-7 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    disabled={loading}
+                  />
+                </div>
+                <p className="mt-1 text-xs text-gray-500">
+                  Enter the price you paid per share at the time of purchase
+                </p>
+              </div>
+            )}
+
             {/* Amount Input */}
             <div>
               <label htmlFor="amount" className="block text-sm font-medium text-gray-700">
-                Amount to Invest (ZAR)
+                Amount Invested (ZAR)
               </label>
               <div className="mt-1 relative rounded-md shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -343,30 +370,28 @@ export default function EditTransactionPage() {
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="1000.00"
                   className="pl-7 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                  disabled={loading || !quote || deleting}
+                  disabled={loading || currentPrice <= 0}
                 />
               </div>
+              <p className="mt-1 text-xs text-gray-500">
+                Total amount you invested (excluding fees)
+              </p>
             </div>
 
             {/* Calculated Shares Display */}
-            {quote && amount && shares > 0 && (
+            {currentPrice > 0 && amount && shares > 0 && (
               <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium text-blue-900">
-                    Shares to purchase:
+                    Shares purchased:
                   </span>
                   <span className="text-lg font-bold text-blue-900">
                     {shares.toFixed(6)}
                   </span>
                 </div>
                 <p className="mt-1 text-xs text-blue-700">
-                  R{amount} ÷ R{quote.price_zar.toFixed(2)} = {shares.toFixed(6)} shares
+                  R{amount} ÷ R{currentPrice.toFixed(2)} = {shares.toFixed(6)} shares
                 </p>
-                {shares !== originalShares && (
-                  <p className="mt-1 text-xs text-blue-600">
-                    Original: {originalShares.toFixed(6)} shares at R{originalPrice.toFixed(2)}
-                  </p>
-                )}
               </div>
             )}
 
@@ -379,7 +404,7 @@ export default function EditTransactionPage() {
                 id="depositMethod"
                 value={depositMethod}
                 onChange={(e) => setDepositMethod(e.target.value as 'card' | 'eft')}
-                disabled={loading || deleting}
+                disabled={loading}
                 className="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
               >
                 <option value="card">Card ({userSettings.default_card_deposit_pct}% fee)</option>
@@ -414,25 +439,17 @@ export default function EditTransactionPage() {
               <button
                 type="button"
                 onClick={() => router.push('/')}
-                disabled={loading || deleting}
+                disabled={loading}
                 className="flex-1 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
-                type="button"
-                onClick={handleDelete}
-                disabled={loading || deleting}
-                className="flex-1 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {deleting ? 'Deleting...' : 'Delete'}
-              </button>
-              <button
                 type="submit"
-                disabled={loading || !quote || !amount || deleting}
+                disabled={loading || currentPrice <= 0 || !amount}
                 className="flex-1 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? 'Saving...' : 'Save Changes'}
+                {loading ? 'Adding...' : 'Add Historical Transaction'}
               </button>
             </div>
           </form>
