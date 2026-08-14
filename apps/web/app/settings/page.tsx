@@ -35,6 +35,11 @@ export default function SettingsPage() {
     loadSettings()
   }, [])
 
+  // Sync local settings with ThemeProvider's current theme
+  useEffect(() => {
+    setSettings(prev => ({ ...prev, theme: currentTheme }))
+  }, [currentTheme])
+
   const loadSettings = async () => {
     setLoading(true)
     setError(null)
