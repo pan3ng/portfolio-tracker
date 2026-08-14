@@ -10,6 +10,30 @@ come back here for the immediate next steps.
 
 ---
 
+## 🎯 Recommended Next Steps (Prioritized)
+
+Based on current state and user feedback, tackle in this order:
+
+### Quick Wins (1-2 hours each)
+1. **Transaction notes/tags** - Add optional notes and tags for categorization
+2. **Fee breakdown tooltip** - Hover to see fee details in portfolio table
+3. **Empty states** - Better onboarding hints for new users
+
+### Medium Effort (Half day each)
+4. **Dashboard improvements** - Quick stats cards, better visual hierarchy
+5. **Mobile responsiveness** - Optimize tables, touch-friendly controls
+6. **Export to CSV** - Download transactions and portfolio data
+7. **About page** - Mission statement, features, privacy stance
+
+### Larger Features (1-2 days each)
+8. **Portfolio performance charts** - Historical value, P/L trends
+9. **Rebalancing calculator** - Suggest exact trades to hit targets
+10. **Dividend tracking** - Track and display dividend income
+
+**Total estimated time for items 1-7:** ~2-3 days of focused work
+
+---
+
 ## Immediate next actions (Phase 2 — Auth)
 
 - [x] Add `@supabase/supabase-js` and `@supabase/ssr` to `apps/web`
@@ -217,6 +241,154 @@ come back here for the immediate next steps.
 - [ ] Predictions/analysis/nudges
 - [ ] Multi-currency support beyond ZAR/USD
 - [ ] API integrations for auto-sync with brokers
+
+---
+
+## Product & Marketing Strategy
+
+### ASO & Keyword Analysis
+**Target Platform:** Web-first, future mobile app (iOS/Android)
+**Target Audience:** South African retail investors (beginners → experienced), JSE traders, rebalancing enthusiasts
+
+**Target Keywords:**
+- [ ] Research and document primary keywords:
+      - Core: "JSE portfolio tracker", "South African investment tracker", "portfolio rebalancing"
+      - Secondary: "EasyEquities tracker", "fee tracking investment", "target allocation portfolio"
+      - Long-tail: "track JSE ETF portfolio", "rebalance investment South Africa", "ZAR USD portfolio tracker"
+- [ ] Analyze competitors:
+      - EasyEquities built-in tools (identify gaps)
+      - Global apps: Personal Capital, Sharesight (identify local advantages)
+      - Direct search for existing JSE-specific tools
+- [ ] Document unique positioning:
+      - JSE-specific ticker database (45+ ETFs/stocks)
+      - ZAR/USD dual account support
+      - Fee-aware cost basis calculations
+      - Intelligent rebalancing signals
+- [ ] SEO optimization tasks:
+      - Meta descriptions for all pages
+      - Update page titles with target keywords
+      - Add structured data (JSON-LD) for rich snippets
+      - Create content/help pages for long-tail keywords
+
+**Note:** Mobile app store optimization (ASO) deferred until app launch phase
+
+### Branding & Identity
+
+**Current Status:**
+- Name: "Portfolio Tracker" (functional, clear, SEO-friendly)
+- Color scheme: Indigo/blue primary (modern, trustworthy)
+- Value proposition: "Fee-aware portfolio tracking for JSE investors with intelligent rebalancing"
+
+**Brand Development Tasks:**
+
+- [ ] **Mission Statement & About Page**
+      - Write clear mission: Help South African investors maintain their target allocations effortlessly
+      - Document core features and benefits
+      - Privacy and security stance (user data, RLS, no third-party sharing)
+      - Add "About" page to website (/about)
+
+- [ ] **Logo Design** (Optional - can defer)
+      - Concept exploration:
+        * Target/bullseye icon (represents target allocation)
+        * Balance scales (represents rebalancing)
+        * Pie chart with South African colors
+        * Minimalist "PT" lettermark
+      - Create favicon and app icons
+      - Ensure scalability (16x16 to 512x512)
+
+- [ ] **Color Scheme Refinement** (Optional)
+      - Current: Indigo (#4F46E5) primary, grays, green/red for P/L
+      - Consider: Adding South African green/gold accents as secondary colors?
+      - Ensure WCAG AA accessibility standards
+      - Document color usage guidelines
+
+- [ ] **Tagline/Slogan Options** (Optional - brainstorm)
+      - "Track every rand. Hit every target."
+      - "Your portfolio, perfectly balanced."
+      - "Rebalancing made effortless."
+      - "Invest with precision."
+
+- [ ] **Name Alternatives** (Deferred - revisit if needed)
+      - Keep "Portfolio Tracker" unless compelling reason to change
+      - Potential alternatives for future consideration:
+        * RebalanceZA, Target Balance, Folio, Allocate, Maintain
+      - Document decision criteria (memorability, SEO, domain availability)
+
+**Monetization Strategy:** TBD (options: free/open source, freemium, subscription)
+
+### UI/UX Enhancements
+
+**Target Experience:** Mobile-responsive, beginner-friendly, data-dense without clutter
+
+**Priority 1: Dashboard Improvements** (Estimated: 3-4 hours)
+- [ ] Add quick stats cards at top of portfolio page
+      - Today's portfolio change (value + percentage)
+      - Cash available to invest (uninvested capital)
+      - Next rebalancing action needed (most overweight/underweight ticker)
+      - Days since last transaction
+- [ ] Better data visualization
+      - Consider: Simple pie chart for current allocation vs target
+      - Consider: Bar chart showing drift per ticker
+      - Use lightweight chart library (e.g., Recharts, Chart.js)
+- [ ] Quick action buttons
+      - Prominent "Add Transaction" button
+      - "Calculate Rebalance" button (when implemented)
+      - "Export Report" button
+- [ ] Improve typography and spacing
+      - Clearer visual hierarchy
+      - Better use of whitespace
+      - Consistent font sizes/weights
+
+**Priority 2: Mobile Responsiveness** (Estimated: 4-6 hours)
+- [ ] Optimize portfolio table for mobile
+      - Card view option for small screens
+      - Horizontal scroll for table view
+      - Collapsible rows for detailed info
+      - Sticky column headers
+- [ ] Touch-friendly controls
+      - Bigger tap targets (min 44x44px)
+      - Swipe actions (swipe transaction to edit/delete)
+      - Pull-to-refresh on lists
+      - Bottom sheet modals instead of centered modals
+- [ ] Navigation improvements
+      - Consider bottom navigation bar for mobile
+      - Hamburger menu with clear sections
+      - Breadcrumbs for context
+- [ ] Test on real devices
+      - iOS Safari (iPhone 12+, SE)
+      - Android Chrome (various screen sizes)
+      - Tablet landscape/portrait
+      - Document device-specific issues
+
+**Priority 3: Onboarding & Empty States** (Estimated: 2-3 hours)
+- [ ] Welcome flow for new users
+      - Brief tour of key features (dismissible)
+      - Highlight: Add deposit → Add transaction → View portfolio → Set targets
+      - Optional: Sample data to explore before adding real transactions
+- [ ] Improved empty states
+      - Portfolio page (no transactions): Show what they'll see + CTA to add first transaction
+      - Deposits page (no deposits): Explain uninvested capital + CTA to add deposit
+      - Targets page (no targets): Explain rebalancing + CTA to set first target
+      - Use illustrations or icons (not just text)
+- [ ] Help/info tooltips
+      - Explain complex metrics (Market P/L vs Total P/L, drift percentage, etc.)
+      - "What is this?" links to help docs
+      - Contextual help in forms
+
+**Nice-to-Have Improvements:**
+- [ ] Loading states: Skeleton screens instead of spinners
+- [ ] Animations: Subtle transitions for better perceived performance
+- [ ] Accessibility: Keyboard navigation, ARIA labels, screen reader testing
+- [ ] Dark mode polish: Ensure all new features support dark mode
+- [ ] Progressive Web App (PWA): Add to home screen, offline support
+
+**UX Metrics to Track (Future):**
+- Time to first transaction
+- Feature discovery rate (do users find deposits, targets, etc?)
+- Mobile vs desktop usage split
+- Drop-off points in key flows
+
+---
 
 ## Previously Completed
 
