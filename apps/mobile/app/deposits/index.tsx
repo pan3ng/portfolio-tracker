@@ -17,6 +17,7 @@ interface DepositRow {
   amount: number
   date: string
   account_type: string
+  movement_type: string
   deposit_method: string
   deposit_fee: number
   description: string | null
@@ -53,7 +54,7 @@ export default function DepositsScreen() {
     () => (accountFilter === 'All' ? deposits : deposits.filter((d) => d.account_type === accountFilter)),
     [deposits, accountFilter]
   )
-  const total = filtered.reduce((sum, d) => sum + d.amount, 0)
+  const netTotal = filtered.reduce((sum, d) => sum + (d.movement_type === 'withdrawal' ? -d.amount : d.amount), 0)
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]}>
@@ -62,7 +63,7 @@ export default function DepositsScreen() {
       <View style={[styles.header, { borderBottomColor: colors.divider }]}>
         <View style={styles.headerTop}>
           <Text style={{ color: colors.accent700, fontSize: 12.5 }} onPress={() => router.back()}>← Back</Text>
-          <Text style={[styles.title, { color: colors.text, fontFamily: fonts.heading }]}>Deposits</Text>
+          <Text style={[styles.title, { color: colors.text, fontFamily: fonts.heading }]}>Deposits &amp; Withdrawals</Text>
           <Text style={{ fontSize: 12.5, opacity: 0 }}>—</Text>
         </View>
         <Segmented
@@ -71,12 +72,13 @@ export default function DepositsScreen() {
           onChange={setAccountFilter}
         />
         <Text style={{ color: colors.textMuted, fontSize: 12 }}>
-          Total: R {total.toFixed(2)} across {filtered.length} deposit{filtered.length === 1 ? '' : 's'}
+          Net: R {netTotal.toFixed(2)} across {filtered.length} movement{filtered.length === 1 ? '' : 's'}
         </Text>
       </View>
 
-      <View style={{ padding: 18, paddingBottom: 0 }}>
-        <Button label="+ Add Deposit" variant="primary" onPress={() => router.push('/deposits/new')} block />
+      <View style={{ padding: 18, paddingBottom: 0, flexDirection: 'row', gap: 10 }}>
+        <Button label="+ Add Deposit" variant="primary" onPress={() => router.push('/transactions/new?kind=deposit')} style={{ flex: 1 }} />
+        <Button label="+ Add Withdrawal" variant="secondary" onPress={() => router.push('/transactions/new?kind=withdrawal')} style={{ flex: 1 }} />
       </View>
 
       {error && <Text style={{ color: colors.loss, fontSize: 13, padding: 18 }}>{error}</Text>}
@@ -93,22 +95,30 @@ export default function DepositsScreen() {
           keyExtractor={(d) => d.id}
           contentContainerStyle={{ padding: 18 }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load() }} />}
-          renderItem={({ item }) => (
-            <Pressable
-              style={({ pressed }) => [styles.row, { borderBottomColor: colors.divider }, pressed && { opacity: 0.6 }]}
-              onPress={() => router.push(`/deposits/${item.id}/edit`)}
-            >
-              <View style={styles.rowTop}>
-                <View>
-                  <Text style={{ color: colors.text, fontFamily: 'ui-monospace', fontSize: 16, fontWeight: '600' }}>R {item.amount.toFixed(2)}</Text>
-                  <Text style={{ color: colors.textMuted, fontFamily: 'ui-monospace', fontSize: 11.5 }}>{new Date(item.date).toLocaleDateString()}</Text>
+          renderItem={({ item }) => {
+            const isWithdrawal = item.movement_type === 'withdrawal'
+            return (
+              <Pressable
+                style={({ pressed }) => [styles.row, { borderBottomColor: colors.divider }, pressed && { opacity: 0.6 }]}
+                onPress={() => router.push(`/deposits/${item.id}/edit`)}
+              >
+                <View style={styles.rowTop}>
+                  <View>
+                    <Text style={{ color: colors.text, fontFamily: 'ui-monospace', fontSize: 16, fontWeight: '600' }}>
+                      {isWithdrawal ? '−' : ''}R {item.amount.toFixed(2)}
+                    </Text>
+                    <Text style={{ color: colors.textMuted, fontFamily: 'ui-monospace', fontSize: 11.5 }}>{new Date(item.date).toLocaleDateString()}</Text>
+                  </View>
+                  <Tag
+                    label={isWithdrawal ? `${item.account_type} · Withdrawal` : `${item.account_type} · ${item.deposit_method}`}
+                    variant={isWithdrawal ? 'outline' : 'neutral'}
+                  />
                 </View>
-                <Tag label={`${item.account_type} · ${item.deposit_method}`} variant="neutral" />
-              </View>
-              {item.deposit_fee > 0 && <Text style={{ color: colors.textMuted, fontSize: 12 }}>Fee: R {item.deposit_fee.toFixed(2)}</Text>}
-              {item.description && <Text style={{ color: colors.textMuted, fontSize: 12 }}>{item.description}</Text>}
-            </Pressable>
-          )}
+                {item.deposit_fee > 0 && <Text style={{ color: colors.textMuted, fontSize: 12 }}>Fee: R {item.deposit_fee.toFixed(2)}</Text>}
+                {item.description && <Text style={{ color: colors.textMuted, fontSize: 12 }}>{item.description}</Text>}
+              </Pressable>
+            )
+          }}
         />
       )}
     </SafeAreaView>

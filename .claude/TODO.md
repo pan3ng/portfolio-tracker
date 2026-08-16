@@ -1212,6 +1212,13 @@ Rebuilt `apps/web/app/(app)/portfolio/page.tsx` ("Holdings" in Nav) to match moc
   fee, per-account totals) still lives on the Deposits page — this is just a "the fees you
   paid, in one place" summary.
 
+## Sub-phase A (unified form + Withdrawal) shipped — see "Sell + Withdrawal Sub-phase A" below (2026-08-16)
+
+Everything below this line was the pre-implementation scoping context. **Sub-phase A is now
+built**: the unified Add screen, the merged Activity ledger, and Withdrawal are all live on
+both platforms. Sell is still not implemented — see the new dated entry further down for
+what shipped and what Sub-phase B (Sell itself) still needs.
+
 ## Future: unified "Add Transaction" screen + Activity ledger (Buy/Sell/Deposit/Withdrawal) → mockup 3e
 
 Mockup 3e shows one entry screen with a Buy/Sell/Deposit segmented control at the top, but
@@ -1299,6 +1306,72 @@ Danger Zone, and tooltips.
   resolves to a known name, it now renders inside the same search input (absolutely
   positioned, muted, right-aligned, matching 3e's single combined box) rather than as
   separate helper text below the field.
+
+## Sell + Withdrawal, Sub-phase A: schema, unified form, merged Activity ledger, Withdrawal (2026-08-16, COMPLETED ✅)
+
+Full scoping plan was written and approved before implementation (the plan captured three
+decisions: average cost for realized gains when Sell eventually lands, build the unified
+form now rather than dedicated screens, Withdrawal ships before Sell). This entry covers
+what actually shipped. Sub-phase B (enabling Sell itself) is separately scoped below —
+not started.
+
+- **Migration `0008_withdrawal_and_sell_types.sql`** (applied to the live project): adds
+  `movement_type` ('deposit'/'withdrawal', default 'deposit') to `deposits`, and
+  `transaction_type` ('buy'/'sell', default 'buy') to `transactions`. Both additive with
+  safe defaults — no backfill needed. `amount`/`shares` stay **always positive**; direction
+  lives only in the type column, never as a sign flip, so every existing sum/aggregate
+  across both platforms kept working unchanged. Table names were deliberately *not*
+  changed (e.g. to `cash_movements`) — renaming would touch RLS policies, every query, and
+  both codebases' generated types for a name no user ever sees.
+- **`packages/api-client/src/portfolio-calc.ts`**: `calculatePortfolio()`'s deposit
+  aggregation now subtracts withdrawals instead of just summing `amount`, so
+  `uninvestedCapital` correctly reflects money that's left an account. Sell math
+  deliberately **not** touched yet — a comment marks where chronological/average-cost
+  handling needs to go for Sub-phase B.
+- **Web unified Add screen** (`/transactions/new`): one screen now covers Buy, Deposit, and
+  Withdrawal via a 4-option segmented control (Sell present, disabled, "Coming soon" — same
+  treatment it already had). Deposit/Withdrawal render inline instead of Deposit linking
+  out to a separate page. The "historical purchase" toggle folds in what used to be the
+  separate `/transactions/new/historical` page (custom date + manual/auto price mode) —
+  that route is deleted, along with `/settings/deposits`.
+- **Web Activity ledger** (`/transactions`, rewritten): merges transactions and deposits
+  into one chronologically-sorted, filterable table (Type/Account/Ticker/Tag filters),
+  replacing the old transactions-only table. Buy rows keep the existing expandable
+  fee-breakdown; Deposit/Withdrawal rows show a Type tag and link to a new
+  `/deposits/[id]/edit` page (mirrors `/transactions/[id]/edit`'s Cancel/Delete/Save
+  pattern, adds a Deposit/Withdrawal toggle so a miscategorized row can be corrected).
+- **Mobile unified Add screen** (`transactions/new.tsx`): same 4-option segmented control:
+  the `kind === 'deposit'` redirect to `/deposits/new` is gone — Deposit/Withdrawal fields
+  render inline. `AddActionSheet` gained a Withdrawal row; `deposits/new.tsx` is deleted,
+  all its callers (Deposits list, Activity's "+ Add deposit") now point at
+  `/transactions/new?kind=deposit` (or `?kind=withdrawal`).
+- **Mobile Activity screen**: now unions three kinds instead of two (`transaction` /
+  `deposit` / `withdrawal`); tapping a Deposit/Withdrawal row navigates straight to
+  `deposits/[id]/edit.tsx` (no expand step, since there's no fee breakdown to show —
+  Buy rows still expand-then-edit, matching Milestone 5's pattern).
+- **`deposits/[id]/edit.tsx`** (mobile) gained the same Deposit/Withdrawal toggle as web's
+  new edit page, plus conditional labels (method field only shown for Deposit, fee label
+  reads "Withdrawal fee" when relevant). The standalone Deposits screen
+  (`app/deposits/index.tsx`, reachable from More) was updated to show a net total
+  (deposits − withdrawals, was previously just summing everything as if it were all
+  deposits) and tag withdrawal rows distinctly.
+- **Verification performed**: `tsc --noEmit` clean on both apps throughout, in the same
+  incremental steps this was built in (migration → calc engine → web forms → web ledger →
+  mobile forms → mobile ledger). `npx expo export --platform android` compiled clean, Metro
+  restarted fresh for the route changes. Web routes smoke-tested via `curl` (307 redirects
+  to `/login`, confirming no server errors — full manual click-through still needs a real
+  logged-in pass on both platforms).
+- **Not built (Sub-phase B, scoped but not started)**: any Sell functionality. When picked
+  up: extend `calculatePortfolio()` to process each ticker's transactions in date order
+  maintaining a running average-cost-per-share, so a sell's realized gain reflects the cost
+  basis *as of that sale* — computed dynamically, not stored on the row, so editing an
+  earlier buy can never leave a stale realized-gain figure behind (the same
+  derive-don't-cache principle the rest of this calc engine already follows for
+  weight%/drift%/P&L). Then: enable the Sell option in the already-shipped unified form,
+  un-disable every "Sell"/"Buy more" affordance already stubbed in the UI (Holding detail,
+  Holdings row actions, `AddActionSheet`), validate shares sold can't exceed shares held,
+  show realized gain per sale in the Activity row. A portfolio-wide realized-gains summary
+  on Overview is a candidate fast-follow, not required to ship Sell itself.
 
 ## Future: Configurable statutory fee defaults (per user, maybe per account)
 

@@ -24,6 +24,7 @@ export type Database = {
           deposit_method: string
           description: string | null
           id: string
+          movement_type: string
           updated_at: string
           user_id: string
         }
@@ -36,6 +37,7 @@ export type Database = {
           deposit_method?: string
           description?: string | null
           id?: string
+          movement_type?: string
           updated_at?: string
           user_id: string
         }
@@ -48,6 +50,7 @@ export type Database = {
           deposit_method?: string
           description?: string | null
           id?: string
+          movement_type?: string
           updated_at?: string
           user_id?: string
         }
@@ -100,6 +103,7 @@ export type Database = {
           tags: string[] | null
           ticker: string
           total_fees: number
+          transaction_type: string
           user_id: string
           vat_fee: number | null
         }
@@ -122,6 +126,7 @@ export type Database = {
           tags?: string[] | null
           ticker: string
           total_fees?: number
+          transaction_type?: string
           user_id: string
           vat_fee?: number | null
         }
@@ -144,6 +149,7 @@ export type Database = {
           tags?: string[] | null
           ticker?: string
           total_fees?: number
+          transaction_type?: string
           user_id?: string
           vat_fee?: number | null
         }

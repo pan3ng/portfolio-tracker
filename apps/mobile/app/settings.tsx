@@ -90,9 +90,9 @@ export default function SettingsScreen() {
           />
         </Section>
 
-        <Section title="Cash deposits" colors={colors}>
-          <Text style={{ color: colors.textMuted, fontSize: 12 }}>Track cash deposited into your accounts to calculate uninvested capital.</Text>
-          <Button label="View Deposits" variant="primary" onPress={() => router.push('/deposits')} block />
+        <Section title="Cash deposits & withdrawals" colors={colors}>
+          <Text style={{ color: colors.textMuted, fontSize: 12 }}>Track cash moving in and out of your accounts to calculate uninvested capital.</Text>
+          <Button label="View Deposits & Withdrawals" variant="primary" onPress={() => router.push('/deposits')} block />
         </Section>
 
         <View style={[styles.dangerCard, { borderColor: colors.loss }]}>

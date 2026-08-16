@@ -27,8 +27,12 @@ export default function AddActionSheet({ visible, onClose }: { visible: boolean;
             <Text style={[styles.rowLabel, { color: colors.text, fontFamily: fonts.body }]}>Sell</Text>
             <Text style={[styles.rowArrow, { color: colors.textMuted, fontSize: 12 }]}>Coming soon</Text>
           </View>
-          <Pressable style={styles.row} onPress={() => go('/deposits/new')}>
+          <Pressable style={[styles.row, { borderBottomColor: colors.divider }]} onPress={() => go('/transactions/new?kind=deposit')}>
             <Text style={[styles.rowLabel, { color: colors.text, fontFamily: fonts.body }]}>Deposit</Text>
+            <Text style={[styles.rowArrow, { color: colors.textMuted }]}>→</Text>
+          </Pressable>
+          <Pressable style={styles.row} onPress={() => go('/transactions/new?kind=withdrawal')}>
+            <Text style={[styles.rowLabel, { color: colors.text, fontFamily: fonts.body }]}>Withdrawal</Text>
             <Text style={[styles.rowArrow, { color: colors.textMuted }]}>→</Text>
           </Pressable>
         </Pressable>
