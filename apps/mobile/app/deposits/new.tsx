@@ -1,10 +1,13 @@
 // File: apps/mobile/app/deposits/new.tsx
 import { useEffect, useState } from 'react'
-import { View, Text, TextInput, Pressable, StyleSheet, ActivityIndicator, ScrollView } from 'react-native'
+import { View, Text, TextInput, StyleSheet, ScrollView } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Stack, useRouter } from 'expo-router'
 import { supabase } from '../../lib/supabase'
-import { colors } from '../../lib/theme'
+import { useTheme } from '../../lib/ThemeContext'
+import { fonts } from '../../lib/theme'
+import Segmented from '../../components/Segmented'
+import Button from '../../components/Button'
 
 type AccountType = 'ZAR' | 'USD'
 type DepositMethod = 'card' | 'eft'
@@ -15,6 +18,7 @@ function todayIso(): string {
 
 export default function NewDepositScreen() {
   const router = useRouter()
+  const { colors } = useTheme()
 
   const [amount, setAmount] = useState('')
   const [date, setDate] = useState(todayIso())
@@ -81,122 +85,95 @@ export default function NewDepositScreen() {
   const currencySymbol = accountType === 'USD' ? '$' : 'R'
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Stack.Screen options={{ headerShown: true, title: 'Add Deposit' }} />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]}>
+      <Stack.Screen options={{ headerShown: false }} />
+
+      <View style={[styles.header, { borderBottomColor: colors.divider }]}>
+        <Text style={{ color: colors.accent700, fontSize: 12.5 }} onPress={() => router.back()}>Cancel</Text>
+        <Text style={[styles.headerTitle, { color: colors.text, fontFamily: fonts.heading }]}>Add Deposit</Text>
+        <Text style={{ fontSize: 12.5, opacity: 0 }}>—</Text>
+      </View>
+
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.field}>
-          <Text style={styles.label}>Amount ({accountType})</Text>
+          <Text style={[styles.label, { color: colors.text }]}>Amount ({accountType})</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { borderColor: colors.divider, backgroundColor: colors.surface, color: colors.text }]}
             value={amount}
             onChangeText={setAmount}
             keyboardType="decimal-pad"
             placeholder={`${currencySymbol} 1000.00`}
+            placeholderTextColor={colors.textMuted}
             editable={!saving}
           />
         </View>
 
         <View style={styles.field}>
-          <Text style={styles.label}>Date</Text>
+          <Text style={[styles.label, { color: colors.text }]}>Date</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { borderColor: colors.divider, backgroundColor: colors.surface, color: colors.text }]}
             value={date}
             onChangeText={setDate}
             placeholder="YYYY-MM-DD"
+            placeholderTextColor={colors.textMuted}
             editable={!saving}
           />
         </View>
 
         <View style={styles.field}>
-          <Text style={styles.label}>Account</Text>
-          <View style={styles.segRow}>
-            {(['ZAR', 'USD'] as AccountType[]).map((opt) => (
-              <Pressable
-                key={opt}
-                style={[styles.segOpt, accountType === opt && styles.segOptActive]}
-                onPress={() => setAccountType(opt)}
-              >
-                <Text style={[styles.segOptText, accountType === opt && styles.segOptTextActive]}>{opt}</Text>
-              </Pressable>
-            ))}
-          </View>
+          <Text style={[styles.label, { color: colors.text }]}>Account</Text>
+          <Segmented block size="md" options={[{ value: 'ZAR', label: 'ZAR' }, { value: 'USD', label: 'USD' }]} value={accountType} onChange={setAccountType} />
         </View>
 
         <View style={styles.field}>
-          <Text style={styles.label}>Deposit method</Text>
-          <View style={styles.segRow}>
-            {(['card', 'eft'] as DepositMethod[]).map((opt) => (
-              <Pressable
-                key={opt}
-                style={[styles.segOpt, method === opt && styles.segOptActive]}
-                onPress={() => setMethod(opt)}
-              >
-                <Text style={[styles.segOptText, method === opt && styles.segOptTextActive]}>{opt === 'card' ? 'Card' : 'EFT'}</Text>
-              </Pressable>
-            ))}
-          </View>
+          <Text style={[styles.label, { color: colors.text }]}>Deposit method</Text>
+          <Segmented block size="md" options={[{ value: 'card', label: 'Card' }, { value: 'eft', label: 'EFT' }]} value={method} onChange={setMethod} />
         </View>
 
         <View style={styles.field}>
-          <Text style={styles.label}>Deposit fee ({currencySymbol})</Text>
+          <Text style={[styles.label, { color: colors.text }]}>Deposit fee ({currencySymbol})</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { borderColor: colors.divider, backgroundColor: colors.surface, color: colors.text }]}
             value={depositFee.toFixed(2)}
             onChangeText={(v) => { setFeeManuallySet(true); setDepositFee(parseFloat(v) || 0) }}
             keyboardType="decimal-pad"
             editable={!saving}
           />
-          <Text style={styles.muted}>
+          <Text style={{ color: colors.textMuted, fontSize: 11.5 }}>
             Auto-calculated at {method === 'card' ? cardPct : eftPct}% ({method}). Edit to override.
           </Text>
         </View>
 
         <View style={styles.field}>
-          <Text style={styles.label}>Description</Text>
+          <Text style={[styles.label, { color: colors.text }]}>Description</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { borderColor: colors.divider, backgroundColor: colors.surface, color: colors.text }]}
             value={description}
             onChangeText={setDescription}
             placeholder="e.g., Monthly transfer"
+            placeholderTextColor={colors.textMuted}
             editable={!saving}
           />
         </View>
 
-        {error && <Text style={styles.error}>{error}</Text>}
-
-        <View style={{ flexDirection: 'row', gap: 12 }}>
-          <Pressable style={styles.secondaryBtn} onPress={() => router.back()} disabled={saving}>
-            <Text style={styles.secondaryBtnText}>Cancel</Text>
-          </Pressable>
-          <Pressable
-            style={[styles.primaryBtn, { flex: 2 }, (!amount || saving) && styles.disabled]}
-            onPress={handleSave}
-            disabled={!amount || saving}
-          >
-            {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryBtnText}>Save deposit</Text>}
-          </Pressable>
-        </View>
+        {error && <Text style={{ color: colors.loss, fontSize: 13 }}>{error}</Text>}
       </ScrollView>
+
+      <View style={[styles.footer, { borderTopColor: colors.divider }]}>
+        <Button label="Cancel" variant="secondary" onPress={() => router.back()} disabled={saving} style={{ flex: 1 }} />
+        <Button label="Save deposit" variant="primary" onPress={handleSave} disabled={!amount || saving} loading={saving} style={{ flex: 2 }} />
+      </View>
     </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg },
-  scroll: { padding: 16, gap: 16 },
+  container: { flex: 1 },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 18, paddingBottom: 12, borderBottomWidth: 1 },
+  headerTitle: { fontSize: 19, letterSpacing: 0.3, marginLeft: 'auto', marginRight: 'auto' },
+  scroll: { padding: 18, gap: 16 },
   field: { gap: 6 },
-  label: { fontSize: 13, fontWeight: '600', color: colors.text },
-  muted: { fontSize: 12, color: colors.textMuted },
-  error: { fontSize: 13, color: colors.loss },
-  input: { borderWidth: 1, borderColor: colors.border, padding: 12, fontSize: 15, backgroundColor: colors.surface },
-  segRow: { flexDirection: 'row', gap: 8 },
-  segOpt: { flex: 1, paddingVertical: 10, alignItems: 'center', borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
-  segOptActive: { backgroundColor: colors.accent, borderColor: colors.accent },
-  segOptText: { fontSize: 14, color: colors.text },
-  segOptTextActive: { color: '#fff', fontWeight: '600' },
-  primaryBtn: { backgroundColor: colors.accent, padding: 14, alignItems: 'center', justifyContent: 'center' },
-  primaryBtnText: { color: '#fff', fontWeight: '600', fontSize: 15 },
-  secondaryBtn: { flex: 1, borderWidth: 1, borderColor: colors.border, padding: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface },
-  secondaryBtnText: { fontWeight: '600', fontSize: 15, color: colors.text },
-  disabled: { opacity: 0.5 },
+  label: { fontSize: 12, fontWeight: '600' },
+  input: { borderWidth: 1, padding: 12, fontSize: 15 },
+  footer: { padding: 14, borderTopWidth: 1, flexDirection: 'row', gap: 12 },
 })

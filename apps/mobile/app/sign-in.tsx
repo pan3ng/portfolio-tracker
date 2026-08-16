@@ -1,15 +1,19 @@
 // File: apps/mobile/app/sign-in.tsx
 import { useState } from 'react'
-import { View, Text, TextInput, Pressable, StyleSheet, ActivityIndicator } from 'react-native'
+import { View, Text, TextInput, StyleSheet } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { makeRedirectUri } from 'expo-auth-session'
 import * as WebBrowser from 'expo-web-browser'
 import { supabase } from '../lib/supabase'
 import { createSessionFromUrl } from '../lib/auth'
+import { useTheme } from '../lib/ThemeContext'
+import { fonts } from '../lib/theme'
+import Button from '../components/Button'
 
 const redirectTo = makeRedirectUri()
 
 export default function SignInScreen() {
+  const { colors } = useTheme()
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
@@ -56,71 +60,61 @@ export default function SignInScreen() {
 
   if (sent) {
     return (
-      <SafeAreaView style={styles.container}>
-        <Text style={styles.title}>Check your email</Text>
-        <Text style={styles.subtitle}>We sent a sign-in link to {email}. It works once and expires shortly.</Text>
-        <Pressable style={styles.secondaryButton} onPress={() => setSent(false)}>
-          <Text style={styles.secondaryButtonText}>Use a different email</Text>
-        </Pressable>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]}>
+        <Text style={[styles.title, { color: colors.text, fontFamily: fonts.heading }]}>Check your email</Text>
+        <Text style={[styles.subtitle, { color: colors.textMuted }]}>We sent a sign-in link to {email}. It works once and expires shortly.</Text>
+        <Button label="Use a different email" variant="secondary" onPress={() => setSent(false)} />
       </SafeAreaView>
     )
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.brand}>Portfolio Tracker</Text>
-      <Text style={styles.title}>Sign in</Text>
-      <Text style={styles.subtitle}>We'll email you a link. No password to remember, nothing to reset.</Text>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]}>
+      <Text style={[styles.brand, { color: colors.text, fontFamily: fonts.heading }]}>HOLDFOLIO</Text>
+      <Text style={[styles.title, { color: colors.text, fontFamily: fonts.heading }]}>Sign in</Text>
+      <Text style={[styles.subtitle, { color: colors.textMuted }]}>We'll email you a link. No password to remember, nothing to reset.</Text>
 
       <TextInput
-        style={styles.input}
+        style={[styles.input, { borderColor: colors.divider, backgroundColor: colors.surface, color: colors.text }]}
         value={email}
         onChangeText={setEmail}
         placeholder="you@example.co.za"
+        placeholderTextColor={colors.textMuted}
         autoCapitalize="none"
         autoComplete="email"
         keyboardType="email-address"
       />
 
-      {error && <Text style={styles.error}>{error}</Text>}
+      {error && <Text style={{ color: colors.loss, fontSize: 13 }}>{error}</Text>}
 
-      <Pressable style={styles.primaryButton} onPress={handleMagicLink} disabled={loading || !email}>
-        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryButtonText}>Email me a link</Text>}
-      </Pressable>
+      <Button label="Email me a link" variant="primary" onPress={handleMagicLink} disabled={loading || !email} loading={loading} block />
 
       <View style={styles.dividerRow}>
-        <View style={styles.divider} />
-        <Text style={styles.dividerText}>or</Text>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: colors.divider }]} />
+        <Text style={[styles.dividerText, { color: colors.textMuted }]}>or</Text>
+        <View style={[styles.divider, { backgroundColor: colors.divider }]} />
       </View>
 
-      <Pressable style={styles.secondaryButton} onPress={handleGoogle} disabled={googleLoading}>
-        {googleLoading ? <ActivityIndicator /> : <Text style={styles.secondaryButtonText}>Continue with Google</Text>}
-      </Pressable>
+      <Button label="Continue with Google" variant="secondary" onPress={handleGoogle} disabled={googleLoading} loading={googleLoading} block />
 
-      <Text style={styles.footnote}>Your holdings are private to your account. We never see your broker login.</Text>
+      <Text style={[styles.footnote, { color: colors.textMuted }]}>Your holdings are private to your account. We never see your broker login.</Text>
 
       {__DEV__ && (
-        <Text selectable style={styles.debug}>Redirect URL (add to Supabase → Auth → URL Configuration): {redirectTo}</Text>
+        <Text selectable style={[styles.debug, { color: colors.textMuted }]}>Redirect URL (add to Supabase → Auth → URL Configuration): {redirectTo}</Text>
       )}
     </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 24, gap: 16, backgroundColor: '#f2f2f3' },
-  brand: { fontSize: 18, fontWeight: '600', marginBottom: 8 },
-  title: { fontSize: 28, fontWeight: '700' },
-  subtitle: { fontSize: 14, opacity: 0.7 },
-  input: { borderWidth: 1, borderColor: '#c9c9cc', padding: 12, fontSize: 16, backgroundColor: '#fff' },
-  primaryButton: { backgroundColor: '#5980a6', padding: 14, alignItems: 'center', justifyContent: 'center' },
-  primaryButtonText: { color: '#fff', fontWeight: '600', fontSize: 16 },
-  secondaryButton: { borderWidth: 1, borderColor: '#c9c9cc', padding: 14, alignItems: 'center', justifyContent: 'center' },
-  secondaryButtonText: { fontWeight: '600', fontSize: 16 },
+  container: { flex: 1, justifyContent: 'center', padding: 24, gap: 16 },
+  brand: { fontSize: 18, letterSpacing: 1, marginBottom: 8 },
+  title: { fontSize: 28 },
+  subtitle: { fontSize: 14 },
+  input: { borderWidth: 1, padding: 12, fontSize: 16 },
   dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  divider: { flex: 1, height: 1, backgroundColor: '#c9c9cc' },
-  dividerText: { fontSize: 11, letterSpacing: 1, opacity: 0.5, textTransform: 'uppercase' },
-  footnote: { fontSize: 12, opacity: 0.55 },
-  error: { color: '#9d5f68', fontSize: 13 },
-  debug: { fontSize: 10, opacity: 0.4, fontFamily: 'monospace' },
+  divider: { flex: 1, height: 1 },
+  dividerText: { fontSize: 11, letterSpacing: 1, textTransform: 'uppercase' },
+  footnote: { fontSize: 12 },
+  debug: { fontSize: 10, fontFamily: 'monospace' },
 })

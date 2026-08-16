@@ -2,20 +2,28 @@
 import { useCallback, useEffect, useState } from 'react'
 import { View, Text, FlatList, StyleSheet, ActivityIndicator } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Stack, useLocalSearchParams } from 'expo-router'
-import { fetchQuote, calculatePortfolio, type HoldingCalc } from '@portfolio-tracker/api-client'
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router'
+import { fetchQuote, calculatePortfolio, getTickerName, type HoldingCalc } from '@portfolio-tracker/api-client'
 import { supabase } from '../../lib/supabase'
-import { colors } from '../../lib/theme'
+import { useTheme } from '../../lib/ThemeContext'
+import { fonts } from '../../lib/theme'
+import BlueprintCard from '../../components/BlueprintCard'
+import WeightBar from '../../components/WeightBar'
+import Tag from '../../components/Tag'
+import Button from '../../components/Button'
 
 interface TransactionRow {
   id: string
   date: string
   shares: number
   price_at_transaction: number
+  transaction_type?: string
 }
 
 export default function HoldingDetailScreen() {
+  const router = useRouter()
   const { ticker } = useLocalSearchParams<{ ticker: string }>()
+  const { colors } = useTheme()
   const [holding, setHolding] = useState<HoldingCalc | null>(null)
   const [transactions, setTransactions] = useState<TransactionRow[]>([])
   const [loading, setLoading] = useState(true)
@@ -25,18 +33,17 @@ export default function HoldingDetailScreen() {
     if (!ticker) return
     setError(null)
     try {
-      const { data, error: fetchError } = await supabase
-        .from('transactions')
-        .select('*')
-        .eq('ticker', ticker)
-        .order('date', { ascending: false })
+      const [{ data, error: fetchError }, { data: targets }] = await Promise.all([
+        supabase.from('transactions').select('*').eq('ticker', ticker).order('date', { ascending: false }),
+        supabase.from('targets').select('*').eq('ticker', ticker),
+      ])
       if (fetchError) throw fetchError
       const rows = (data as any[]) || []
       setTransactions(rows)
 
       const quote = await fetchQuote(supabase, ticker)
       const prices = new Map<string, number>([[ticker, quote.price_zar]])
-      const result = calculatePortfolio(rows, [], [], prices)
+      const result = calculatePortfolio(rows, [], targets || [], prices)
       setHolding(result.holdings[0] ?? null)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load holding')
@@ -49,94 +56,131 @@ export default function HoldingDetailScreen() {
     load()
   }, [load])
 
+  const name = ticker ? getTickerName(ticker) : undefined
+  const avgCost = holding && holding.shares > 0 ? holding.share_value / holding.shares : 0
+  const isOver = holding && holding.target_weight_pct > 0 && holding.drift_pct > 0.5
+  const isUnder = holding && holding.target_weight_pct > 0 && holding.drift_pct < -0.5
+
   return (
-    <SafeAreaView style={styles.container}>
-      <Stack.Screen options={{ headerShown: true, title: ticker }} />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={['top']}>
+      <Stack.Screen options={{ headerShown: false }} />
 
       {loading ? (
-        <View style={styles.centered}><ActivityIndicator /></View>
+        <View style={styles.centered}><ActivityIndicator color={colors.accent} /></View>
       ) : error ? (
-        <Text style={styles.error}>{error}</Text>
+        <Text style={{ color: colors.loss, padding: 18 }}>{error}</Text>
       ) : (
-        <>
-          {holding && (
-            <View style={styles.card}>
-              <Text style={styles.metricLabel}>Current value</Text>
-              <Text style={styles.heroValue}>R{holding.current_value.toFixed(2)}</Text>
-              <View style={styles.metricsRow}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.metricLabel}>Shares held</Text>
-                  <Text style={styles.metricValue}>{holding.shares.toFixed(6)}</Text>
+        <FlatList
+          data={transactions}
+          keyExtractor={(tx) => tx.id}
+          ListHeaderComponent={
+            <View>
+              <View style={[styles.header, { borderBottomColor: colors.divider }]}>
+                <Text style={{ color: colors.accent700, fontSize: 12.5 }} onPress={() => router.back()}>← Holdings</Text>
+                <View style={styles.titleRow}>
+                  <Text style={[styles.title, { color: colors.text, fontFamily: fonts.heading }]}>{ticker}</Text>
+                  {isOver && <Tag label="Overweight" variant="outline" />}
+                  {isUnder && <Tag label="Underweight" variant="outline" />}
+                  {holding && (
+                    <Text style={[styles.mono, { color: colors.text, fontFamily: fonts.heading, marginLeft: 'auto', fontSize: 18 }]}>
+                      R {holding.current_price.toFixed(2)}
+                    </Text>
+                  )}
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.metricLabel}>Current price</Text>
-                  <Text style={styles.metricValue}>R{holding.current_price.toFixed(2)}</Text>
-                </View>
+                <Text style={{ color: colors.textMuted, fontSize: 11.5 }}>{name || ''}</Text>
               </View>
-              <View style={styles.metricsRow}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.metricLabel}>Gain since bought</Text>
-                  <Text style={[styles.metricValue, { color: holding.market_profit_loss >= 0 ? colors.gain : colors.loss }]}>
-                    {holding.market_profit_loss >= 0 ? '+' : ''}R{holding.market_profit_loss.toFixed(2)} ({holding.market_profit_loss_pct.toFixed(1)}%)
-                  </Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.metricLabel}>Return after fees</Text>
-                  <Text style={[styles.metricValue, { color: holding.profit_loss >= 0 ? colors.gain : colors.loss }]}>
-                    {holding.profit_loss >= 0 ? '+' : ''}R{holding.profit_loss.toFixed(2)} ({holding.profit_loss_pct.toFixed(1)}%)
-                  </Text>
-                </View>
-              </View>
-              <View style={styles.metricsRow}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.metricLabel}>Cost basis (incl. fees)</Text>
-                  <Text style={styles.metricValue}>R{holding.purchase_value.toFixed(2)}</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.metricLabel}>Total fees paid</Text>
-                  <Text style={styles.metricValue}>R{holding.fees.toFixed(2)}</Text>
-                </View>
-              </View>
-            </View>
-          )}
 
-          <Text style={styles.sectionTitle}>Transactions</Text>
-          <FlatList
-            data={transactions}
-            keyExtractor={(tx) => tx.id}
-            renderItem={({ item }: { item: TransactionRow }) => {
-              const amount = item.shares * item.price_at_transaction
-              return (
-                <View style={styles.txRow}>
-                  <View>
-                    <Text style={styles.txShares}>{item.shares.toFixed(6)} sh</Text>
-                    <Text style={styles.metricLabel}>{new Date(item.date).toLocaleDateString()} @ R{item.price_at_transaction.toFixed(2)}</Text>
+              {holding && (
+                <View style={styles.body}>
+                  <View style={styles.grid2}>
+                    <BlueprintCard style={styles.gridCard}>
+                      <Text style={[styles.kicker, { color: colors.textMuted }]}>Shares</Text>
+                      <Text style={[styles.mono, { color: colors.text, fontFamily: fonts.heading, fontSize: 19 }]}>{holding.shares.toFixed(6)}</Text>
+                    </BlueprintCard>
+                    <BlueprintCard style={styles.gridCard}>
+                      <Text style={[styles.kicker, { color: colors.textMuted }]}>Avg cost</Text>
+                      <Text style={[styles.mono, { color: colors.text, fontFamily: fonts.heading, fontSize: 19 }]}>R {avgCost.toFixed(2)}</Text>
+                    </BlueprintCard>
+                    <BlueprintCard style={styles.gridCard}>
+                      <Text style={[styles.kicker, { color: colors.textMuted }]}>Market value</Text>
+                      <Text style={[styles.mono, { color: colors.text, fontFamily: fonts.heading, fontSize: 19 }]}>R {holding.current_value.toFixed(2)}</Text>
+                    </BlueprintCard>
+                    <BlueprintCard style={styles.gridCard}>
+                      <Text style={[styles.kicker, { color: colors.textMuted }]}>Unrealised, after fees</Text>
+                      <Text style={[styles.mono, { color: holding.profit_loss >= 0 ? colors.gain : colors.loss, fontFamily: fonts.heading, fontSize: 19 }]}>
+                        {holding.profit_loss >= 0 ? '+' : ''}R {holding.profit_loss.toFixed(2)}
+                      </Text>
+                      <Text style={[styles.sub, { color: colors.textMuted }]}>fees paid R {holding.fees.toFixed(2)}</Text>
+                    </BlueprintCard>
                   </View>
-                  <Text style={styles.txAmount}>R{amount.toFixed(2)}</Text>
+
+                  {holding.target_weight_pct > 0 && (
+                    <BlueprintCard>
+                      <Text style={[styles.sectionTitle, { color: colors.text, fontFamily: fonts.heading }]}>Weight vs target</Text>
+                      <WeightBar currentPct={holding.current_weight_pct} targetPct={holding.target_weight_pct} height={10} />
+                      <View style={styles.spread}>
+                        <Text style={[styles.mono, { color: colors.text, fontSize: 12 }]}>now {holding.current_weight_pct.toFixed(1)}%</Text>
+                        <Text style={[styles.mono, { color: colors.loss, fontSize: 12 }]}>
+                          target {holding.target_weight_pct.toFixed(1)}% · {holding.drift_pct >= 0 ? '+' : ''}{holding.drift_pct.toFixed(1)} pts
+                        </Text>
+                      </View>
+                    </BlueprintCard>
+                  )}
+
+                  <BlueprintCard dashed style={{ alignItems: 'center', paddingVertical: 18 }}>
+                    <Text style={[styles.kicker, { color: colors.textMuted, fontFamily: fonts.heading }]}>Price since your first buy</Text>
+                    <Text style={[styles.sub, { color: colors.textMuted }]}>Needs price history — coming soon</Text>
+                  </BlueprintCard>
+
+                  <View style={styles.spread}>
+                    <Text style={[styles.sectionTitle, { color: colors.text, fontFamily: fonts.heading }]}>Your transactions</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 11.5 }}>{transactions.length} total</Text>
+                  </View>
                 </View>
-              )
-            }}
-          />
-        </>
+              )}
+            </View>
+          }
+          contentContainerStyle={{ paddingBottom: 18 }}
+          renderItem={({ item }) => {
+            const amount = item.shares * item.price_at_transaction
+            return (
+              <View style={[styles.txRow, { borderBottomColor: colors.divider, paddingHorizontal: 18 }]}>
+                <Text style={[styles.mono, { color: colors.text, fontSize: 13 }]}>{new Date(item.date).toLocaleDateString()}</Text>
+                <Tag label="Buy" variant="accent" />
+                <Text style={[styles.mono, { color: colors.text, fontSize: 14, marginLeft: 'auto' }]}>R {amount.toFixed(2)}</Text>
+                <Text style={[styles.mono, { color: colors.textMuted, fontSize: 11.5, width: '100%' }]}>
+                  {item.shares.toFixed(6)} sh @ R {item.price_at_transaction.toFixed(2)}
+                </Text>
+              </View>
+            )
+          }}
+        />
+      )}
+
+      {holding && (
+        <View style={[styles.footer, { borderTopColor: colors.divider }]}>
+          <Button label="Sell" variant="secondary" onPress={() => {}} disabled style={{ flex: 1 }} />
+          <Button label="Buy more" variant="primary" onPress={() => router.push(`/transactions/new?ticker=${ticker}`)} style={{ flex: 2 }} />
+        </View>
       )}
     </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg, padding: 16, gap: 16 },
+  container: { flex: 1 },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  error: { color: colors.loss, fontSize: 13 },
-  card: { backgroundColor: colors.accentSoft, padding: 16, gap: 12 },
-  metricLabel: { fontSize: 12, color: colors.textMuted },
-  heroValue: { fontSize: 32, fontWeight: '700' },
-  metricsRow: { flexDirection: 'row', gap: 12 },
-  metricValue: { fontSize: 16, fontWeight: '600' },
-  sectionTitle: { fontSize: 16, fontWeight: '600' },
-  txRow: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.border,
-  },
-  txShares: { fontSize: 14, fontWeight: '600' },
-  txAmount: { fontSize: 14, fontWeight: '600' },
+  header: { padding: 18, paddingBottom: 12, borderBottomWidth: 1, gap: 8 },
+  titleRow: { flexDirection: 'row', alignItems: 'baseline', gap: 10 },
+  title: { fontSize: 30, letterSpacing: -0.3 },
+  body: { padding: 18, gap: 14 },
+  grid2: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  gridCard: { flexBasis: '47%', flexGrow: 1 },
+  kicker: { fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase' },
+  sub: { fontSize: 11.5 },
+  mono: { fontFamily: 'ui-monospace', fontVariant: ['tabular-nums'] },
+  sectionTitle: { fontSize: 13, letterSpacing: 0.5, textTransform: 'uppercase' },
+  spread: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
+  txRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, paddingVertical: 10, borderBottomWidth: 1 },
+  footer: { padding: 14, borderTopWidth: 1, flexDirection: 'row', gap: 10 },
 })

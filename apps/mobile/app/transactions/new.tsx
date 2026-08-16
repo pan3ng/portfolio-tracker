@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { View, Text, TextInput, Pressable, StyleSheet, ActivityIndicator, ScrollView } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Stack, useRouter } from 'expo-router'
+import { Stack, useRouter, useLocalSearchParams } from 'expo-router'
 import {
   fetchQuote,
   getTickerName,
@@ -12,20 +12,29 @@ import {
   type FeeBreakdownData,
 } from '@portfolio-tracker/api-client'
 import { supabase } from '../../lib/supabase'
-import { colors } from '../../lib/theme'
+import { useTheme } from '../../lib/ThemeContext'
+import { fonts } from '../../lib/theme'
+import BlueprintCard from '../../components/BlueprintCard'
+import Segmented from '../../components/Segmented'
+import Button from '../../components/Button'
 
 type AccountType = 'ZAR' | 'USD'
+type TxKind = 'buy' | 'sell' | 'deposit'
 
 export default function NewTransactionScreen() {
   const router = useRouter()
+  const { colors } = useTheme()
+  const params = useLocalSearchParams<{ ticker?: string }>()
 
+  const [kind, setKind] = useState<TxKind>('buy')
   const [accountType, setAccountType] = useState<AccountType>('ZAR')
-  const [ticker, setTicker] = useState('')
+  const [ticker, setTicker] = useState(params.ticker?.toUpperCase() || '')
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [quote, setQuote] = useState<Quote | null>(null)
   const [amount, setAmount] = useState('')
   const [notes, setNotes] = useState('')
   const [tagsInput, setTagsInput] = useState('')
+  const [showFeeDetail, setShowFeeDetail] = useState(true)
 
   const [commissionPct, setCommissionPct] = useState(0.25)
   const [fxPct, setFxPct] = useState(0.5)
@@ -44,6 +53,10 @@ export default function NewTransactionScreen() {
       }
     })
   }, [])
+
+  useEffect(() => {
+    if (kind === 'deposit') router.replace('/deposits/new')
+  }, [kind])
 
   const handleFetchQuote = async () => {
     const trimmed = ticker.trim().toUpperCase()
@@ -112,49 +125,56 @@ export default function NewTransactionScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Stack.Screen options={{ headerShown: true, title: 'Add Transaction' }} />
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        <View style={styles.segRow}>
-          {(['ZAR', 'USD'] as AccountType[]).map((opt) => (
-            <Pressable
-              key={opt}
-              style={[styles.segOpt, accountType === opt && styles.segOptActive]}
-              onPress={() => setAccountType(opt)}
-            >
-              <Text style={[styles.segOptText, accountType === opt && styles.segOptTextActive]}>{opt}</Text>
-            </Pressable>
-          ))}
-        </View>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]}>
+      <Stack.Screen options={{ headerShown: false }} />
 
+      <View style={[styles.header, { borderBottomColor: colors.divider }]}>
+        <View style={styles.headerTop}>
+          <Text style={{ color: colors.accent700, fontSize: 12.5 }} onPress={() => router.back()}>Cancel</Text>
+          <Text style={[styles.headerTitle, { color: colors.text, fontFamily: fonts.heading }]}>Record a buy</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 12.5, opacity: 0.4 }}>Historical</Text>
+        </View>
+        <Segmented
+          block
+          size="md"
+          options={[
+            { value: 'buy', label: 'Buy' },
+            { value: 'sell', label: 'Sell' },
+            { value: 'deposit', label: 'Deposit' },
+          ]}
+          value={kind}
+          onChange={(v) => setKind(v as TxKind)}
+        />
+      </View>
+
+      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.field}>
-          <Text style={styles.label}>What did you buy?</Text>
+          <Text style={[styles.label, { color: colors.text }]}>What did you buy?</Text>
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <TextInput
-              style={[styles.input, { flex: 1 }]}
+              style={[styles.input, { flex: 1, borderColor: colors.divider, backgroundColor: colors.surface, color: colors.text }]}
               value={ticker}
               onChangeText={(v) => { setTicker(v.toUpperCase()); setQuote(null); setShowSuggestions(true) }}
               onFocus={() => setShowSuggestions(true)}
               placeholder="e.g. STXNDQ"
+              placeholderTextColor={colors.textMuted}
               autoCapitalize="characters"
               editable={!saving}
             />
-            <Pressable style={styles.primaryBtn} onPress={handleFetchQuote} disabled={fetchingQuote || saving}>
-              {fetchingQuote ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryBtnText}>Get Quote</Text>}
-            </Pressable>
+            <Button label={fetchingQuote ? '' : 'Get Quote'} loading={fetchingQuote} onPress={handleFetchQuote} disabled={saving} variant="primary" />
           </View>
-          {tickerName && <Text style={styles.muted}>{tickerName}</Text>}
+          {tickerName && <Text style={{ color: colors.textMuted, fontSize: 12 }}>{tickerName}</Text>}
 
           {suggestions.length > 0 && (
-            <View style={styles.suggestions}>
+            <View style={[styles.suggestions, { borderColor: colors.divider, backgroundColor: colors.surface }]}>
               {suggestions.map((s) => (
                 <Pressable
                   key={s.symbol}
-                  style={styles.suggestionRow}
+                  style={[styles.suggestionRow, { borderBottomColor: colors.divider }]}
                   onPress={() => { setTicker(s.symbol); setShowSuggestions(false); setQuote(null) }}
                 >
-                  <Text style={styles.suggestionSymbol}>{s.symbol}</Text>
-                  <Text style={styles.muted}>{s.name}</Text>
+                  <Text style={{ color: colors.text, fontFamily: fonts.heading, fontSize: 14 }}>{s.symbol}</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 12 }}>{s.name}</Text>
                 </Pressable>
               ))}
             </View>
@@ -162,132 +182,131 @@ export default function NewTransactionScreen() {
         </View>
 
         {quote && (
-          <View style={styles.quoteCard}>
+          <View style={[styles.quoteCard, { borderColor: colors.accent, backgroundColor: colors.surface }]}>
             <View>
-              <Text style={styles.ticker}>{quote.ticker}</Text>
-              <Text style={styles.muted}>Fetched {new Date(quote.fetched_at).toLocaleTimeString()}</Text>
+              <Text style={{ color: colors.text, fontFamily: fonts.heading, fontSize: 16 }}>{quote.ticker}</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 11.5 }}>{tickerName}</Text>
             </View>
             <View style={{ alignItems: 'flex-end' }}>
-              <Text style={styles.quotePrice}>R{quote.price_zar.toFixed(2)}</Text>
-              <Text style={styles.muted}>per share</Text>
+              <Text style={{ color: colors.text, fontFamily: fonts.heading, fontSize: 22 }}>R {quote.price_zar.toFixed(2)}</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 11.5 }}>per share</Text>
             </View>
           </View>
         )}
 
         <View style={styles.field}>
-          <Text style={styles.label}>Amount to invest ({accountType})</Text>
+          <Text style={[styles.label, { color: colors.text }]}>Amount to invest ({accountType})</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { borderColor: colors.divider, backgroundColor: colors.surface, color: colors.text }]}
             value={amount}
             onChangeText={setAmount}
             keyboardType="decimal-pad"
             placeholder={`${currencySymbol} 1000.00`}
+            placeholderTextColor={colors.textMuted}
             editable={!saving && !!quote}
           />
-          {!quote && <Text style={styles.muted}>Please fetch a quote first</Text>}
+          {!quote && <Text style={{ color: colors.textMuted, fontSize: 12 }}>Please fetch a quote first</Text>}
         </View>
 
         {investmentAmount > 0 && (
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Fees ({currencySymbol}{fees.totalFees.toFixed(2)})</Text>
-            <FeeLine label={`Broker commission · ${commissionPct}%`} value={fees.commissionFee} symbol={currencySymbol} />
-            <FeeLine label="Settlement & admin · 0.075%" value={fees.settlementAdminFee} symbol={currencySymbol} />
-            <FeeLine label="Investor protection levy · 0.0002%" value={fees.iplAdminFee} symbol={currencySymbol} />
-            <FeeLine label="VAT · 15%" value={fees.vatFee} symbol={currencySymbol} />
-            <FeeLine label="Securities transfer tax · 0.25%" value={fees.securitiesTransferTaxFee} symbol={currencySymbol} />
-            {accountType === 'USD' && <FeeLine label={`Foreign exchange · ${fxPct}%`} value={fees.fxFee} symbol={currencySymbol} />}
-          </View>
+          <BlueprintCard>
+            <Pressable style={styles.feeHeader} onPress={() => setShowFeeDetail((v) => !v)}>
+              <Text style={[styles.sectionTitle, { color: colors.text, fontFamily: fonts.heading }]}>What the fees add up to</Text>
+              <Text style={{ color: colors.accent700, fontSize: 11.5 }}>{showFeeDetail ? 'Hide' : 'Show'}</Text>
+            </Pressable>
+            {showFeeDetail && (
+              <>
+                <FeeLine label={`Commission ${commissionPct}%`} value={fees.commissionFee} symbol={currencySymbol} muted={colors.textMuted} text={colors.text} />
+                <FeeLine label="Settlement & admin" value={fees.settlementAdminFee} symbol={currencySymbol} muted={colors.textMuted} text={colors.text} />
+                <FeeLine label="Investor protection levy" value={fees.iplAdminFee} symbol={currencySymbol} muted={colors.textMuted} text={colors.text} />
+                <FeeLine label="Securities transfer tax" value={fees.securitiesTransferTaxFee} symbol={currencySymbol} muted={colors.textMuted} text={colors.text} />
+                <FeeLine label="VAT on commission" value={fees.vatFee} symbol={currencySymbol} muted={colors.textMuted} text={colors.text} />
+                {accountType === 'USD' && <FeeLine label={`Foreign exchange ${fxPct}%`} value={fees.fxFee} symbol={currencySymbol} muted={colors.textMuted} text={colors.text} />}
+                <View style={[styles.feeTotalRow, { borderTopColor: colors.divider }]}>
+                  <Text style={{ color: colors.text, fontFamily: fonts.bodyMedium, fontSize: 13.5 }}>Total fees</Text>
+                  <Text style={{ color: colors.text, fontSize: 13.5 }}>{currencySymbol}{fees.totalFees.toFixed(2)}</Text>
+                </View>
+              </>
+            )}
+          </BlueprintCard>
         )}
 
         {quote && amount && shares > 0 && (
-          <View style={styles.totalCard}>
-            <Text style={styles.muted}>You'll pay in total</Text>
-            <Text style={styles.totalValue}>{currencySymbol}{totalToPay.toFixed(2)}</Text>
-            <Text style={styles.muted}>{shares.toFixed(6)} shares, plus {currencySymbol}{fees.totalFees.toFixed(2)} in fees</Text>
-          </View>
+          <BlueprintCard wash>
+            <Text style={[styles.kicker, { color: colors.accent700 }]}>You'll pay</Text>
+            <Text style={[styles.totalValue, { color: colors.text, fontFamily: fonts.heading }]}>{currencySymbol}{totalToPay.toFixed(2)}</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 12.5 }}>{shares.toFixed(6)} shares, plus {currencySymbol}{fees.totalFees.toFixed(2)} in fees</Text>
+          </BlueprintCard>
         )}
 
         <View style={styles.field}>
-          <Text style={styles.label}>Notes</Text>
+          <Text style={[styles.label, { color: colors.text }]}>Notes</Text>
           <TextInput
-            style={[styles.input, { height: 70, textAlignVertical: 'top' }]}
+            style={[styles.input, { height: 70, textAlignVertical: 'top', borderColor: colors.divider, backgroundColor: colors.surface, color: colors.text }]}
             value={notes}
             onChangeText={setNotes}
             multiline
             placeholder="e.g., Monthly contribution"
+            placeholderTextColor={colors.textMuted}
             editable={!saving}
           />
         </View>
 
         <View style={styles.field}>
-          <Text style={styles.label}>Tags (comma separated)</Text>
+          <Text style={[styles.label, { color: colors.text }]}>Tags (comma separated)</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { borderColor: colors.divider, backgroundColor: colors.surface, color: colors.text }]}
             value={tagsInput}
             onChangeText={setTagsInput}
             placeholder="e.g., core, monthly"
+            placeholderTextColor={colors.textMuted}
             editable={!saving}
           />
         </View>
 
-        {error && <Text style={styles.error}>{error}</Text>}
-
-        <View style={{ flexDirection: 'row', gap: 12 }}>
-          <Pressable style={styles.secondaryBtn} onPress={() => router.back()} disabled={saving}>
-            <Text style={styles.secondaryBtnText}>Cancel</Text>
-          </Pressable>
-          <Pressable
-            style={[styles.primaryBtn, { flex: 2 }, (!quote || !amount || saving) && styles.disabled]}
-            onPress={handleSave}
-            disabled={!quote || !amount || saving}
-          >
-            {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryBtnText}>Save this buy</Text>}
-          </Pressable>
-        </View>
+        {error && <Text style={{ color: colors.loss, fontSize: 13 }}>{error}</Text>}
       </ScrollView>
+
+      <View style={[styles.footer, { borderTopColor: colors.divider }]}>
+        <Button label="Cancel" variant="secondary" onPress={() => router.back()} disabled={saving} style={{ flex: 1 }} />
+        <Button
+          label="Save transaction"
+          variant="primary"
+          onPress={handleSave}
+          disabled={!quote || !amount || saving}
+          loading={saving}
+          style={{ flex: 2 }}
+        />
+      </View>
     </SafeAreaView>
   )
 }
 
-function FeeLine({ label, value, symbol }: { label: string; value: number; symbol: string }) {
+function FeeLine({ label, value, symbol, muted, text }: { label: string; value: number; symbol: string; muted: string; text: string }) {
   return (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-      <Text style={styles.muted}>{label}</Text>
-      <Text style={styles.feeValue}>{symbol}{value.toFixed(2)}</Text>
+      <Text style={{ color: muted, fontSize: 13 }}>{label}</Text>
+      <Text style={{ color: text, fontSize: 13 }}>{symbol}{value.toFixed(2)}</Text>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg },
-  scroll: { padding: 16, gap: 16 },
+  container: { flex: 1 },
+  header: { padding: 18, paddingBottom: 12, borderBottomWidth: 1, gap: 10 },
+  headerTop: { flexDirection: 'row', alignItems: 'center' },
+  headerTitle: { fontSize: 19, letterSpacing: 0.3, marginLeft: 'auto', marginRight: 'auto' },
+  scroll: { padding: 18, gap: 14 },
   field: { gap: 6 },
-  label: { fontSize: 13, fontWeight: '600', color: colors.text },
-  muted: { fontSize: 12, color: colors.textMuted },
-  error: { fontSize: 13, color: colors.loss },
-  input: { borderWidth: 1, borderColor: colors.border, padding: 12, fontSize: 15, backgroundColor: colors.surface },
-  segRow: { flexDirection: 'row', gap: 8 },
-  segOpt: { flex: 1, paddingVertical: 10, alignItems: 'center', borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
-  segOptActive: { backgroundColor: colors.accent, borderColor: colors.accent },
-  segOptText: { fontSize: 14, color: colors.text },
-  segOptTextActive: { color: '#fff', fontWeight: '600' },
-  suggestions: { borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
-  suggestionRow: { padding: 10, borderBottomWidth: 1, borderBottomColor: colors.border },
-  suggestionSymbol: { fontSize: 14, fontWeight: '600' },
-  quoteCard: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    borderWidth: 1, borderColor: colors.accent, backgroundColor: colors.surface, padding: 14,
-  },
-  ticker: { fontSize: 15, fontWeight: '600' },
-  quotePrice: { fontSize: 22, fontWeight: '700', color: colors.accent },
-  card: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, padding: 14, gap: 8 },
-  cardTitle: { fontSize: 13, fontWeight: '600', marginBottom: 2 },
-  feeValue: { fontSize: 12, color: colors.text },
-  totalCard: { backgroundColor: colors.accentSoft, padding: 16, gap: 4 },
-  totalValue: { fontSize: 28, fontWeight: '700' },
-  primaryBtn: { backgroundColor: colors.accent, padding: 14, alignItems: 'center', justifyContent: 'center' },
-  primaryBtnText: { color: '#fff', fontWeight: '600', fontSize: 15 },
-  secondaryBtn: { flex: 1, borderWidth: 1, borderColor: colors.border, padding: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface },
-  secondaryBtnText: { fontWeight: '600', fontSize: 15, color: colors.text },
-  disabled: { opacity: 0.5 },
+  label: { fontSize: 12, fontWeight: '600' },
+  input: { borderWidth: 1, padding: 12, fontSize: 15 },
+  suggestions: { borderWidth: 1 },
+  suggestionRow: { padding: 10, borderBottomWidth: 1 },
+  quoteCard: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderWidth: 1, padding: 14 },
+  kicker: { fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase' },
+  sectionTitle: { fontSize: 13, letterSpacing: 0.3, textTransform: 'uppercase' },
+  feeHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
+  feeTotalRow: { flexDirection: 'row', justifyContent: 'space-between', paddingTop: 7, borderTopWidth: 1 },
+  totalValue: { fontSize: 28, letterSpacing: -0.3 },
+  footer: { padding: 14, borderTopWidth: 1, flexDirection: 'row', gap: 10 },
 })

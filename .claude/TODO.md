@@ -453,6 +453,95 @@ the thing it displays, not just view it.
   mobile (add-only for now — edits still need the web app); the chip-style tag input; a
   native date picker.
 
+### Native Expo mobile app — Milestone 4 ("Industry" design-system port + navigation restructure) (2026-08-16, COMPLETED ✅)
+
+Imported the mobile mockups from the Claude Design project (`Canvas.dc.html`, project
+`158b2b26-52b9-48ee-8cba-138d0468542a`) via the `claude_design` MCP and applied them —
+closing the "functional but plainly styled" gap called out since Milestone 1. This was a
+full visual + navigation rebuild, not incremental styling.
+
+- **Design tokens** (`lib/theme.ts`): light/dark palettes transcribed by hand from the
+  design system's `styles.css` custom properties (RN has no CSS custom properties) —
+  `--color-bg`/`-surface`/`-text`/`-accent`/`-divider` and the accent/neutral tonal ramps.
+  `lib/ThemeContext.tsx` (new) provides `useTheme()`, mirrors web's light/dark/system
+  preference (persisted to AsyncStorage, synced to `user_settings.theme` same as web).
+- **Fonts**: added `expo-font`, `@expo-google-fonts/barlow`, `@expo-google-fonts/barlow-condensed`
+  (Barlow for body text, Barlow Condensed for headings, matching the design system's Google
+  Fonts import exactly). `expo-font`'s native module was already compiled into the current
+  EAS dev build — it's a direct dependency of the `expo` package itself, not something we
+  added — so loading custom fonts via `useFonts()` in `app/_layout.tsx` needed no new native
+  build, just a Metro reload. `app.json`'s `userInterfaceStyle` changed `light` → `automatic`;
+  **this one native-config field needs a future rebuild to fully take effect on Android** —
+  until then, explicit Light/Dark selection in Settings works regardless, but "Device" may
+  not correctly track the OS theme on this specific installed binary.
+- **Shared primitives** (`components/`): `BlueprintCard` (hairline border + 4 corner
+  registration ticks, built from plain `View`s — `::before`/`::after` don't exist in RN),
+  `Button`, `Segmented`, `Tag`, `WeightBar` (fill bar + target tick mark, used on
+  Holdings/Holding-detail/Plan), `Corner`. `TabIcon.tsx` — the bottom-tab icons (dashboard
+  grid, list, document, menu) are built from plain bordered `View`s, not SVGs:
+  `react-native-svg` isn't installed and has a native module, so adding it would have forced
+  an EAS rebuild just for icons.
+- **Navigation restructured** to match the mockup's IA: 5-tab bar (Overview, Holdings,
+  center **+** action, Activity, More) replacing Milestone 2/3's 4 tabs
+  (Overview/Transactions/Targets/Settings). The **+** tab never navigates — its
+  `tabBarButton` is overridden to intercept the press and open `AddActionSheet`, a bottom
+  modal offering Buy / Sell (disabled, "coming soon") / Deposit. **More** is a real
+  full-screen tab (Plan, Deposits & cash, Import CSV [not built, shown disabled], Settings,
+  sign out) rather than a true sliding bottom sheet like the mockup shows — simpler and more
+  robust in expo-router than intercepting tab presses to render an overlay, at the cost of
+  one visual simplification.
+- **Overview** (`(tabs)/index.tsx`) rebuilt as a dashboard: hero value, gain/return cards,
+  an off-plan/cash-ready/best-worst stat row, an allocation breakdown, and a "what to do
+  next" suggestion card. Two things worth flagging since they're new logic, not just
+  restyling:
+  - **"Off your plan by X pts"** = half the sum of `|drift_pct|` across targeted holdings
+    (standard rebalancing-distance metric — equals both the total overweight and total
+    underweight amounts when targets sum to 100%).
+  - **"What to do next"** picks the 1–2 most-underweight holdings and suggests splitting
+    uninvested cash across them proportionally to their drift gap. Only shown when there's
+    both uninvested cash and an underweight holding — never fabricated. This is a genuinely
+    new feature (a simple rebalancing suggestion), not just a mockup port.
+  - The mockup's allocation **donut chart** is rendered as a horizontal stacked bar + legend
+    instead — real per-ticker weight data (not a placeholder), just without
+    `react-native-svg` to draw an actual circle.
+- **Holdings** (`(tabs)/holdings.tsx`, new tab): dedicated list with weight bars, target
+  tick marks, and Overweight/Underweight tags — split out of what used to be Overview's
+  inline holdings list.
+- **Holding detail, Record transaction**: restyled in place to match the mockup (blueprint
+  metric cards, fee-breakdown card, weight-vs-target bar), logic unchanged from Milestone
+  2/3.
+- **Activity** (renamed from Transactions): now interleaves deposits into the same
+  chronological feed as transactions (mockup shows deposits inline — Milestone 2/3's
+  Transactions tab queried only the `transactions` table), grouped by month, with a ticker/tag
+  search field. Tap-to-expand fee breakdown kept from Milestone 2.
+- **Plan** (`app/plan.tsx`, new — reachable from More): merges what were two separate
+  screens (Milestone 2's view-only Targets tab and Milestone 3's `targets/edit.tsx`) into
+  one, matching the mockup: editable target-weight inputs sit directly above each holding's
+  live current-weight bar, so drift is visible while editing instead of in a separate view.
+  `(tabs)/targets.tsx` and `targets/edit.tsx` were deleted.
+- **Settings** (`app/settings.tsx`, moved off the tab bar to a pushed route reachable from
+  More): restyled with the mockup's Appearance section, now actually wired to
+  `useTheme().setPreference()` (functional, not decorative). The mockup's "Money" section
+  (rate source, FX spread, "show amounts in") and CSV export/import were **deliberately
+  left out** rather than built as inert-looking controls — nothing backs them yet, and
+  fake-functional UI is worse than an honest gap. The working Danger Zone (Clear My
+  Data / Delete My Account, type-to-confirm) was restyled to match but **not reduced** to
+  the mockup's single ghost-link "Delete account" — the real confirm flow was kept because
+  it's tested, working safety-critical functionality per this project's standing rule about
+  not reverting working functionality for a mockup's sake.
+- **Sign-in** restyled for token/font consistency; no functional change.
+- **Verification performed**: `tsc --noEmit` clean, `npx expo-doctor` 20/21 (same
+  pre-existing duplicate-`react` warning, untouched by this pass), `npx expo export
+  --platform android` compiled clean (1390 modules, up from 1337). Metro restarted fresh
+  after the route restructure (screens renamed/deleted/added) so expo-router's manifest
+  picked up the new tree; the already-installed EAS dev build picks up all of this over a
+  plain reload — no new native dependencies were added (fonts' native module was already
+  present, icons are plain Views, no SVG library).
+- **Known simplifications vs. the mockup** (all noted above, consolidated here): More is a
+  full screen, not a sliding sheet; allocation is a stacked bar, not a donut; tab icons are
+  View-based, not the mockup's stroke SVGs (same visual shapes, built differently); "Device"
+  theme detection needs a future native rebuild to fully track Android's OS theme.
+
 ### Mobile: move off Expo Go onto a development build (2026-08-16, COMPLETED ✅ — root cause confirmed)
 
 Discovered while trying to test Milestone 1 on a physical Android device: scanning the QR

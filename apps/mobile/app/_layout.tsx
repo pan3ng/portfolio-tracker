@@ -1,18 +1,23 @@
 // File: apps/mobile/app/_layout.tsx
 import { useEffect, useState } from 'react'
+import { View } from 'react-native'
 import { Stack, useRouter, useSegments } from 'expo-router'
 import * as Linking from 'expo-linking'
 import * as WebBrowser from 'expo-web-browser'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
+import { useFonts, Barlow_400Regular, Barlow_500Medium, Barlow_700Bold } from '@expo-google-fonts/barlow'
+import { BarlowCondensed_400Regular, BarlowCondensed_600SemiBold } from '@expo-google-fonts/barlow-condensed'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 import { createSessionFromUrl } from '../lib/auth'
+import { ThemeProvider, useTheme } from '../lib/ThemeContext'
 
 WebBrowser.maybeCompleteAuthSession()
 
-export default function RootLayout() {
+function RootNavigator() {
   const router = useRouter()
   const segments = useSegments()
+  const { colors } = useTheme()
   const [session, setSession] = useState<Session | null>(null)
   const [checked, setChecked] = useState(false)
 
@@ -52,8 +57,35 @@ export default function RootLayout() {
   }, [checked, session, segments])
 
   return (
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        headerStyle: { backgroundColor: colors.bg },
+        headerTintColor: colors.text,
+        contentStyle: { backgroundColor: colors.bg },
+      }}
+    />
+  )
+}
+
+export default function RootLayout() {
+  const [fontsLoaded] = useFonts({
+    Barlow_400Regular,
+    Barlow_500Medium,
+    Barlow_700Bold,
+    BarlowCondensed_400Regular,
+    BarlowCondensed_600SemiBold,
+  })
+
+  if (!fontsLoaded) {
+    return <View style={{ flex: 1, backgroundColor: '#f2f2f3' }} />
+  }
+
+  return (
     <SafeAreaProvider>
-      <Stack screenOptions={{ headerShown: false }} />
+      <ThemeProvider>
+        <RootNavigator />
+      </ThemeProvider>
     </SafeAreaProvider>
   )
 }
