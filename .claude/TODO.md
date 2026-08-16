@@ -275,38 +275,59 @@ at all — this is a known, documented tradeoff (architecture doc §3), not a bu
   last traded price, not a guaranteed fill — the historical form's manual-price override
   already covers the case where the user knows their actual fill price after the fact.
 
-### Native Expo mobile app (2026-08-16, decided: real native, not a PWA — scope not yet started)
+### Native Expo mobile app — Milestone 1 (Foundation + Sign-in + Overview) (2026-08-16, COMPLETED ✅)
 
-`apps/mobile` is still the untouched `create-expo-app` scaffold — `App.tsx` is literally
-the default "Open up App.tsx to start working on your app!" placeholder. No Supabase
-wiring, no auth, no screens, nothing app-specific exists yet. This isn't a finishing pass,
-it's a ground-up build; a PWA-wrapping-the-web-app alternative was considered (much less
-work, ships faster) but explicitly rejected in favor of doing a real native app properly.
-Not started — this is the scope, roughly in build order:
+`apps/mobile` was the untouched `create-expo-app` scaffold before this — `App.tsx`/`index.ts`
+deleted, replaced with a real `expo-router`-based app. A PWA-wrapping-the-web-app alternative
+was considered (much less work) but explicitly rejected in favor of a real native app.
 
-- **Foundation (blocking everything else)**:
-  - A mobile-specific Supabase client using `AsyncStorage`-backed session persistence
-    (the web client's cookie-based `@supabase/ssr` approach doesn't apply to React Native)
-  - Magic-link + Google OAuth for mobile — needs a deep-link URL scheme registered in
-    `app.json` (`expo-auth-session` or equivalent), since there's no server route to land
-    on the way `apps/web/app/auth/callback/route.ts` works
-  - A navigation library (React Navigation is the standard pick) — the Next.js App Router
-    doesn't apply here
-  - `apps/mobile/.env` populated with the same Supabase URL/publishable key as web
-- **Screens** (logic port + native-UI build, each): Sign in → Overview (hero cards,
-  metrics, holdings table, donut chart) → Holdings list → Holding detail → Plan/Targets →
-  Transactions list → Add Transaction (most complex — ticker search, quote fetch, full
-  statutory fee breakdown) → historical entry → edit → Settings → Deposits
-- **Design system port**: the "Industry" blueprint look (`globals.css`) is web CSS: needs
-  a React Native token/StyleSheet equivalent (or NativeWind), `expo-font` for Barlow/Barlow
-  Condensed instead of `next/font/google`, and a native dark-mode implementation
-  (`useColorScheme()`-based, not the web's class-toggle `ThemeProvider`)
-- **Charts**: web's donut/weight-bar visuals are SVG; RN needs `react-native-svg` + a
-  charting library, or these ship as the same "coming soon" placeholders web already has
-- **Reusable as-is**: `packages/api-client` (Supabase client factory, `fetchQuote`,
-  `getTickerName`, `searchJSETickers`, DB types) and `packages/schemas` are already
-  workspace packages — mobile imports the business logic directly, no duplication needed
-  there. This is the one piece of real leverage from the monorepo structure.
+- **Routing**: switched to `expo-router` (file-based, `app/` directory) rather than manually
+  wiring `@react-navigation/native` — it's the SDK's own first-party, actively-documented
+  navigation solution, needs far less manual boilerplate, and matches the mental model
+  already used in `apps/web`'s App Router. `app.json` updated: `scheme: "portfoliotracker"`,
+  `plugins: ["expo-router"]` (`expo-status-bar`/`expo-web-browser` plugins auto-added by
+  `expo install`), `experiments.typedRoutes`. `package.json` `main` → `"expo-router/entry"`.
+- **Supabase client** (`lib/supabase.ts`): `@supabase/supabase-js` with `AsyncStorage`-backed
+  session persistence (`react-native-url-polyfill` imported first, per Supabase's own RN
+  guide) — reads `EXPO_PUBLIC_SUPABASE_URL`/`EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` from
+  `apps/mobile/.env` (already populated with real values from repo init).
+- **Auth** (`app/sign-in.tsx`, `lib/auth.ts`, deep-link handling in `app/_layout.tsx`):
+  magic link + Google OAuth, mirroring `/login`'s content. **Important mechanism
+  difference from web, confirmed against Supabase's current docs**: mobile does *not* use
+  `exchangeCodeForSession(code)` the way `apps/web/app/auth/callback/route.ts` does — there's
+  no server route to land on. Instead the redirect lands as a deep link carrying
+  `access_token`/`refresh_token` directly in the URL, exchanged via `supabase.auth.setSession()`
+  (see `lib/auth.ts#createSessionFromUrl`). OAuth uses `expo-auth-session`'s
+  `makeRedirectUri()` together with `expo-web-browser`'s `openAuthSessionAsync()` to open
+  the consent flow and catch the return. **Dashboard step needed before this works**:
+  Supabase's Redirect URLs allow-list
+  needs the mobile scheme added — `portfoliotracker://**` for a standalone/dev-client build,
+  and (for testing via Expo Go, per the existing physical-device-only gotcha below) whatever
+  `exp://` proxy URL Expo Go's dev session uses; not yet added, not yet tested end-to-end on
+  a device. The Google Cloud OAuth client itself needs **no** changes — its authorized
+  redirect URI is Supabase's own callback, identical for web and mobile.
+- **Shared calc logic**: `app/index.tsx` (Overview) imports `calculatePortfolio`/
+  `getActiveTickers`/`fetchQuote` from `@portfolio-tracker/api-client` — the same functions
+  `apps/web/app/(app)/page.tsx` now uses (extracted from web in this same pass, see the
+  commit "Extract portfolio calc logic to packages/api-client"). No calculation logic
+  duplicated between platforms.
+- **Verification performed** (no physical device available here): `tsc --noEmit` clean,
+  `npx expo-doctor` 20/21 checks passed, `npx expo export --platform android` compiled the
+  full production bundle (1326 modules) with no resolution/syntax errors. **Not yet tested
+  on an actual device** — needs the Supabase Redirect URLs step above first, then `expo
+  start` + Expo Go QR code per the existing testing gotcha.
+- **Known gotcha**: `expo-doctor`'s one failing check is a duplicate `react` version —
+  `apps/mobile` needs its own exact `react@19.2.3` (confirmed correct per `expo install
+  --check`), while the workspace root hoists `react@19.2.8` for `apps/web`'s looser
+  `^19.2.0` range. Not fixed (mobile's own `node_modules/react` copy takes precedence
+  within `apps/mobile`, and touching `apps/web`'s pinned version wasn't worth the risk to a
+  deployed app for a warning that mainly matters for native builds, not Expo Go testing) —
+  revisit if `eas build`/`expo run:android` ever hits real duplicate-module errors.
+- **Not built in this milestone** (unchanged from before): Holdings list, Holding detail,
+  Plan/Targets, Transactions, Settings, Deposits screens; the full "Industry" design-system
+  port (this milestone's screens are functional but plainly styled, not blueprint-matched);
+  charts (donut, weight bars) — same "coming soon" treatment web already has, once mobile
+  gets there.
 
 ### Near-term (after multi-account support)
 - [x] Uninvested capital tracking (COMPLETED ✅)
