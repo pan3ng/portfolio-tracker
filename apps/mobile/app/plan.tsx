@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { View, Text, TextInput, Pressable, StyleSheet, ActivityIndicator, ScrollView } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Stack, useRouter } from 'expo-router'
+import { Stack, useRouter, useLocalSearchParams } from 'expo-router'
 import { fetchQuote, getActiveTickers, getTickerName, validateTargetsSumTo100 } from '@portfolio-tracker/api-client'
 import { supabase } from '../lib/supabase'
 import { useTheme } from '../lib/ThemeContext'
@@ -22,7 +22,8 @@ interface TargetRow {
 export default function PlanScreen() {
   const router = useRouter()
   const { colors } = useTheme()
-  const [accountFilter, setAccountFilter] = useState<AccountType>('ZAR')
+  const params = useLocalSearchParams<{ ticker?: string; account?: string }>()
+  const [accountFilter, setAccountFilter] = useState<AccountType>(params.account === 'USD' ? 'USD' : 'ZAR')
   const [allTargets, setAllTargets] = useState<TargetRow[]>([])
   const [currentWeights, setCurrentWeights] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(true)
@@ -34,9 +35,24 @@ export default function PlanScreen() {
     try {
       const { data: targetsData, error: targetError } = await supabase.from('targets').select('*').order('ticker', { ascending: true })
       if (targetError) throw targetError
-      setAllTargets((targetsData || []).map((t: any) => ({
+      const loadedTargets: TargetRow[] = (targetsData || []).map((t: any) => ({
         ticker: t.ticker, target_weight_pct: t.target_weight_pct, account_type: (t.account_type || 'ZAR') as AccountType,
-      })))
+      }))
+
+      // Arriving from a "Set target →" link on a holding without one: queue a fresh
+      // row for its ticker (if not already targeted) so the user only has to type
+      // the percentage.
+      const presetTicker = params.ticker?.toUpperCase()
+      let finalTargets = loadedTargets
+      if (presetTicker) {
+        const presetAccount: AccountType = params.account === 'USD' ? 'USD' : 'ZAR'
+        const exists = loadedTargets.some((t) => t.ticker === presetTicker && t.account_type === presetAccount)
+        if (!exists) {
+          finalTargets = [...loadedTargets, { ticker: presetTicker, target_weight_pct: 0, account_type: presetAccount }]
+        }
+        setAccountFilter(presetAccount)
+      }
+      setAllTargets(finalTargets)
 
       const { data: transactions, error: txError } = await supabase.from('transactions').select('ticker, shares, account_type').eq('account_type', accountFilter)
       if (txError) throw txError

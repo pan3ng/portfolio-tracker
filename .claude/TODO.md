@@ -542,6 +542,54 @@ full visual + navigation rebuild, not incremental styling.
   View-based, not the mockup's stroke SVGs (same visual shapes, built differently); "Device"
   theme detection needs a future native rebuild to fully track Android's OS theme.
 
+### Native Expo mobile app — Milestone 5 (Edit Transaction, fee-rate editing, Set target) (2026-08-16, COMPLETED ✅)
+
+Closed three gaps spotted in review right after Milestone 4 shipped: no way to edit an
+existing transaction, no way to override an individual fee on Add Transaction (web has
+had "Edit rates" since the 3e mockup pass), and no prompt to set a target for a holding
+that doesn't have one yet.
+
+- **`components/FeeBreakdownCard.tsx`** (new): mobile's counterpart to web's
+  `FeeBreakdown.tsx` — auto-calculates the full statutory fee stack via the already-shared
+  `calculateStatutoryFees()`, but now with an "Edit rates" toggle that swaps each read-only
+  fee line for an editable input, tracks which fields were manually overridden (so
+  recalculating on amount/account changes doesn't clobber an edit), and a "Reset to
+  calculated values" action once adjusted — mirrors web's `manualOverrides` behavior
+  field-for-field. Replaces the static read-only fee list `transactions/new.tsx` had in
+  Milestone 4; both `transactions/new.tsx` and the new edit screen share it now.
+- **`app/transactions/[id]/edit.tsx`** (new): mirrors web's `/transactions/[id]/edit` —
+  loads the existing row (pre-filling `FeeBreakdownCard` with its stored, possibly-already-
+  overridden fee values via `initialFees`), lets the ticker/account/amount/fees/notes/tags
+  all be changed, "Get Quote" re-fetches a fresh price if wanted (otherwise keeps the
+  stored one), and adds a working Delete button (Cancel/Delete/Save, matching web's
+  3-button footer). Date is not editable, same as web — the update payload never touches
+  it.
+- **Activity screen**: the fee-breakdown-expanded row now has an "Edit transaction" link
+  (this was already in the design mockup's screen 1f — missed wiring it up in Milestone 4)
+  that navigates to the new edit screen.
+- **"Set target" prompts** added everywhere a holding can lack one, matching web's existing
+  `hasTarget` pattern from `/portfolio`: Holdings tab rows and the Holding detail screen
+  both show "Set target →" instead of a weight bar when `target_weight_pct` is 0, linking
+  to `/plan?ticker=X&account=Y`. `app/plan.tsx` now reads those query params and — mirroring
+  web's targets page exactly — queues a fresh zero-weight row for that ticker (only if it
+  isn't already targeted) and switches the account segment to match, so the user only has
+  to type the percentage.
+- **Bug fix, found while wiring up "Set target" on Holding detail**: that screen was
+  computing `current_weight_pct`/`drift_pct` by calling `calculatePortfolio()` with only
+  the one ticker's transactions, which makes portfolio value equal that single holding's
+  value — so "Weight vs target" always showed "now 100.0%" regardless of the holding's
+  actual share of the portfolio. Fixed by fetching all transactions (not ticker-filtered)
+  and all active tickers' prices, running the full calculation, then picking the one
+  holding out of `result.holdings` — same data Holdings/Overview already compute, just
+  filtered down for display. The per-ticker transaction list shown on the page is still
+  filtered client-side from the same fetch, so no extra query.
+- **Verification performed**: `tsc --noEmit` clean, `npx expo export --platform android`
+  compiled clean. No new native dependencies. Metro restarted fresh so expo-router picked
+  up the new `transactions/[id]/edit` dynamic route.
+- **Not built**: editing/deleting deposits or targets from mobile (still add/edit-in-place
+  only for transactions; deposits and targets remain add-only or full-replace-on-save from
+  mobile, same as before this pass).
+
 ### Mobile: move off Expo Go onto a development build (2026-08-16, COMPLETED ✅ — root cause confirmed)
 
 Discovered while trying to test Milestone 1 on a physical Android device: scanning the QR

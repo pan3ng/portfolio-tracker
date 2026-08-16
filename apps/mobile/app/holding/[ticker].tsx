@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { View, Text, FlatList, StyleSheet, ActivityIndicator } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router'
-import { fetchQuote, calculatePortfolio, getTickerName, type HoldingCalc } from '@portfolio-tracker/api-client'
+import { fetchQuote, calculatePortfolio, getActiveTickers, getTickerName, type HoldingCalc } from '@portfolio-tracker/api-client'
 import { supabase } from '../../lib/supabase'
 import { useTheme } from '../../lib/ThemeContext'
 import { fonts } from '../../lib/theme'
@@ -33,18 +33,32 @@ export default function HoldingDetailScreen() {
     if (!ticker) return
     setError(null)
     try {
-      const [{ data, error: fetchError }, { data: targets }] = await Promise.all([
-        supabase.from('transactions').select('*').eq('ticker', ticker).order('date', { ascending: false }),
-        supabase.from('targets').select('*').eq('ticker', ticker),
+      // Fetch ALL transactions/targets (not just this ticker's) — current_weight_pct
+      // and drift_pct only mean anything relative to the whole portfolio's value.
+      const [{ data: allTx, error: fetchError }, { data: targets }] = await Promise.all([
+        supabase.from('transactions').select('*').order('date', { ascending: false }),
+        supabase.from('targets').select('*'),
       ])
       if (fetchError) throw fetchError
-      const rows = (data as any[]) || []
-      setTransactions(rows)
+      const allRows = (allTx as any[]) || []
+      setTransactions(allRows.filter((tx) => tx.ticker === ticker))
 
-      const quote = await fetchQuote(supabase, ticker)
-      const prices = new Map<string, number>([[ticker, quote.price_zar]])
-      const result = calculatePortfolio(rows, [], targets || [], prices)
-      setHolding(result.holdings[0] ?? null)
+      const activeTickers = getActiveTickers(allRows)
+      const priceResults = await Promise.all(
+        activeTickers.map(async (t) => {
+          try {
+            const quote = await fetchQuote(supabase, t)
+            return { ticker: t, price: quote.price_zar }
+          } catch {
+            return null
+          }
+        })
+      )
+      const prices = new Map<string, number>()
+      priceResults.forEach((r) => { if (r) prices.set(r.ticker, r.price) })
+
+      const result = calculatePortfolio(allRows, [], targets || [], prices)
+      setHolding(result.holdings.find((h) => h.ticker === ticker) ?? null)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load holding')
     } finally {
@@ -114,7 +128,7 @@ export default function HoldingDetailScreen() {
                     </BlueprintCard>
                   </View>
 
-                  {holding.target_weight_pct > 0 && (
+                  {holding.target_weight_pct > 0 ? (
                     <BlueprintCard>
                       <Text style={[styles.sectionTitle, { color: colors.text, fontFamily: fonts.heading }]}>Weight vs target</Text>
                       <WeightBar currentPct={holding.current_weight_pct} targetPct={holding.target_weight_pct} height={10} />
@@ -124,6 +138,18 @@ export default function HoldingDetailScreen() {
                           target {holding.target_weight_pct.toFixed(1)}% · {holding.drift_pct >= 0 ? '+' : ''}{holding.drift_pct.toFixed(1)} pts
                         </Text>
                       </View>
+                    </BlueprintCard>
+                  ) : (
+                    <BlueprintCard>
+                      <Text style={[styles.sectionTitle, { color: colors.text, fontFamily: fonts.heading }]}>Weight vs target</Text>
+                      <Text style={{ color: colors.textMuted, fontSize: 12.5 }}>
+                        Now {holding.current_weight_pct.toFixed(1)}% of your portfolio — no target set yet.
+                      </Text>
+                      <Button
+                        label="Set target"
+                        variant="secondary"
+                        onPress={() => router.push(`/plan?ticker=${holding.ticker}&account=${holding.account_type}`)}
+                      />
                     </BlueprintCard>
                   )}
 

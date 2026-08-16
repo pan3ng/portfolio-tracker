@@ -159,7 +159,7 @@ export default function HoldingsScreen() {
                     </Text>
                   </View>
                 </View>
-                {item.target_weight_pct > 0 && (
+                {item.target_weight_pct > 0 ? (
                   <View style={styles.barRow}>
                     <View style={{ flex: 1 }}>
                       <WeightBar
@@ -172,6 +172,12 @@ export default function HoldingsScreen() {
                       {item.current_weight_pct.toFixed(1)}% / {item.target_weight_pct.toFixed(1)}%
                     </Text>
                   </View>
+                ) : (
+                  <Pressable
+                    onPress={(e) => { e.stopPropagation(); router.push(`/plan?ticker=${item.ticker}&account=${item.account_type}`) }}
+                  >
+                    <Text style={{ color: colors.accent700, fontSize: 12 }}>Set target →</Text>
+                  </Pressable>
                 )}
               </Pressable>
             )

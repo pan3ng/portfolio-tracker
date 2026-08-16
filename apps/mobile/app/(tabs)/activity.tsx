@@ -206,6 +206,9 @@ export default function ActivityScreen() {
                       <Text style={{ color: colors.textMuted, fontSize: 12 }}>Tags: {item.tags.join(', ')}</Text>
                     )}
                     {item.notes && <Text style={{ color: colors.textMuted, fontSize: 12 }}>Note: {item.notes}</Text>}
+                    <Pressable onPress={() => router.push(`/transactions/${item.id}/edit`)} style={{ marginTop: 2 }}>
+                      <Text style={{ color: colors.accent700, fontSize: 12.5 }}>Edit transaction</Text>
+                    </Pressable>
                   </View>
                 )}
               </View>
