@@ -99,6 +99,10 @@ export default function SignInScreen() {
       </Pressable>
 
       <Text style={styles.footnote}>Your holdings are private to your account. We never see your broker login.</Text>
+
+      {__DEV__ && (
+        <Text selectable style={styles.debug}>Redirect URL (add to Supabase → Auth → URL Configuration): {redirectTo}</Text>
+      )}
     </SafeAreaView>
   )
 }
@@ -118,4 +122,5 @@ const styles = StyleSheet.create({
   dividerText: { fontSize: 11, letterSpacing: 1, opacity: 0.5, textTransform: 'uppercase' },
   footnote: { fontSize: 12, opacity: 0.55 },
   error: { color: '#9d5f68', fontSize: 13 },
+  debug: { fontSize: 10, opacity: 0.4, fontFamily: 'monospace' },
 })
