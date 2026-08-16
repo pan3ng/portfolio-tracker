@@ -329,7 +329,7 @@ was considered (much less work) but explicitly rejected in favor of a real nativ
   charts (donut, weight bars) — same "coming soon" treatment web already has, once mobile
   gets there.
 
-### Mobile: move off Expo Go onto a development build (2026-08-16, blocking device testing, not started)
+### Mobile: move off Expo Go onto a development build (2026-08-16, blocking device testing — now confirmed necessary, not optional)
 
 Discovered while trying to test Milestone 1 on a physical Android device: scanning the QR
 code failed with "project is incompatible with this version of Expo Go," and the Play
@@ -369,6 +369,44 @@ once, permanently.
 - A dev build only needs rebuilding when *native* dependencies change (new native
   packages, Expo SDK upgrades) — everyday JS/screen changes still hot-reload through
   Metro exactly like Expo Go does today.
+
+**Investigation log (2026-08-16) — why this is now believed necessary, not just nice-to-have:**
+
+Both magic-link and Google OAuth sign-in were tested repeatedly and failed identically —
+every attempt landed on the Vercel production web app (logged in there) instead of
+bouncing back into Expo Go, despite the redirect config being provably correct:
+
+- Confirmed via `curl .../auth/v1/health`: this project's GoTrue (Supabase Auth) version
+  is `v2.195.0` — recent, not a stale-version explanation.
+- Confirmed via Supabase's own Auth Logs: the `/auth/v1/authorize?provider=google&
+  redirect_to=exp%3A%2F%2F192.168.1.96%3A8081` request correctly received and encoded the
+  exp:// redirect target (visible verbatim in the log's `event_message`).
+- Confirmed the Redirect URLs allow-list contained both `exp://192.168.1.96:8081/**` and
+  the bare `exp://192.168.1.96:8081` (no wildcard) — neither fixed it.
+- Ruled out a real GoTrue bug found during research (`supabase/auth#2285`, custom schemes
+  rejected by the *OAuth Dynamic Client Registration* endpoint) — that's a different
+  feature (Supabase acting as an OAuth *provider*), not the `/authorize`→`/callback` flow
+  this app uses, and that issue explicitly says standard auth flows (what we use) were
+  already fixed to support custom schemes when allow-listed.
+- Google's consent screen visibly renders and completes successfully — the failure is
+  specifically in getting back *into* the app afterward.
+- Magic-link testing hit Supabase's email rate limit before capturing the actual
+  `/auth/v1/verify` log entry (the single request that both validates the OTP token and
+  performs magic link's final redirect) — the true root cause was never confirmed with
+  100% certainty from Supabase-side logs alone.
+
+**Working theory** (not proven, but consistent with every observation above and with the
+broader community's own conclusion in `supabase/supabase#14769`-adjacent discussions):
+this is happening at the **Android OS / Chrome intent-resolution layer**, not in
+Supabase. `exp://<dynamic-LAN-IP>:<port>` is a much harder target for Android to reliably
+recognize as "hand this to an installed app" than a real app's own compiled-in custom
+scheme, since the host portion changes every dev session — Chrome most likely can't
+resolve a handler for it and just keeps showing whatever was already loaded in that tab
+(the Vercel site, from earlier testing). A development build's stable `portfoliotracker://`
+scheme, registered as a real Android Intent Filter at build time, doesn't have this
+problem. If sign-in *still* fails identically after moving to a dev build, that would
+disprove this theory and point back to something Supabase-side worth escalating to their
+support/Discord with the exact evidence gathered above.
 
 ### Near-term (after multi-account support)
 - [x] Uninvested capital tracking (COMPLETED ✅)
