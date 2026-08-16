@@ -21,6 +21,7 @@ export function createSupabaseClient(url: string, anonKey: string): SupabaseClie
 
 export * from "@portfolio-tracker/schemas";
 export * from "./jse-tickers";
+export * from "./portfolio-calc";
 export type { Database } from "./database.types";
 
 /**

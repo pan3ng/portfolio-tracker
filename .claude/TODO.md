@@ -22,10 +22,15 @@ everything that shipped is in the "Previously Completed" section further down th
 this file was not rewritten to consolidate it.
 
 **Process going forward**: per the earlier v1 roadmap decision, changes now happen on a
-branch (starting with `v1.1`) rather than directly on `main` — `main` tracks what's
-actually deployed to production. Merge back to `main` (and re-deploy) when a batch of
-v1.1 work is ready to ship, ideally tagging releases (`git tag v1.0.0` etc.) for a clean
-marker of what shipped when.
+branch rather than directly on `main` — `main` tracks what's actually deployed to
+production. **Versions live only as git tags on `main`, never as branch names** (decided
+2026-08-16, after `v1.1`-as-a-branch-name turned out to be confusing to work in day to
+day). The rolling work branch is called `dev` — all v1.1+ work happens there. When a
+coherent batch is ready to ship: merge `dev` → `main`, push (triggers the Vercel
+production deploy), then tag the release (`git tag -a v1.1.0 -m "..."`, following on
+from `v1.0.0`). `dev` keeps going for the next batch. A short-lived `feature/<name>`
+branch off `dev` is the escape hatch for anything large/risky enough to want isolated
+review before landing on `dev` — not the default, just available if needed.
 
 **The "🎯 Recommended Next Steps" list immediately below is stale/historical** — written
 early in the project and superseded by everything that's actually shipped since (several
@@ -207,6 +212,53 @@ Based on current state and user feedback, tackle in this order:
 
 ## Future Enhancements (Post Current Phase)
 
+### CI/CD workflow for EAS builds (2026-08-16, recommendation: not yet, premature)
+
+Asked about explicitly; logging the recommendation and shape for later rather than
+building it now.
+
+**Not necessary at this stage** — reasoning:
+
+- Solo dev, single manual trigger point today: the mobile app has exactly one build ever
+  triggered (`eas build` run manually from the CLI). Manual triggering isn't a bottleneck
+  yet — CI/CD earns its keep by removing real friction, and there isn't any to remove.
+- **The 10-builds/month free EAS tier quota is the binding constraint, not manual
+  effort.** A workflow firing on every push to `dev` would burn a month's entire quota in
+  days. Making it useful would need deliberately narrow triggers (tag push or manual
+  `workflow_dispatch` only) — which mostly reproduces what running `eas build` by hand
+  already gives, for real infrastructure cost to set up and maintain.
+- Mobile is still Milestone 1 of many (1 of ~10 planned screens built), and the build
+  this quota concern is about hadn't even confirmed yet, at time of writing, whether it
+  fixes the sign-in issue it exists to test. Investing in release automation before the
+  thing being released is stable is backwards ordering.
+- **Revisit when**: mobile reaches enough feature parity for a real release cadence
+  (regular builds for testers), a second contributor joins, or app-store submission
+  (`eas submit`) becomes a recurring rather than one-off action. None of those are true
+  today.
+
+**Shape for whenever this is picked up:**
+
+- GitHub Actions workflow, triggered narrowly — a version tag push or manual
+  `workflow_dispatch`, never on every commit, given the quota above.
+- Needs an EAS robot access token (`EXPO_TOKEN`) stored as a GitHub Actions secret —
+  `eas login`'s interactive browser flow (used manually, see the Mobile Milestone 1 entry
+  above) doesn't work in CI.
+- Ties into the still-open question of when `preview`/`production` EAS profiles get added
+  (only `development` exists in `eas.json` today, from Milestone 1's setup) — CI would
+  likely target `preview` for internal testers first; `production` + `eas submit` only
+  once real store distribution is actually planned, not before.
+- Should run `tsc`/lint as a gate before triggering any build — reuse the same
+  verification commands (`npx tsc --noEmit -p apps/mobile`) already used manually
+  throughout this project, don't invent a new check.
+
+### Onboarding for new users (2026-08-16, future — not designed)
+
+Some guided first-run experience for a brand-new account with no data yet — e.g.
+prompting a first deposit and a first target once the empty-state ("Welcome to Portfolio
+Tracker... Get started by recording your first transaction") is showing. Explicitly not
+designed in the v1.1 pass that added the landing page/Danger Zone/tooltips — flagged for
+later.
+
 ### Live FX rate fetching for USD transactions (recommendation, not started)
 
 Right now USD-account transactions store `amount` in dollars but `price_at_transaction`
@@ -262,38 +314,138 @@ at all — this is a known, documented tradeoff (architecture doc §3), not a bu
   last traded price, not a guaranteed fill — the historical form's manual-price override
   already covers the case where the user knows their actual fill price after the fact.
 
-### Native Expo mobile app (2026-08-16, decided: real native, not a PWA — scope not yet started)
+### Native Expo mobile app — Milestone 1 (Foundation + Sign-in + Overview) (2026-08-16, COMPLETED ✅)
 
-`apps/mobile` is still the untouched `create-expo-app` scaffold — `App.tsx` is literally
-the default "Open up App.tsx to start working on your app!" placeholder. No Supabase
-wiring, no auth, no screens, nothing app-specific exists yet. This isn't a finishing pass,
-it's a ground-up build; a PWA-wrapping-the-web-app alternative was considered (much less
-work, ships faster) but explicitly rejected in favor of doing a real native app properly.
-Not started — this is the scope, roughly in build order:
+`apps/mobile` was the untouched `create-expo-app` scaffold before this — `App.tsx`/`index.ts`
+deleted, replaced with a real `expo-router`-based app. A PWA-wrapping-the-web-app alternative
+was considered (much less work) but explicitly rejected in favor of a real native app.
 
-- **Foundation (blocking everything else)**:
-  - A mobile-specific Supabase client using `AsyncStorage`-backed session persistence
-    (the web client's cookie-based `@supabase/ssr` approach doesn't apply to React Native)
-  - Magic-link + Google OAuth for mobile — needs a deep-link URL scheme registered in
-    `app.json` (`expo-auth-session` or equivalent), since there's no server route to land
-    on the way `apps/web/app/auth/callback/route.ts` works
-  - A navigation library (React Navigation is the standard pick) — the Next.js App Router
-    doesn't apply here
-  - `apps/mobile/.env` populated with the same Supabase URL/publishable key as web
-- **Screens** (logic port + native-UI build, each): Sign in → Overview (hero cards,
-  metrics, holdings table, donut chart) → Holdings list → Holding detail → Plan/Targets →
-  Transactions list → Add Transaction (most complex — ticker search, quote fetch, full
-  statutory fee breakdown) → historical entry → edit → Settings → Deposits
-- **Design system port**: the "Industry" blueprint look (`globals.css`) is web CSS: needs
-  a React Native token/StyleSheet equivalent (or NativeWind), `expo-font` for Barlow/Barlow
-  Condensed instead of `next/font/google`, and a native dark-mode implementation
-  (`useColorScheme()`-based, not the web's class-toggle `ThemeProvider`)
-- **Charts**: web's donut/weight-bar visuals are SVG; RN needs `react-native-svg` + a
-  charting library, or these ship as the same "coming soon" placeholders web already has
-- **Reusable as-is**: `packages/api-client` (Supabase client factory, `fetchQuote`,
-  `getTickerName`, `searchJSETickers`, DB types) and `packages/schemas` are already
-  workspace packages — mobile imports the business logic directly, no duplication needed
-  there. This is the one piece of real leverage from the monorepo structure.
+- **Routing**: switched to `expo-router` (file-based, `app/` directory) rather than manually
+  wiring `@react-navigation/native` — it's the SDK's own first-party, actively-documented
+  navigation solution, needs far less manual boilerplate, and matches the mental model
+  already used in `apps/web`'s App Router. `app.json` updated: `scheme: "portfoliotracker"`,
+  `plugins: ["expo-router"]` (`expo-status-bar`/`expo-web-browser` plugins auto-added by
+  `expo install`), `experiments.typedRoutes`. `package.json` `main` → `"expo-router/entry"`.
+- **Supabase client** (`lib/supabase.ts`): `@supabase/supabase-js` with `AsyncStorage`-backed
+  session persistence (`react-native-url-polyfill` imported first, per Supabase's own RN
+  guide) — reads `EXPO_PUBLIC_SUPABASE_URL`/`EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` from
+  `apps/mobile/.env` (already populated with real values from repo init).
+- **Auth** (`app/sign-in.tsx`, `lib/auth.ts`, deep-link handling in `app/_layout.tsx`):
+  magic link + Google OAuth, mirroring `/login`'s content. **Important mechanism
+  difference from web, confirmed against Supabase's current docs**: mobile does *not* use
+  `exchangeCodeForSession(code)` the way `apps/web/app/auth/callback/route.ts` does — there's
+  no server route to land on. Instead the redirect lands as a deep link carrying
+  `access_token`/`refresh_token` directly in the URL, exchanged via `supabase.auth.setSession()`
+  (see `lib/auth.ts#createSessionFromUrl`). OAuth uses `expo-auth-session`'s
+  `makeRedirectUri()` together with `expo-web-browser`'s `openAuthSessionAsync()` to open
+  the consent flow and catch the return. **Dashboard step needed before this works**:
+  Supabase's Redirect URLs allow-list
+  needs the mobile scheme added — `portfoliotracker://**` for a standalone/dev-client build,
+  and (for testing via Expo Go, per the existing physical-device-only gotcha below) whatever
+  `exp://` proxy URL Expo Go's dev session uses; not yet added, not yet tested end-to-end on
+  a device. The Google Cloud OAuth client itself needs **no** changes — its authorized
+  redirect URI is Supabase's own callback, identical for web and mobile.
+- **Shared calc logic**: `app/index.tsx` (Overview) imports `calculatePortfolio`/
+  `getActiveTickers`/`fetchQuote` from `@portfolio-tracker/api-client` — the same functions
+  `apps/web/app/(app)/page.tsx` now uses (extracted from web in this same pass, see the
+  commit "Extract portfolio calc logic to packages/api-client"). No calculation logic
+  duplicated between platforms.
+- **Verification performed**: `tsc --noEmit` clean, `npx expo-doctor` 20/21 checks passed,
+  `npx expo export --platform android` compiled the full production bundle (1326 modules)
+  with no resolution/syntax errors. **Tested on an actual device (2026-08-16) and
+  confirmed working** — both magic-link and Google OAuth sign-in succeed end-to-end on an
+  EAS development build (see "Mobile: move off Expo Go onto a development build" below for
+  why Expo Go itself couldn't get past sign-in, and how that was root-caused and fixed).
+- **Known gotcha**: `expo-doctor`'s one failing check is a duplicate `react` version —
+  `apps/mobile` needs its own exact `react@19.2.3` (confirmed correct per `expo install
+  --check`), while the workspace root hoists `react@19.2.8` for `apps/web`'s looser
+  `^19.2.0` range. Not fixed (mobile's own `node_modules/react` copy takes precedence
+  within `apps/mobile`, and touching `apps/web`'s pinned version wasn't worth the risk to a
+  deployed app for a warning that mainly matters for native builds, not Expo Go testing) —
+  revisit if `eas build`/`expo run:android` ever hits real duplicate-module errors.
+- **Not built in this milestone** (unchanged from before): Holdings list, Holding detail,
+  Plan/Targets, Transactions, Settings, Deposits screens; the full "Industry" design-system
+  port (this milestone's screens are functional but plainly styled, not blueprint-matched);
+  charts (donut, weight bars) — same "coming soon" treatment web already has, once mobile
+  gets there.
+
+### Mobile: move off Expo Go onto a development build (2026-08-16, COMPLETED ✅ — root cause confirmed)
+
+Discovered while trying to test Milestone 1 on a physical Android device: scanning the QR
+code failed with "project is incompatible with this version of Expo Go," and the Play
+Store had no update available. Root cause (confirmed against Expo's own May 2026
+changelog, not a project misconfiguration): Expo changed Expo Go distribution — the
+app-store build is no longer guaranteed to track new SDK releases, and this project is on
+SDK 57. Worked around for now with a sideloaded SDK-57 Expo Go APK
+(`expo.dev/go?device=true&platform=android&sdkVersion=57`), but that's a stopgap — the
+real fix, and the thing to do before going much further on mobile, is switching to a
+**development build** (the app compiled as its own binary, with `expo-dev-client` for the
+same hot-reload/dev-tools Expo Go gives, but not dependent on Expo's separately-versioned
+shared client). This also fixes the *other* problem hit at the same time: OAuth/magic-link
+redirects currently need Supabase's Redirect URLs to contain a network-dependent
+`exp://<LAN-IP>:8081` entry that breaks every time the dev machine's IP changes — a
+development build uses the stable `portfoliotracker://` custom scheme instead, registered
+once, permanently.
+
+**What it takes, when this gets picked up:**
+
+- `npx expo install expo-dev-client`; `npm install -g eas-cli`; `eas login` (free Expo
+  account); `eas init` (adds a `projectId` to `app.json`); `eas build:configure`
+  (generates `eas.json` with a `development` profile, `developmentClient: true`,
+  `distribution: "internal"`).
+- `app.json` needs bundle identifiers it doesn't have yet — `android.package` and
+  `ios.bundleIdentifier` (e.g. `com.<name>.portfoliotracker`). Not needed for Expo Go,
+  required for any real build.
+- **Build path choice**: `eas build --profile development --platform android` (cloud,
+  needs an EAS account, EAS manages Android signing) vs. `npx expo run:android` (local,
+  free, needs Android Studio installed). iOS needs an Apple Developer Program account
+  ($99/year) for anything beyond a 7-day local-device install via Xcode + a free Apple ID
+  — a real cost/effort decision to make explicitly, not default into.
+- EAS cloud builds don't see the local `.env` — `EXPO_PUBLIC_SUPABASE_URL`/
+  `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` need to be set as EAS Secrets (or in `eas.json`)
+  for cloud builds specifically; local builds are unaffected.
+- Once built and installed once, add `portfoliotracker://**` to Supabase's Redirect URLs
+  (replacing the fragile `exp://` entry) — permanent, one-time.
+- A dev build only needs rebuilding when *native* dependencies change (new native
+  packages, Expo SDK upgrades) — everyday JS/screen changes still hot-reload through
+  Metro exactly like Expo Go does today.
+
+**Investigation log (2026-08-16) — why this is now believed necessary, not just nice-to-have:**
+
+Both magic-link and Google OAuth sign-in were tested repeatedly and failed identically —
+every attempt landed on the Vercel production web app (logged in there) instead of
+bouncing back into Expo Go, despite the redirect config being provably correct:
+
+- Confirmed via `curl .../auth/v1/health`: this project's GoTrue (Supabase Auth) version
+  is `v2.195.0` — recent, not a stale-version explanation.
+- Confirmed via Supabase's own Auth Logs: the `/auth/v1/authorize?provider=google&
+  redirect_to=exp%3A%2F%2F192.168.1.96%3A8081` request correctly received and encoded the
+  exp:// redirect target (visible verbatim in the log's `event_message`).
+- Confirmed the Redirect URLs allow-list contained both `exp://192.168.1.96:8081/**` and
+  the bare `exp://192.168.1.96:8081` (no wildcard) — neither fixed it.
+- Ruled out a real GoTrue bug found during research (`supabase/auth#2285`, custom schemes
+  rejected by the *OAuth Dynamic Client Registration* endpoint) — that's a different
+  feature (Supabase acting as an OAuth *provider*), not the `/authorize`→`/callback` flow
+  this app uses, and that issue explicitly says standard auth flows (what we use) were
+  already fixed to support custom schemes when allow-listed.
+- Google's consent screen visibly renders and completes successfully — the failure is
+  specifically in getting back *into* the app afterward.
+- Magic-link testing hit Supabase's email rate limit before capturing the actual
+  `/auth/v1/verify` log entry (the single request that both validates the OTP token and
+  performs magic link's final redirect) — the true root cause was never confirmed with
+  100% certainty from Supabase-side logs alone.
+
+**Working theory — CONFIRMED (2026-08-16):** the root cause was the **Android OS / Chrome
+intent-resolution layer**, not Supabase. `exp://<dynamic-LAN-IP>:<port>` was a much harder
+target for Android to reliably recognize as "hand this to an installed app" than a real
+app's own compiled-in custom scheme, since the host portion changes every dev session —
+Chrome couldn't resolve a handler for it and just kept showing whatever was already loaded
+in that tab (the Vercel site, from earlier testing). After building and installing an EAS
+development build (`eas build --profile development --platform android`) with the stable
+`portfoliotracker://` scheme registered as a real Android Intent Filter, both magic-link
+and Google OAuth sign-in worked on the first attempt — no other change was needed, which
+rules out a Supabase-side cause and confirms this was purely an Expo-Go-on-Android
+limitation.
 
 ### Near-term (after multi-account support)
 - [x] Uninvested capital tracking (COMPLETED ✅)
@@ -845,6 +997,12 @@ retire Settings › Deposits. Until then, keep today's separate, purpose-built e
 already relabeled "+ Add Transaction" (2026-08-15) ahead of this, since "+ Record a buy"
 read oddly once the page itself covers more than buys conceptually.
 
+**Roadmap placement (2026-08-16)**: confirmed this is what "the transactions redesign"
+refers to in v1.1 planning. Sequenced *after* Mobile Milestone 1 (Foundation + Sign-in +
+Overview) — still blocked on Withdrawal and Sell, neither started. No design or
+implementation work happened on this in the v1.1 pass that added the landing page,
+Danger Zone, and tooltips.
+
 ## Add-transaction screen realigned with mockup 3e (2026-08-15, COMPLETED ✅)
 
 - `/transactions/new` restyled to match 3e: title "Add a Transaction", Buy/Sell/Deposit
@@ -922,6 +1080,46 @@ is real), surface them on the Settings page next to commission/FX, and have
   here rather than bolted on. Natural to build alongside the "unified Add Transaction"
   work above, since Sell will need the same weight-impact math (shares going down
   instead of up).
+
+## v1.1: landing page, data deletion, tooltips (2026-08-16, COMPLETED ✅)
+
+- **Public landing page at `/`**: `/` is dual-purpose now rather than moved to a new URL —
+  9+ places in the app assumed `/` means "authenticated home" (`router.push('/')`,
+  `href="/"`), so moving Overview elsewhere would have rippled everywhere for no real
+  benefit. Instead: `lib/supabase/middleware.ts` lets `/` through unauthenticated (was
+  only `/login`/`/auth` before), `app/(app)/page.tsx` checks auth before fetching any
+  data and renders the new `components/LandingPage.tsx` when logged out, and `Nav.tsx`
+  renders nothing when there's no user so the authenticated app chrome never leaks to a
+  logged-out visitor. Landing content is real copy grounded in shipped features (fee
+  breakdown, target-weight planning, multi-account, deposits) plus an illustrative
+  (clearly-labeled, not-a-real-screenshot) preview table — no fabricated screenshots,
+  since there's no way to capture authenticated screens without real login credentials.
+  **Gotcha hit**: reusing the raw `.nav`/`.nav a` CSS classes for the landing page's own
+  header washed out the "Log in" button, because `.nav a` (class+element selector) has
+  higher specificity than `.btn-primary` (single class) and its `opacity: 0.6` link-dim
+  rule won. Fixed by not reusing `.nav` for a non-Nav header — replicated the layout
+  inline instead.
+- **Settings → Danger Zone**: "Clear My Data" (client-side deletes across `transactions`/
+  `targets`/`deposits`, plus `user_settings`, keeps the login) and "Delete My Account"
+  (new `supabase/functions/delete-account` Edge Function, deployed). Both require typing
+  a confirm word (CLEAR / DELETE) rather than a plain `confirm()`, given the severity.
+  The Edge Function is the app's first use of the Supabase **service role key** — it's
+  never client-exposed; `SUPABASE_SERVICE_ROLE_KEY` is auto-injected into every Edge
+  Function by Supabase, not something manually configured. Deleting the auth user via
+  `auth.admin.deleteUser` cascades to all four data tables automatically (each already had
+  `on delete cascade` from day one). Verified: calling the function without a valid JWT
+  returns 401 (Supabase's default platform-level JWT verification, not custom code).
+- **`Tooltip` component** (`components/Tooltip.tsx`): hover/focus-triggered, accessible
+  (`role="tooltip"`, `aria-describedby`), matches the blueprint design system. Applied to
+  the "Total P/L" / "P/L" column headers (explains "after fees" — the exact nuance behind
+  shortening that label a while back) on both the Overview and `/portfolio` holdings
+  tables, and to the three statutory fee labels in `FeeBreakdown.tsx` (Settlement & admin,
+  Investor protection levy, Securities transfer tax), using the real EasyEquities fee
+  descriptions supplied earlier rather than invented text. This is a starting scope, not
+  exhaustive — more spots can be added as they come up.
+- **Not done in this pass** (see "Future: unified Add Transaction..." above and Mobile
+  Milestone 1 below): onboarding (explicitly future, not designed), the transactions
+  redesign (placement confirmed, no work), native mobile app.
 
 ## Deferred (explicitly out of scope for now)
 

@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react'
 import { Card } from '@/components/Card'
+import { Tooltip } from '@/components/Tooltip'
 
 export interface FeeBreakdownData {
   commissionFee: number
@@ -141,11 +142,11 @@ export default function FeeBreakdown({
   const currencySymbol = accountType === 'USD' ? '$' : 'R'
   const isAdjusted = Object.values(manualOverrides).some(Boolean)
 
-  const FeeRow = ({ label, field, show = true }: { label: string; field: FeeField; show?: boolean }) => {
+  const FeeRow = ({ label, tooltip, field, show = true }: { label: string; tooltip?: string; field: FeeField; show?: boolean }) => {
     if (!show) return null
     return (
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span className="text-muted">{label}</span>
+        <span className="text-muted">{tooltip ? <Tooltip content={tooltip}>{label}</Tooltip> : label}</span>
         {isEditingRates ? (
           <input
             type="number" step="0.01" min="0" className="input num" style={{ width: 100, textAlign: 'right' }}
@@ -188,10 +189,19 @@ export default function FeeBreakdown({
       {isExpanded && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginTop: 14, fontSize: 13.5 }}>
           <FeeRow label={`Broker commission · ${userSettings.default_commission_pct}%`} field="commissionFee" />
-          <FeeRow label={`Settlement & administration · ${SETTLEMENT_ADMIN_PCT}%`} field="settlementAdminFee" />
-          <FeeRow label={`Investor protection levy & administration · ${IPL_PCT}%`} field="iplAdminFee" />
-          <FeeRow label={`VAT · ${VAT_PCT}%`} field="vatFee" />
-          <FeeRow label={`Securities transfer tax & admin · ${SECURITIES_TRANSFER_TAX_PCT}%`} field="securitiesTransferTaxFee" />
+          <FeeRow
+            label={`Settlement & administration · ${SETTLEMENT_ADMIN_PCT}%`} field="settlementAdminFee"
+            tooltip="Covers electronic settlement of the trade through the settlement authority, plus recovery of the fractional-share administration cost."
+          />
+          <FeeRow
+            label={`Investor protection levy & administration · ${IPL_PCT}%`} field="iplAdminFee"
+            tooltip="A mandatory regulator charge on whole shares traded, funding market oversight (e.g. insider trading regulation) — ultimately for investors' benefit."
+          />
+          <FeeRow label={`VAT · ${VAT_PCT}%`} field="vatFee" tooltip="VAT on the brokerage-related fees above (commission, settlement, IPL) — not charged on the transfer tax." />
+          <FeeRow
+            label={`Securities transfer tax & admin · ${SECURITIES_TRANSFER_TAX_PCT}%`} field="securitiesTransferTaxFee"
+            tooltip="Levied by SARS on the purchase and transfer of listed and unlisted securities."
+          />
           <FeeRow label={`Foreign exchange fee · ${userSettings.default_fx_pct}%`} field="fxFee" show={accountType === 'USD'} />
           <FeeRow label="Other fees (donations, misc)" field="otherFees" />
 

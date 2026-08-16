@@ -18,12 +18,23 @@ export function Nav() {
   const supabase = createClient()
   const pathname = usePathname()
   const [userEmail, setUserEmail] = useState('')
+  const [authChecked, setAuthChecked] = useState(false)
+  const [hasUser, setHasUser] = useState(false)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) setUserEmail(user.email || '')
+      if (user) {
+        setUserEmail(user.email || '')
+        setHasUser(true)
+      }
+      setAuthChecked(true)
     })
   }, [])
+
+  // Only relevant on '/', the one route reachable while logged out (see middleware) —
+  // every other route in this group is already auth-gated, so this never flashes
+  // real nav content to a logged-out visitor there.
+  if (authChecked && !hasUser) return null
 
   return (
     <div className="nav">

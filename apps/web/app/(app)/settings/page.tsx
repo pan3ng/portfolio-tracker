@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useTheme } from '@/components/ThemeProvider'
 import { Card } from '@/components/Card'
@@ -17,7 +18,18 @@ interface UserSettings {
 
 export default function SettingsPage() {
   const supabase = createClient()
+  const router = useRouter()
   const { theme: currentTheme, setTheme: setAppTheme } = useTheme()
+
+  const [showClearConfirm, setShowClearConfirm] = useState(false)
+  const [clearConfirmText, setClearConfirmText] = useState('')
+  const [clearing, setClearing] = useState(false)
+  const [clearError, setClearError] = useState<string | null>(null)
+
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   const [settings, setSettings] = useState<UserSettings>({
     default_commission_pct: 0.25,
@@ -124,6 +136,48 @@ export default function SettingsPage() {
       setError(err instanceof Error ? err.message : 'Failed to save settings')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleClearData = async () => {
+    if (clearConfirmText !== 'CLEAR') return
+    setClearing(true)
+    setClearError(null)
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Not authenticated')
+
+      const { error: txError } = await supabase.from('transactions').delete().eq('user_id', user.id)
+      if (txError) throw txError
+      const { error: targetsError } = await supabase.from('targets').delete().eq('user_id', user.id)
+      if (targetsError) throw targetsError
+      const { error: depositsError } = await supabase.from('deposits').delete().eq('user_id', user.id)
+      if (depositsError) throw depositsError
+      const { error: settingsError } = await supabase.from('user_settings').delete().eq('user_id', user.id)
+      if (settingsError) throw settingsError
+
+      router.push('/')
+    } catch (err) {
+      setClearError(err instanceof Error ? err.message : 'Failed to clear data')
+      setClearing(false)
+    }
+  }
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== 'DELETE') return
+    setDeleting(true)
+    setDeleteError(null)
+
+    try {
+      const { error } = await supabase.functions.invoke('delete-account')
+      if (error) throw error
+
+      await supabase.auth.signOut()
+      router.push('/')
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : 'Failed to delete account')
+      setDeleting(false)
     }
   }
 
@@ -293,9 +347,94 @@ export default function SettingsPage() {
           <div style={{ fontWeight: 600 }}>Data Export</div>
           <p style={{ fontSize: 12, margin: 0 }}>Export your portfolio data to CSV format</p>
         </div>
-        <div className="text-muted" style={{ fontSize: 13 }}>
-          <div style={{ fontWeight: 600 }}>Account Management</div>
-          <p style={{ fontSize: 12, margin: 0 }}>Manage your connected accounts and data retention preferences</p>
+      </Card>
+
+      {/* Danger Zone */}
+      <Card style={{ padding: 'var(--space-6)', gap: 'var(--space-4)', borderColor: 'var(--color-loss)' }}>
+        <h4 style={{ marginBottom: 0, color: 'var(--color-loss)' }}>Danger Zone</h4>
+
+        <div>
+          <h5 style={{ marginBottom: 4 }}>Clear My Data</h5>
+          <p className="text-muted" style={{ fontSize: 12, marginBottom: 10 }}>
+            Deletes all transactions, targets, deposits, and fee settings. Your login stays active — you&apos;ll land on a fresh, empty account.
+          </p>
+          {!showClearConfirm ? (
+            <button
+              type="button" onClick={() => setShowClearConfirm(true)}
+              className="btn" style={{ borderColor: 'var(--color-loss)', color: 'var(--color-loss)' }}
+            >
+              Clear My Data
+            </button>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 360 }}>
+              <label htmlFor="clearConfirm" style={{ fontSize: 12 }}>Type CLEAR to confirm</label>
+              <input
+                id="clearConfirm" type="text" className="input"
+                value={clearConfirmText}
+                onChange={(e) => setClearConfirmText(e.target.value)}
+                disabled={clearing}
+              />
+              {clearError && <p style={{ margin: 0, fontSize: 12, color: 'var(--color-loss)' }}>{clearError}</p>}
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  type="button" onClick={handleClearData}
+                  disabled={clearConfirmText !== 'CLEAR' || clearing}
+                  className="btn btn-primary" style={{ background: 'var(--color-loss)', borderColor: 'var(--color-loss)' }}
+                >
+                  {clearing ? 'Clearing...' : 'Confirm: Clear My Data'}
+                </button>
+                <button
+                  type="button" onClick={() => { setShowClearConfirm(false); setClearConfirmText(''); setClearError(null) }}
+                  disabled={clearing} className="btn btn-secondary"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="hr" />
+
+        <div>
+          <h5 style={{ marginBottom: 4 }}>Delete My Account</h5>
+          <p className="text-muted" style={{ fontSize: 12, marginBottom: 10 }}>
+            Permanently deletes your account and all data. This cannot be undone — you won&apos;t be able to log back in.
+          </p>
+          {!showDeleteConfirm ? (
+            <button
+              type="button" onClick={() => setShowDeleteConfirm(true)}
+              className="btn" style={{ borderColor: 'var(--color-loss)', color: 'var(--color-loss)' }}
+            >
+              Delete My Account
+            </button>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 360 }}>
+              <label htmlFor="deleteConfirm" style={{ fontSize: 12 }}>Type DELETE to confirm</label>
+              <input
+                id="deleteConfirm" type="text" className="input"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                disabled={deleting}
+              />
+              {deleteError && <p style={{ margin: 0, fontSize: 12, color: 'var(--color-loss)' }}>{deleteError}</p>}
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  type="button" onClick={handleDeleteAccount}
+                  disabled={deleteConfirmText !== 'DELETE' || deleting}
+                  className="btn btn-primary" style={{ background: 'var(--color-loss)', borderColor: 'var(--color-loss)' }}
+                >
+                  {deleting ? 'Deleting...' : 'Confirm: Delete My Account'}
+                </button>
+                <button
+                  type="button" onClick={() => { setShowDeleteConfirm(false); setDeleteConfirmText(''); setDeleteError(null) }}
+                  disabled={deleting} className="btn btn-secondary"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </Card>
 

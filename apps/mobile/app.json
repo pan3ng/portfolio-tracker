@@ -1,15 +1,25 @@
 {
   "expo": {
-    "name": "mobile",
+    "name": "Portfolio Tracker",
     "slug": "mobile",
+    "scheme": "portfoliotracker",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "plugins": [
+      "expo-router",
+      "expo-status-bar",
+      "expo-web-browser"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
     "ios": {
       "supportsTablet": true
     },
     "android": {
+      "package": "com.pan3ng.portfoliotracker",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -20,6 +30,13 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "55a59804-14fb-464b-9f0a-cf7c5ce52e6a"
+      }
+    },
+    "owner": "pan3ng"
   }
 }
