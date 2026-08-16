@@ -217,7 +217,7 @@ export default function OverviewScreen() {
             <Text style={[styles.suggestTitle, { color: colors.text, fontFamily: fonts.heading }]}>Put your cash to work</Text>
             <Text style={[styles.suggestBody, { color: colors.text }]}>{suggestion}</Text>
             <Pressable style={[styles.ctaBtn, { backgroundColor: colors.accent }]} onPress={() => router.push('/transactions/new')}>
-              <Text style={{ color: colors.bg, fontFamily: fonts.heading, fontSize: 14 }}>Record this buy</Text>
+              <Text style={{ color: colors.bg, fontFamily: fonts.heading, fontSize: 14 }}>Add Transaction</Text>
             </Pressable>
           </BlueprintCard>
         )}

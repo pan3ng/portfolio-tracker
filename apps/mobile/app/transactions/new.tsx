@@ -131,7 +131,7 @@ export default function NewTransactionScreen() {
       <View style={[styles.header, { borderBottomColor: colors.divider }]}>
         <View style={styles.headerTop}>
           <Text style={{ color: colors.accent700, fontSize: 12.5 }} onPress={() => router.back()}>Cancel</Text>
-          <Text style={[styles.headerTitle, { color: colors.text, fontFamily: fonts.heading }]}>Record a buy</Text>
+          <Text style={[styles.headerTitle, { color: colors.text, fontFamily: fonts.heading }]}>Add a Transaction</Text>
           <Text style={{ color: colors.textMuted, fontSize: 12.5, opacity: 0.4 }}>Historical</Text>
         </View>
         <Segmented

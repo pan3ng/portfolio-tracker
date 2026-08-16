@@ -180,7 +180,7 @@ export default function HoldingsScreen() {
       )}
 
       <View style={[styles.footer, { borderTopColor: colors.divider }]}>
-        <Button label="+ Record a buy" variant="primary" onPress={() => router.push('/transactions/new')} style={{ flex: 1 }} />
+        <Button label="+ Add Transaction" variant="primary" onPress={() => router.push('/transactions/new')} style={{ flex: 1 }} />
         <Button label="Plan" variant="secondary" onPress={() => router.push('/plan')} />
       </View>
     </SafeAreaView>
