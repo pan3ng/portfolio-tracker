@@ -8,6 +8,7 @@ import { Card } from '@/components/Card'
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
   const [sent, setSent] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -33,6 +34,26 @@ export default function LoginPage() {
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true)
+    setError(null)
+
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      })
+
+      if (error) throw error
+      // On success the browser navigates away to Google, so no further state change here.
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred')
+      setGoogleLoading(false)
     }
   }
 
@@ -92,6 +113,20 @@ export default function LoginPage() {
             {loading ? 'Sending...' : 'Email me a link'}
           </button>
         </form>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 11, letterSpacing: '.1em', textTransform: 'uppercase', opacity: 0.45 }}>
+          <span style={{ flex: 1, height: 1, background: 'var(--color-divider)' }} />
+          or
+          <span style={{ flex: 1, height: 1, background: 'var(--color-divider)' }} />
+        </div>
+
+        <button
+          type="button" onClick={handleGoogleSignIn} disabled={googleLoading}
+          className="btn btn-secondary btn-block" style={{ justifyContent: 'center', minHeight: 44, marginTop: 0 }}
+        >
+          {googleLoading ? 'Redirecting...' : 'Continue with Google'}
+        </button>
+
         <p style={{ fontSize: 12, opacity: 0.55, margin: 0 }}>
           Your holdings are private to your account. We never see your broker login.
         </p>
