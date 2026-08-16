@@ -1,10 +1,12 @@
 // File: apps/web/components/SortableTh.tsx
-import type { CSSProperties } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
+import { Tooltip } from '@/components/Tooltip'
 
 export type SortDir = 'asc' | 'desc'
 
 export function SortableTh({
   label,
+  tooltip,
   sortKey,
   active,
   dir,
@@ -13,6 +15,7 @@ export function SortableTh({
   width,
 }: {
   label: string
+  tooltip?: ReactNode
   sortKey: string
   active: boolean
   dir: SortDir
@@ -25,7 +28,7 @@ export function SortableTh({
 
   return (
     <th onClick={() => onSort(sortKey)} style={style}>
-      {label}
+      {tooltip ? <Tooltip content={tooltip}>{label}</Tooltip> : label}
       <span className="text-muted" style={{ marginLeft: 4 }}>{active ? (dir === 'asc' ? '▲' : '▼') : ''}</span>
     </th>
   )

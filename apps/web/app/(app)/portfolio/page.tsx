@@ -382,7 +382,7 @@ export default function PortfolioPage() {
                 <SortableTh label="P/L" sortKey="pl" align="right" active={sortKey === 'pl'} dir={sortDir} onSort={handleSort} />
                 {showDetails && <SortableTh label="Fees" sortKey="fees" align="right" active={sortKey === 'fees'} dir={sortDir} onSort={handleSort} />}
                 {showDetails && <SortableTh label="Market P/L" sortKey="marketPl" align="right" active={sortKey === 'marketPl'} dir={sortDir} onSort={handleSort} />}
-                {showDetails && <SortableTh label="Total P/L" sortKey="totalPl" align="right" active={sortKey === 'totalPl'} dir={sortDir} onSort={handleSort} />}
+                {showDetails && <SortableTh label="Total P/L" tooltip="Profit or loss after all trading fees are deducted" sortKey="totalPl" align="right" active={sortKey === 'totalPl'} dir={sortDir} onSort={handleSort} />}
                 <SortableTh label="Weight vs target" sortKey="weight" width={150} active={sortKey === 'weight'} dir={sortDir} onSort={handleSort} />
                 <SortableTh label="Drift" sortKey="drift" align="right" width={74} active={sortKey === 'drift'} dir={sortDir} onSort={handleSort} />
               </tr>
