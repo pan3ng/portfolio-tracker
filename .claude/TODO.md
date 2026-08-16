@@ -10,7 +10,36 @@ come back here for the immediate next steps.
 
 ---
 
-## 🎯 Recommended Next Steps (Prioritized)
+## ✅ V1 SHIPPED (2026-08-16)
+
+`main` is deployed to production on Vercel as v1. It includes: magic-link + Google OAuth
+sign-in, the full "Industry" blueprint design system, Overview/Holdings/Holding
+detail/Plan/Transactions/Settings/Deposits pages, sortable tables, real JSE statutory fee
+breakdown on buys (commission, settlement & admin, IPL, VAT, securities transfer tax),
+deposit-level fee tracking, and multi-account (ZAR/USD) support. Full dated changelog for
+everything that shipped is in the "Previously Completed" section further down this file
+(each entry is a `## <feature> (<date>, COMPLETED ✅)` header) — that's the real history;
+this file was not rewritten to consolidate it.
+
+**Process going forward**: per the earlier v1 roadmap decision, changes now happen on a
+branch (starting with `v1.1`) rather than directly on `main` — `main` tracks what's
+actually deployed to production. Merge back to `main` (and re-deploy) when a batch of
+v1.1 work is ready to ship, ideally tagging releases (`git tag v1.0.0` etc.) for a clean
+marker of what shipped when.
+
+**The "🎯 Recommended Next Steps" list immediately below is stale/historical** — written
+early in the project and superseded by everything that's actually shipped since (several
+of its items, like transaction notes/tags, are long done). The **real** current backlog
+for v1.1+ is the "Future Enhancements" section further down: configurable statutory fee
+rates, live FX rate fetching, a real bid/ask price feed, the weight-impact preview on the
+buy screen, and the bigger unified "Add Transaction" + Activity ledger screen (which
+itself depends on building Sell and Withdrawal first). A real native Expo mobile app is
+also now in scope for v1.1+, scoped out in a prior conversation — not yet logged in detail
+here.
+
+---
+
+## 🎯 Recommended Next Steps (Prioritized) — historical, superseded (see note above)
 
 Based on current state and user feedback, tackle in this order:
 
@@ -232,6 +261,39 @@ at all — this is a known, documented tradeoff (architecture doc §3), not a bu
   the Add Transaction page that the calculated share count is an *estimate* based on the
   last traded price, not a guaranteed fill — the historical form's manual-price override
   already covers the case where the user knows their actual fill price after the fact.
+
+### Native Expo mobile app (2026-08-16, decided: real native, not a PWA — scope not yet started)
+
+`apps/mobile` is still the untouched `create-expo-app` scaffold — `App.tsx` is literally
+the default "Open up App.tsx to start working on your app!" placeholder. No Supabase
+wiring, no auth, no screens, nothing app-specific exists yet. This isn't a finishing pass,
+it's a ground-up build; a PWA-wrapping-the-web-app alternative was considered (much less
+work, ships faster) but explicitly rejected in favor of doing a real native app properly.
+Not started — this is the scope, roughly in build order:
+
+- **Foundation (blocking everything else)**:
+  - A mobile-specific Supabase client using `AsyncStorage`-backed session persistence
+    (the web client's cookie-based `@supabase/ssr` approach doesn't apply to React Native)
+  - Magic-link + Google OAuth for mobile — needs a deep-link URL scheme registered in
+    `app.json` (`expo-auth-session` or equivalent), since there's no server route to land
+    on the way `apps/web/app/auth/callback/route.ts` works
+  - A navigation library (React Navigation is the standard pick) — the Next.js App Router
+    doesn't apply here
+  - `apps/mobile/.env` populated with the same Supabase URL/publishable key as web
+- **Screens** (logic port + native-UI build, each): Sign in → Overview (hero cards,
+  metrics, holdings table, donut chart) → Holdings list → Holding detail → Plan/Targets →
+  Transactions list → Add Transaction (most complex — ticker search, quote fetch, full
+  statutory fee breakdown) → historical entry → edit → Settings → Deposits
+- **Design system port**: the "Industry" blueprint look (`globals.css`) is web CSS: needs
+  a React Native token/StyleSheet equivalent (or NativeWind), `expo-font` for Barlow/Barlow
+  Condensed instead of `next/font/google`, and a native dark-mode implementation
+  (`useColorScheme()`-based, not the web's class-toggle `ThemeProvider`)
+- **Charts**: web's donut/weight-bar visuals are SVG; RN needs `react-native-svg` + a
+  charting library, or these ship as the same "coming soon" placeholders web already has
+- **Reusable as-is**: `packages/api-client` (Supabase client factory, `fetchQuote`,
+  `getTickerName`, `searchJSETickers`, DB types) and `packages/schemas` are already
+  workspace packages — mobile imports the business logic directly, no duplication needed
+  there. This is the one piece of real leverage from the monorepo structure.
 
 ### Near-term (after multi-account support)
 - [x] Uninvested capital tracking (COMPLETED ✅)

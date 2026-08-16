@@ -144,3 +144,26 @@ Chronological record of what's actually been done, for continuity across Claude 
 - No `/login` page yet
 - No auth-protecting middleware yet
 - No transaction-entry or allocation-view UI yet
+
+---
+
+**v1 shipped (2026-08-16).** Everything between the Phase 1 gate above and v1 — full
+transaction/deposit/fee/allocation UI, the "Industry" blueprint design system, multi-account
+support — happened across many sessions and is tracked as dated `## <feature> (<date>,
+COMPLETED ✅)` entries in `TODO.md`'s "Previously Completed" section rather than
+backfilled here; that file is the authoritative changelog going forward.
+
+One addition worth recording here since it revises a decision above: **Google OAuth was
+added alongside magic link** (§ decision above said "not OAuth... remains easy to add
+later if the app ever goes multi-user" — turned out to be wanted for convenience even as
+a single-user app, not because of a multi-user need). Configured via a Google Cloud OAuth
+client (Web application type, authorized redirect URI set to Supabase's
+`https://<project-ref>.supabase.co/auth/v1/callback`, *not* the app's own `/auth/callback`
+— that's Supabase's callback, which then forwards to ours) and enabled as a provider in
+Supabase's dashboard. No app code changes needed beyond a `signInWithOAuth` call and a
+button on `/login` — the existing `/auth/callback` route already handled the PKCE code
+exchange generically (magic link and OAuth both land there the same way).
+
+Process from this point: `main` tracks what's deployed to production; new work happens on
+a branch (`v1.1` first) and merges back when ready to ship, ideally with a `git tag` marking
+each release.
