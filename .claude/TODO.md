@@ -590,6 +590,30 @@ that doesn't have one yet.
   only for transactions; deposits and targets remain add-only or full-replace-on-save from
   mobile, same as before this pass).
 
+### Native Expo mobile app — Milestone 6 (Edit/Delete Deposit — mobile parity close-out) (2026-08-16, COMPLETED ✅)
+
+Closed the last mobile-vs-web parity gap flagged after Milestone 5: deposits were add-only
+on mobile. (Targets/Plan turned out to already be at parity — `app/plan.tsx`'s per-row ✕ +
+save pattern mirrors web's targets page exactly, both being a full-replace-on-save editor
+rather than per-row PATCH; no work needed there.)
+
+- **`app/deposits/[id]/edit.tsx`** (new): mirrors web's deposits page edit-in-place form —
+  amount, date, account, method, fee (prefilled from the stored value rather than
+  auto-recalculated, same as web's `handleEdit`, since a saved deposit's fee may already
+  have been manually overridden), description, and a working Delete. Cancel/Delete/Save
+  footer, same 3-button shape as the transaction edit screen from Milestone 5.
+- **Deposits list** (`app/deposits/index.tsx`): rows are now tappable, navigating to the
+  new edit screen — previously view-only.
+- **Verification performed**: `tsc --noEmit` clean, `npx expo export --platform android`
+  compiled clean. No new native dependencies. Metro restarted fresh so expo-router picked
+  up the new `deposits/[id]/edit` dynamic route.
+- **Mobile is now at full CRUD parity with web** for transactions and deposits (add, edit,
+  delete both); targets/plan parity confirmed pre-existing. Remaining mobile gaps are all
+  bigger, separately-scoped items: Sell/Withdrawal (blocked on the same web-side
+  prerequisite as the unified Activity ledger redesign), the "Industry" design system's
+  aspirational Settings sections (Money/CSV — deliberately not built, see Milestone 4), and
+  a native date picker (deferred to batch with some other native-dependency change).
+
 ### Mobile: move off Expo Go onto a development build (2026-08-16, COMPLETED ✅ — root cause confirmed)
 
 Discovered while trying to test Milestone 1 on a physical Android device: scanning the QR

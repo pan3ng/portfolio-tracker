@@ -1,6 +1,6 @@
 // File: apps/mobile/app/deposits/index.tsx
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native'
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, RefreshControl, Pressable } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Stack, useRouter } from 'expo-router'
 import { supabase } from '../../lib/supabase'
@@ -94,7 +94,10 @@ export default function DepositsScreen() {
           contentContainerStyle={{ padding: 18 }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load() }} />}
           renderItem={({ item }) => (
-            <View style={[styles.row, { borderBottomColor: colors.divider }]}>
+            <Pressable
+              style={({ pressed }) => [styles.row, { borderBottomColor: colors.divider }, pressed && { opacity: 0.6 }]}
+              onPress={() => router.push(`/deposits/${item.id}/edit`)}
+            >
               <View style={styles.rowTop}>
                 <View>
                   <Text style={{ color: colors.text, fontFamily: 'ui-monospace', fontSize: 16, fontWeight: '600' }}>R {item.amount.toFixed(2)}</Text>
@@ -104,7 +107,7 @@ export default function DepositsScreen() {
               </View>
               {item.deposit_fee > 0 && <Text style={{ color: colors.textMuted, fontSize: 12 }}>Fee: R {item.deposit_fee.toFixed(2)}</Text>}
               {item.description && <Text style={{ color: colors.textMuted, fontSize: 12 }}>{item.description}</Text>}
-            </View>
+            </Pressable>
           )}
         />
       )}
