@@ -1,7 +1,8 @@
-// File: apps/mobile/app/index.tsx
+// File: apps/mobile/app/(tabs)/index.tsx
 import { useCallback, useEffect, useState } from 'react'
 import { View, Text, FlatList, StyleSheet, ActivityIndicator, Pressable, RefreshControl } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { useRouter } from 'expo-router'
 import {
   fetchQuote,
   calculatePortfolio,
@@ -9,7 +10,8 @@ import {
   type HoldingCalc,
   type PortfolioCalcResult,
 } from '@portfolio-tracker/api-client'
-import { supabase } from '../lib/supabase'
+import { supabase } from '../../lib/supabase'
+import { colors } from '../../lib/theme'
 
 const EMPTY_RESULT: PortfolioCalcResult = {
   holdings: [], totalValue: 0, totalShareInvestment: 0, totalFeesPaid: 0, totalCostBasis: 0,
@@ -18,6 +20,7 @@ const EMPTY_RESULT: PortfolioCalcResult = {
 }
 
 export default function OverviewScreen() {
+  const router = useRouter()
   const [result, setResult] = useState<PortfolioCalcResult>(EMPTY_RESULT)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -64,10 +67,6 @@ export default function OverviewScreen() {
     load()
   }, [load])
 
-  const handleSignOut = () => {
-    supabase.auth.signOut()
-  }
-
   if (loading) {
     return (
       <SafeAreaView style={styles.centered}>
@@ -80,9 +79,6 @@ export default function OverviewScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.brand}>Portfolio Tracker</Text>
-        <Pressable onPress={handleSignOut}>
-          <Text style={styles.signOut}>Sign out</Text>
-        </Pressable>
       </View>
 
       {error && <Text style={styles.error}>{error}</Text>}
@@ -117,18 +113,21 @@ export default function OverviewScreen() {
           data={result.holdings}
           keyExtractor={(h) => h.ticker}
           renderItem={({ item }: { item: HoldingCalc }) => (
-            <View style={styles.row}>
+            <Pressable
+              style={({ pressed }) => [styles.row, pressed && { opacity: 0.6 }]}
+              onPress={() => router.push(`/holding/${item.ticker}`)}
+            >
               <View>
                 <Text style={styles.rowTicker}>{item.ticker}</Text>
                 <Text style={styles.metricSub}>{item.current_weight_pct.toFixed(1)}% of portfolio</Text>
               </View>
               <View style={{ alignItems: 'flex-end' }}>
                 <Text style={styles.rowValue}>R{item.current_value.toFixed(2)}</Text>
-                <Text style={{ color: item.profit_loss_pct >= 0 ? '#3f7a5c' : '#9d5f68', fontSize: 13 }}>
+                <Text style={{ color: item.profit_loss_pct >= 0 ? colors.gain : colors.loss, fontSize: 13 }}>
                   {item.profit_loss_pct >= 0 ? '+' : ''}{item.profit_loss_pct.toFixed(1)}%
                 </Text>
               </View>
-            </View>
+            </Pressable>
           )}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load() }} />
@@ -144,7 +143,6 @@ const styles = StyleSheet.create({
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   brand: { fontSize: 18, fontWeight: '600' },
-  signOut: { fontSize: 14, opacity: 0.6 },
   error: { color: '#9d5f68', fontSize: 13 },
   heroCard: { backgroundColor: '#e5eef5', padding: 16, gap: 4 },
   heroValue: { fontSize: 36, fontWeight: '700' },

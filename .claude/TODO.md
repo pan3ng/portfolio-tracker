@@ -369,6 +369,49 @@ was considered (much less work) but explicitly rejected in favor of a real nativ
   charts (donut, weight bars) — same "coming soon" treatment web already has, once mobile
   gets there.
 
+### Native Expo mobile app — Milestone 2 (Transactions, Targets, Settings, Deposits, Holding detail — read views) (2026-08-16, COMPLETED ✅)
+
+Built out the rest of the screens listed as missing from Milestone 1, scoped deliberately to
+**viewing**, not editing — add/edit forms for transactions, deposits, and targets stay a
+future milestone. Reasoning: Milestone 1 proved sign-in and the shared calc engine both
+work; the fastest way to make the app actually useful day-to-day is full read coverage of
+what's already in the database, before taking on the added complexity (and duplicate-fee-math
+risk) of native input forms.
+
+- **Navigation restructure**: added an `(tabs)` route group (`expo-router`'s `Tabs`) with
+  four tabs — Overview, Transactions, Targets, Settings — replacing the single-screen stack
+  from Milestone 1. `app/index.tsx` moved to `app/(tabs)/index.tsx`; `app/_layout.tsx`'s
+  auth-redirect logic needed no changes since group segments like `(tabs)` don't affect the
+  `segments[0] === 'sign-in'` check.
+- **Transactions tab**: read-only list (`app/(tabs)/transactions.tsx`), account filter
+  (All/ZAR/USD), tap-to-expand fee breakdown per row — mirrors the web transactions table's
+  columns without the edit affordance.
+- **Targets tab**: view-only current-vs-target weight per holding with a drift indicator
+  (`app/(tabs)/targets.tsx`), reusing `calculatePortfolio()`'s existing `target_weight_pct`/
+  `drift_pct` fields — no separate calculation logic needed. Editing targets stays web-only
+  for now.
+- **Settings tab**: sign-out moved here from the Overview header; ported the full Danger
+  Zone (Clear My Data / Delete My Account with type-to-confirm) from the web settings page,
+  same Supabase calls. Fee-default editing and the light/dark theme picker were left out —
+  mobile doesn't have per-transaction fee override UI yet, so defaults have nothing to feed.
+- **Deposits screen** (`app/deposits.tsx`, pushed from Settings, not a tab): view-only list
+  with account filter and a total. Add/edit deposit form not built.
+- **Holding detail** (`app/holding/[ticker].tsx`, pushed by tapping a row on Overview):
+  per-ticker P&L, cost basis, and fee totals computed by calling `calculatePortfolio()` with
+  just that ticker's transactions — reuses the exact same fee math as everywhere else in the
+  app rather than re-deriving it, at the cost of the weight/drift fields being meaningless
+  on this screen (single-ticker input makes weight trivially 100%) and so left off it.
+- **No new native dependencies** — no icon library added (tab bar is text-label only, to
+  avoid an EAS rebuild for this pass); every new screen is plain JS/RN core, so the existing
+  installed EAS development build picked all of it up over Metro with a plain reload, no
+  new `eas build` spent.
+- **Verification performed**: `tsc --noEmit` clean, `npx expo-doctor` 20/21 (same
+  pre-existing duplicate-`react` warning as Milestone 1, not touched by this pass),
+  `npx expo export --platform android` compiled clean (1333 modules, up from 1326).
+- **Not built in this milestone**: add/edit forms for transactions, deposits, and targets;
+  the "Industry" blueprint design-system port (screens remain plainly styled); charts
+  (donut, weight bars) on Targets/Overview — same "coming soon" as web already has.
+
 ### Mobile: move off Expo Go onto a development build (2026-08-16, COMPLETED ✅ — root cause confirmed)
 
 Discovered while trying to test Milestone 1 on a physical Android device: scanning the QR
