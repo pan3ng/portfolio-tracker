@@ -350,11 +350,12 @@ was considered (much less work) but explicitly rejected in favor of a real nativ
   `apps/web/app/(app)/page.tsx` now uses (extracted from web in this same pass, see the
   commit "Extract portfolio calc logic to packages/api-client"). No calculation logic
   duplicated between platforms.
-- **Verification performed** (no physical device available here): `tsc --noEmit` clean,
-  `npx expo-doctor` 20/21 checks passed, `npx expo export --platform android` compiled the
-  full production bundle (1326 modules) with no resolution/syntax errors. **Not yet tested
-  on an actual device** — needs the Supabase Redirect URLs step above first, then `expo
-  start` + Expo Go QR code per the existing testing gotcha.
+- **Verification performed**: `tsc --noEmit` clean, `npx expo-doctor` 20/21 checks passed,
+  `npx expo export --platform android` compiled the full production bundle (1326 modules)
+  with no resolution/syntax errors. **Tested on an actual device (2026-08-16) and
+  confirmed working** — both magic-link and Google OAuth sign-in succeed end-to-end on an
+  EAS development build (see "Mobile: move off Expo Go onto a development build" below for
+  why Expo Go itself couldn't get past sign-in, and how that was root-caused and fixed).
 - **Known gotcha**: `expo-doctor`'s one failing check is a duplicate `react` version —
   `apps/mobile` needs its own exact `react@19.2.3` (confirmed correct per `expo install
   --check`), while the workspace root hoists `react@19.2.8` for `apps/web`'s looser
@@ -368,7 +369,7 @@ was considered (much less work) but explicitly rejected in favor of a real nativ
   charts (donut, weight bars) — same "coming soon" treatment web already has, once mobile
   gets there.
 
-### Mobile: move off Expo Go onto a development build (2026-08-16, blocking device testing — now confirmed necessary, not optional)
+### Mobile: move off Expo Go onto a development build (2026-08-16, COMPLETED ✅ — root cause confirmed)
 
 Discovered while trying to test Milestone 1 on a physical Android device: scanning the QR
 code failed with "project is incompatible with this version of Expo Go," and the Play
@@ -434,18 +435,17 @@ bouncing back into Expo Go, despite the redirect config being provably correct:
   performs magic link's final redirect) — the true root cause was never confirmed with
   100% certainty from Supabase-side logs alone.
 
-**Working theory** (not proven, but consistent with every observation above and with the
-broader community's own conclusion in `supabase/supabase#14769`-adjacent discussions):
-this is happening at the **Android OS / Chrome intent-resolution layer**, not in
-Supabase. `exp://<dynamic-LAN-IP>:<port>` is a much harder target for Android to reliably
-recognize as "hand this to an installed app" than a real app's own compiled-in custom
-scheme, since the host portion changes every dev session — Chrome most likely can't
-resolve a handler for it and just keeps showing whatever was already loaded in that tab
-(the Vercel site, from earlier testing). A development build's stable `portfoliotracker://`
-scheme, registered as a real Android Intent Filter at build time, doesn't have this
-problem. If sign-in *still* fails identically after moving to a dev build, that would
-disprove this theory and point back to something Supabase-side worth escalating to their
-support/Discord with the exact evidence gathered above.
+**Working theory — CONFIRMED (2026-08-16):** the root cause was the **Android OS / Chrome
+intent-resolution layer**, not Supabase. `exp://<dynamic-LAN-IP>:<port>` was a much harder
+target for Android to reliably recognize as "hand this to an installed app" than a real
+app's own compiled-in custom scheme, since the host portion changes every dev session —
+Chrome couldn't resolve a handler for it and just kept showing whatever was already loaded
+in that tab (the Vercel site, from earlier testing). After building and installing an EAS
+development build (`eas build --profile development --platform android`) with the stable
+`portfoliotracker://` scheme registered as a real Android Intent Filter, both magic-link
+and Google OAuth sign-in worked on the first attempt — no other change was needed, which
+rules out a Supabase-side cause and confirms this was purely an Expo-Go-on-Android
+limitation.
 
 ### Near-term (after multi-account support)
 - [x] Uninvested capital tracking (COMPLETED ✅)
