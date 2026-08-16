@@ -212,6 +212,45 @@ Based on current state and user feedback, tackle in this order:
 
 ## Future Enhancements (Post Current Phase)
 
+### CI/CD workflow for EAS builds (2026-08-16, recommendation: not yet, premature)
+
+Asked about explicitly; logging the recommendation and shape for later rather than
+building it now.
+
+**Not necessary at this stage** — reasoning:
+
+- Solo dev, single manual trigger point today: the mobile app has exactly one build ever
+  triggered (`eas build` run manually from the CLI). Manual triggering isn't a bottleneck
+  yet — CI/CD earns its keep by removing real friction, and there isn't any to remove.
+- **The 10-builds/month free EAS tier quota is the binding constraint, not manual
+  effort.** A workflow firing on every push to `dev` would burn a month's entire quota in
+  days. Making it useful would need deliberately narrow triggers (tag push or manual
+  `workflow_dispatch` only) — which mostly reproduces what running `eas build` by hand
+  already gives, for real infrastructure cost to set up and maintain.
+- Mobile is still Milestone 1 of many (1 of ~10 planned screens built), and the build
+  this quota concern is about hadn't even confirmed yet, at time of writing, whether it
+  fixes the sign-in issue it exists to test. Investing in release automation before the
+  thing being released is stable is backwards ordering.
+- **Revisit when**: mobile reaches enough feature parity for a real release cadence
+  (regular builds for testers), a second contributor joins, or app-store submission
+  (`eas submit`) becomes a recurring rather than one-off action. None of those are true
+  today.
+
+**Shape for whenever this is picked up:**
+
+- GitHub Actions workflow, triggered narrowly — a version tag push or manual
+  `workflow_dispatch`, never on every commit, given the quota above.
+- Needs an EAS robot access token (`EXPO_TOKEN`) stored as a GitHub Actions secret —
+  `eas login`'s interactive browser flow (used manually, see the Mobile Milestone 1 entry
+  above) doesn't work in CI.
+- Ties into the still-open question of when `preview`/`production` EAS profiles get added
+  (only `development` exists in `eas.json` today, from Milestone 1's setup) — CI would
+  likely target `preview` for internal testers first; `production` + `eas submit` only
+  once real store distribution is actually planned, not before.
+- Should run `tsc`/lint as a gate before triggering any build — reuse the same
+  verification commands (`npx tsc --noEmit -p apps/mobile`) already used manually
+  throughout this project, don't invent a new check.
+
 ### Onboarding for new users (2026-08-16, future — not designed)
 
 Some guided first-run experience for a brand-new account with no data yet — e.g.
