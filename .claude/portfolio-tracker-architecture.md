@@ -164,6 +164,10 @@ Supabase's dashboard. No app code changes needed beyond a `signInWithOAuth` call
 button on `/login` — the existing `/auth/callback` route already handled the PKCE code
 exchange generically (magic link and OAuth both land there the same way).
 
-Process from this point: `main` tracks what's deployed to production; new work happens on
-a branch (`v1.1` first) and merges back when ready to ship, ideally with a `git tag` marking
-each release.
+Process from this point: `main` tracks what's deployed to production. Versions live only
+as git tags on `main` (`v1.0.0`, then `v1.1.0`, etc.) — never as branch names, since a
+branch named after a version turned out to be an easy way to lose track of not being on
+`main`. New work happens on one rolling branch, `dev`, and merges back to `main` (then
+gets tagged) when a batch is ready to ship. A short-lived `feature/<name>` branch off
+`dev` is available for anything large/risky enough to want isolated review first, but
+isn't the default.

@@ -22,10 +22,15 @@ everything that shipped is in the "Previously Completed" section further down th
 this file was not rewritten to consolidate it.
 
 **Process going forward**: per the earlier v1 roadmap decision, changes now happen on a
-branch (starting with `v1.1`) rather than directly on `main` — `main` tracks what's
-actually deployed to production. Merge back to `main` (and re-deploy) when a batch of
-v1.1 work is ready to ship, ideally tagging releases (`git tag v1.0.0` etc.) for a clean
-marker of what shipped when.
+branch rather than directly on `main` — `main` tracks what's actually deployed to
+production. **Versions live only as git tags on `main`, never as branch names** (decided
+2026-08-16, after `v1.1`-as-a-branch-name turned out to be confusing to work in day to
+day). The rolling work branch is called `dev` — all v1.1+ work happens there. When a
+coherent batch is ready to ship: merge `dev` → `main`, push (triggers the Vercel
+production deploy), then tag the release (`git tag -a v1.1.0 -m "..."`, following on
+from `v1.0.0`). `dev` keeps going for the next batch. A short-lived `feature/<name>`
+branch off `dev` is the escape hatch for anything large/risky enough to want isolated
+review before landing on `dev` — not the default, just available if needed.
 
 **The "🎯 Recommended Next Steps" list immediately below is stale/historical** — written
 early in the project and superseded by everything that's actually shipped since (several
