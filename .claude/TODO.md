@@ -369,6 +369,251 @@ was considered (much less work) but explicitly rejected in favor of a real nativ
   charts (donut, weight bars) — same "coming soon" treatment web already has, once mobile
   gets there.
 
+### Native Expo mobile app — Milestone 2 (Transactions, Targets, Settings, Deposits, Holding detail — read views) (2026-08-16, COMPLETED ✅)
+
+Built out the rest of the screens listed as missing from Milestone 1, scoped deliberately to
+**viewing**, not editing — add/edit forms for transactions, deposits, and targets stay a
+future milestone. Reasoning: Milestone 1 proved sign-in and the shared calc engine both
+work; the fastest way to make the app actually useful day-to-day is full read coverage of
+what's already in the database, before taking on the added complexity (and duplicate-fee-math
+risk) of native input forms.
+
+- **Navigation restructure**: added an `(tabs)` route group (`expo-router`'s `Tabs`) with
+  four tabs — Overview, Transactions, Targets, Settings — replacing the single-screen stack
+  from Milestone 1. `app/index.tsx` moved to `app/(tabs)/index.tsx`; `app/_layout.tsx`'s
+  auth-redirect logic needed no changes since group segments like `(tabs)` don't affect the
+  `segments[0] === 'sign-in'` check.
+- **Transactions tab**: read-only list (`app/(tabs)/transactions.tsx`), account filter
+  (All/ZAR/USD), tap-to-expand fee breakdown per row — mirrors the web transactions table's
+  columns without the edit affordance.
+- **Targets tab**: view-only current-vs-target weight per holding with a drift indicator
+  (`app/(tabs)/targets.tsx`), reusing `calculatePortfolio()`'s existing `target_weight_pct`/
+  `drift_pct` fields — no separate calculation logic needed. Editing targets stays web-only
+  for now.
+- **Settings tab**: sign-out moved here from the Overview header; ported the full Danger
+  Zone (Clear My Data / Delete My Account with type-to-confirm) from the web settings page,
+  same Supabase calls. Fee-default editing and the light/dark theme picker were left out —
+  mobile doesn't have per-transaction fee override UI yet, so defaults have nothing to feed.
+- **Deposits screen** (`app/deposits.tsx`, pushed from Settings, not a tab): view-only list
+  with account filter and a total. Add/edit deposit form not built.
+- **Holding detail** (`app/holding/[ticker].tsx`, pushed by tapping a row on Overview):
+  per-ticker P&L, cost basis, and fee totals computed by calling `calculatePortfolio()` with
+  just that ticker's transactions — reuses the exact same fee math as everywhere else in the
+  app rather than re-deriving it, at the cost of the weight/drift fields being meaningless
+  on this screen (single-ticker input makes weight trivially 100%) and so left off it.
+- **No new native dependencies** — no icon library added (tab bar is text-label only, to
+  avoid an EAS rebuild for this pass); every new screen is plain JS/RN core, so the existing
+  installed EAS development build picked all of it up over Metro with a plain reload, no
+  new `eas build` spent.
+- **Verification performed**: `tsc --noEmit` clean, `npx expo-doctor` 20/21 (same
+  pre-existing duplicate-`react` warning as Milestone 1, not touched by this pass),
+  `npx expo export --platform android` compiled clean (1333 modules, up from 1326).
+- **Not built in this milestone**: add/edit forms for transactions, deposits, and targets;
+  the "Industry" blueprint design-system port (screens remain plainly styled); charts
+  (donut, weight bars) on Targets/Overview — same "coming soon" as web already has.
+
+### Native Expo mobile app — Milestone 3 (Add Transaction, Add Deposit, Edit Targets forms) (2026-08-16, COMPLETED ✅)
+
+Closed the gap Milestone 2 deliberately left open: every screen now has a way to create/edit
+the thing it displays, not just view it.
+
+- **`packages/api-client/src/fee-calc.ts`** (new): extracted the statutory fee formulas
+  (settlement & admin, IPL, VAT, securities transfer tax, commission, FX) out of web's
+  `FeeBreakdown` component into a shared `calculateStatutoryFees()` function, so mobile's
+  Add Transaction form computes the exact same numbers instead of re-deriving the rates by
+  hand. Web's `FeeBreakdown.tsx` was left as-is (its manual-override/edit-rates state is
+  tightly coupled to the component and already shipped) — only mobile consumes the new
+  shared function for now.
+- **`app/transactions/new.tsx`**: Buy-only form matching web's current scope (Sell is still
+  "coming soon" everywhere). Currency toggle, ticker input with a live autocomplete dropdown
+  (`searchJSETickers`, already bundled in `api-client`, so no new ticker data or network call
+  needed), Get Quote, amount, an auto-calculated read-only fee breakdown, total-to-pay
+  summary, notes, and a comma-separated tags field (plain text, not the chip-style `TagInput`
+  web uses — cheaper to build, same end data shape).
+- **`app/deposits/new.tsx`**: amount, account, deposit method (card/EFT), fee
+  auto-calculated from the user's saved `default_card_deposit_pct`/`default_eft_deposit_pct`
+  (editable to override), description. Required moving `app/deposits.tsx` to
+  `app/deposits/index.tsx` so `deposits/new` could nest under it (a file route and a
+  directory route of the same name can't coexist in expo-router, same constraint as Next.js).
+- **`app/targets/edit.tsx`**: full list editor (add/remove ticker rows, live sum-to-100%
+  validation via the already-shared `validateTargetsSumTo100`) using the same
+  delete-all-then-insert-all save pattern as web's targets page. Reachable via a new "Edit
+  Targets" button on the Targets tab.
+- **No native date picker** — deposit date and (implicitly) transaction date stay plain
+  text/auto-today rather than adding `@react-native-community/datetimepicker`, which would
+  require a native module and therefore a new EAS build. Revisit once another change needs
+  a rebuild anyway, and batch it in then rather than spending a build on this alone.
+- **Verification performed**: `tsc --noEmit` clean, `npx expo export --platform android`
+  compiled clean (1337 modules, up from 1333). No new native dependencies, so the existing
+  installed EAS development build picks this up over a Metro reload — restarted Metro fresh
+  after adding the new route files to make sure expo-router's route manifest picked up
+  `transactions/new`, `deposits/new`, and `targets/edit`.
+- **Not built**: Sell/Withdrawal transactions (blocked on the same web-side prerequisite as
+  the web transactions redesign); editing/deleting existing transactions or deposits from
+  mobile (add-only for now — edits still need the web app); the chip-style tag input; a
+  native date picker.
+
+### Native Expo mobile app — Milestone 4 ("Industry" design-system port + navigation restructure) (2026-08-16, COMPLETED ✅)
+
+Imported the mobile mockups from the Claude Design project (`Canvas.dc.html`, project
+`158b2b26-52b9-48ee-8cba-138d0468542a`) via the `claude_design` MCP and applied them —
+closing the "functional but plainly styled" gap called out since Milestone 1. This was a
+full visual + navigation rebuild, not incremental styling.
+
+- **Design tokens** (`lib/theme.ts`): light/dark palettes transcribed by hand from the
+  design system's `styles.css` custom properties (RN has no CSS custom properties) —
+  `--color-bg`/`-surface`/`-text`/`-accent`/`-divider` and the accent/neutral tonal ramps.
+  `lib/ThemeContext.tsx` (new) provides `useTheme()`, mirrors web's light/dark/system
+  preference (persisted to AsyncStorage, synced to `user_settings.theme` same as web).
+- **Fonts**: added `expo-font`, `@expo-google-fonts/barlow`, `@expo-google-fonts/barlow-condensed`
+  (Barlow for body text, Barlow Condensed for headings, matching the design system's Google
+  Fonts import exactly). `expo-font`'s native module was already compiled into the current
+  EAS dev build — it's a direct dependency of the `expo` package itself, not something we
+  added — so loading custom fonts via `useFonts()` in `app/_layout.tsx` needed no new native
+  build, just a Metro reload. `app.json`'s `userInterfaceStyle` changed `light` → `automatic`;
+  **this one native-config field needs a future rebuild to fully take effect on Android** —
+  until then, explicit Light/Dark selection in Settings works regardless, but "Device" may
+  not correctly track the OS theme on this specific installed binary.
+- **Shared primitives** (`components/`): `BlueprintCard` (hairline border + 4 corner
+  registration ticks, built from plain `View`s — `::before`/`::after` don't exist in RN),
+  `Button`, `Segmented`, `Tag`, `WeightBar` (fill bar + target tick mark, used on
+  Holdings/Holding-detail/Plan), `Corner`. `TabIcon.tsx` — the bottom-tab icons (dashboard
+  grid, list, document, menu) are built from plain bordered `View`s, not SVGs:
+  `react-native-svg` isn't installed and has a native module, so adding it would have forced
+  an EAS rebuild just for icons.
+- **Navigation restructured** to match the mockup's IA: 5-tab bar (Overview, Holdings,
+  center **+** action, Activity, More) replacing Milestone 2/3's 4 tabs
+  (Overview/Transactions/Targets/Settings). The **+** tab never navigates — its
+  `tabBarButton` is overridden to intercept the press and open `AddActionSheet`, a bottom
+  modal offering Buy / Sell (disabled, "coming soon") / Deposit. **More** is a real
+  full-screen tab (Plan, Deposits & cash, Import CSV [not built, shown disabled], Settings,
+  sign out) rather than a true sliding bottom sheet like the mockup shows — simpler and more
+  robust in expo-router than intercepting tab presses to render an overlay, at the cost of
+  one visual simplification.
+- **Overview** (`(tabs)/index.tsx`) rebuilt as a dashboard: hero value, gain/return cards,
+  an off-plan/cash-ready/best-worst stat row, an allocation breakdown, and a "what to do
+  next" suggestion card. Two things worth flagging since they're new logic, not just
+  restyling:
+  - **"Off your plan by X pts"** = half the sum of `|drift_pct|` across targeted holdings
+    (standard rebalancing-distance metric — equals both the total overweight and total
+    underweight amounts when targets sum to 100%).
+  - **"What to do next"** picks the 1–2 most-underweight holdings and suggests splitting
+    uninvested cash across them proportionally to their drift gap. Only shown when there's
+    both uninvested cash and an underweight holding — never fabricated. This is a genuinely
+    new feature (a simple rebalancing suggestion), not just a mockup port.
+  - The mockup's allocation **donut chart** is rendered as a horizontal stacked bar + legend
+    instead — real per-ticker weight data (not a placeholder), just without
+    `react-native-svg` to draw an actual circle.
+- **Holdings** (`(tabs)/holdings.tsx`, new tab): dedicated list with weight bars, target
+  tick marks, and Overweight/Underweight tags — split out of what used to be Overview's
+  inline holdings list.
+- **Holding detail, Record transaction**: restyled in place to match the mockup (blueprint
+  metric cards, fee-breakdown card, weight-vs-target bar), logic unchanged from Milestone
+  2/3.
+- **Activity** (renamed from Transactions): now interleaves deposits into the same
+  chronological feed as transactions (mockup shows deposits inline — Milestone 2/3's
+  Transactions tab queried only the `transactions` table), grouped by month, with a ticker/tag
+  search field. Tap-to-expand fee breakdown kept from Milestone 2.
+- **Plan** (`app/plan.tsx`, new — reachable from More): merges what were two separate
+  screens (Milestone 2's view-only Targets tab and Milestone 3's `targets/edit.tsx`) into
+  one, matching the mockup: editable target-weight inputs sit directly above each holding's
+  live current-weight bar, so drift is visible while editing instead of in a separate view.
+  `(tabs)/targets.tsx` and `targets/edit.tsx` were deleted.
+- **Settings** (`app/settings.tsx`, moved off the tab bar to a pushed route reachable from
+  More): restyled with the mockup's Appearance section, now actually wired to
+  `useTheme().setPreference()` (functional, not decorative). The mockup's "Money" section
+  (rate source, FX spread, "show amounts in") and CSV export/import were **deliberately
+  left out** rather than built as inert-looking controls — nothing backs them yet, and
+  fake-functional UI is worse than an honest gap. The working Danger Zone (Clear My
+  Data / Delete My Account, type-to-confirm) was restyled to match but **not reduced** to
+  the mockup's single ghost-link "Delete account" — the real confirm flow was kept because
+  it's tested, working safety-critical functionality per this project's standing rule about
+  not reverting working functionality for a mockup's sake.
+- **Sign-in** restyled for token/font consistency; no functional change.
+- **Verification performed**: `tsc --noEmit` clean, `npx expo-doctor` 20/21 (same
+  pre-existing duplicate-`react` warning, untouched by this pass), `npx expo export
+  --platform android` compiled clean (1390 modules, up from 1337). Metro restarted fresh
+  after the route restructure (screens renamed/deleted/added) so expo-router's manifest
+  picked up the new tree; the already-installed EAS dev build picks up all of this over a
+  plain reload — no new native dependencies were added (fonts' native module was already
+  present, icons are plain Views, no SVG library).
+- **Known simplifications vs. the mockup** (all noted above, consolidated here): More is a
+  full screen, not a sliding sheet; allocation is a stacked bar, not a donut; tab icons are
+  View-based, not the mockup's stroke SVGs (same visual shapes, built differently); "Device"
+  theme detection needs a future native rebuild to fully track Android's OS theme.
+
+### Native Expo mobile app — Milestone 5 (Edit Transaction, fee-rate editing, Set target) (2026-08-16, COMPLETED ✅)
+
+Closed three gaps spotted in review right after Milestone 4 shipped: no way to edit an
+existing transaction, no way to override an individual fee on Add Transaction (web has
+had "Edit rates" since the 3e mockup pass), and no prompt to set a target for a holding
+that doesn't have one yet.
+
+- **`components/FeeBreakdownCard.tsx`** (new): mobile's counterpart to web's
+  `FeeBreakdown.tsx` — auto-calculates the full statutory fee stack via the already-shared
+  `calculateStatutoryFees()`, but now with an "Edit rates" toggle that swaps each read-only
+  fee line for an editable input, tracks which fields were manually overridden (so
+  recalculating on amount/account changes doesn't clobber an edit), and a "Reset to
+  calculated values" action once adjusted — mirrors web's `manualOverrides` behavior
+  field-for-field. Replaces the static read-only fee list `transactions/new.tsx` had in
+  Milestone 4; both `transactions/new.tsx` and the new edit screen share it now.
+- **`app/transactions/[id]/edit.tsx`** (new): mirrors web's `/transactions/[id]/edit` —
+  loads the existing row (pre-filling `FeeBreakdownCard` with its stored, possibly-already-
+  overridden fee values via `initialFees`), lets the ticker/account/amount/fees/notes/tags
+  all be changed, "Get Quote" re-fetches a fresh price if wanted (otherwise keeps the
+  stored one), and adds a working Delete button (Cancel/Delete/Save, matching web's
+  3-button footer). Date is not editable, same as web — the update payload never touches
+  it.
+- **Activity screen**: the fee-breakdown-expanded row now has an "Edit transaction" link
+  (this was already in the design mockup's screen 1f — missed wiring it up in Milestone 4)
+  that navigates to the new edit screen.
+- **"Set target" prompts** added everywhere a holding can lack one, matching web's existing
+  `hasTarget` pattern from `/portfolio`: Holdings tab rows and the Holding detail screen
+  both show "Set target →" instead of a weight bar when `target_weight_pct` is 0, linking
+  to `/plan?ticker=X&account=Y`. `app/plan.tsx` now reads those query params and — mirroring
+  web's targets page exactly — queues a fresh zero-weight row for that ticker (only if it
+  isn't already targeted) and switches the account segment to match, so the user only has
+  to type the percentage.
+- **Bug fix, found while wiring up "Set target" on Holding detail**: that screen was
+  computing `current_weight_pct`/`drift_pct` by calling `calculatePortfolio()` with only
+  the one ticker's transactions, which makes portfolio value equal that single holding's
+  value — so "Weight vs target" always showed "now 100.0%" regardless of the holding's
+  actual share of the portfolio. Fixed by fetching all transactions (not ticker-filtered)
+  and all active tickers' prices, running the full calculation, then picking the one
+  holding out of `result.holdings` — same data Holdings/Overview already compute, just
+  filtered down for display. The per-ticker transaction list shown on the page is still
+  filtered client-side from the same fetch, so no extra query.
+- **Verification performed**: `tsc --noEmit` clean, `npx expo export --platform android`
+  compiled clean. No new native dependencies. Metro restarted fresh so expo-router picked
+  up the new `transactions/[id]/edit` dynamic route.
+- **Not built**: editing/deleting deposits or targets from mobile (still add/edit-in-place
+  only for transactions; deposits and targets remain add-only or full-replace-on-save from
+  mobile, same as before this pass).
+
+### Native Expo mobile app — Milestone 6 (Edit/Delete Deposit — mobile parity close-out) (2026-08-16, COMPLETED ✅)
+
+Closed the last mobile-vs-web parity gap flagged after Milestone 5: deposits were add-only
+on mobile. (Targets/Plan turned out to already be at parity — `app/plan.tsx`'s per-row ✕ +
+save pattern mirrors web's targets page exactly, both being a full-replace-on-save editor
+rather than per-row PATCH; no work needed there.)
+
+- **`app/deposits/[id]/edit.tsx`** (new): mirrors web's deposits page edit-in-place form —
+  amount, date, account, method, fee (prefilled from the stored value rather than
+  auto-recalculated, same as web's `handleEdit`, since a saved deposit's fee may already
+  have been manually overridden), description, and a working Delete. Cancel/Delete/Save
+  footer, same 3-button shape as the transaction edit screen from Milestone 5.
+- **Deposits list** (`app/deposits/index.tsx`): rows are now tappable, navigating to the
+  new edit screen — previously view-only.
+- **Verification performed**: `tsc --noEmit` clean, `npx expo export --platform android`
+  compiled clean. No new native dependencies. Metro restarted fresh so expo-router picked
+  up the new `deposits/[id]/edit` dynamic route.
+- **Mobile is now at full CRUD parity with web** for transactions and deposits (add, edit,
+  delete both); targets/plan parity confirmed pre-existing. Remaining mobile gaps are all
+  bigger, separately-scoped items: Sell/Withdrawal (blocked on the same web-side
+  prerequisite as the unified Activity ledger redesign), the "Industry" design system's
+  aspirational Settings sections (Money/CSV — deliberately not built, see Milestone 4), and
+  a native date picker (deferred to batch with some other native-dependency change).
+
 ### Mobile: move off Expo Go onto a development build (2026-08-16, COMPLETED ✅ — root cause confirmed)
 
 Discovered while trying to test Milestone 1 on a physical Android device: scanning the QR
