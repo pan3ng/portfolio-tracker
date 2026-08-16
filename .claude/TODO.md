@@ -178,6 +178,61 @@ Based on current state and user feedback, tackle in this order:
 
 ## Future Enhancements (Post Current Phase)
 
+### Live FX rate fetching for USD transactions (recommendation, not started)
+
+Right now USD-account transactions store `amount` in dollars but `price_at_transaction`
+is always the ZAR share price (`quote.price_zar`) — there's no exchange rate anywhere,
+so a USD investor can't see what a purchase actually cost in dollar terms or reconcile
+against their brokerage statement. Recommended approach when this gets picked up:
+
+- **New Edge Function** `get-fx-rate`, mirroring the existing `get-quote` function's shape
+  (same auth/CORS pattern, same "fetch → cache → return" structure) rather than a new
+  architectural pattern
+- **Rate source**: a free-tier FX API with a USD/ZAR pair and no key requirement for low
+  volume (e.g. exchangerate.host or Frankfurter) — daily rates are precise enough for this
+  use case; a paid real-time feed is overkill for a personal portfolio tracker
+- **Caching**: same idea as quote caching — store the day's rate (e.g. a small
+  `fx_rates(date, pair, rate)` table or a cache column) and reuse it for the rest of the
+  day rather than calling out on every page load; FX rates don't move enough intraday to
+  matter for this app's purposes
+- **UI hook-in**: call it once when `accountType === 'USD'` is selected and a quote has
+  been fetched, then show a small "≈ R{amount × rate}" hint next to the amount field —
+  informational only, doesn't change any stored value or calculation
+- **Scope boundary**: this is about *displaying* an equivalent ZAR value for context, not
+  changing how `price_at_transaction`/`shares`/fees are computed — those stay exactly as
+  they are today (quote price is always ZAR, amount is always the account's own currency)
+  to avoid a much bigger rework of the fee/cost-basis math for comparatively little value
+
+### Real bid/ask ("buy at ask") pricing instead of last-trade price (2026-08-15, recommendation, not started)
+
+Flagged by a real discrepancy: for a live example (R2000 + fees, ticker last-traded at
+R106.60), this app calculated 18.71 shares while EasyEquities' actual market-order fill
+came to 18.26 shares — because EE executes at the live **ask** price (R109.50 in that
+example), not the last-traded price. Our only quote source, `supabase/functions/get-quote`,
+reads Yahoo Finance's unofficial `regularMarketPrice` (last trade) and has no bid/ask data
+at all — this is a known, documented tradeoff (architecture doc §3), not a bug.
+
+- **Spread behavior** (general market microstructure, not JSE-specific data we have):
+  the bid-ask spread is not constant — it moves continuously through the trading day,
+  typically widening at open/close and during volatile moves, tightening mid-session.
+  It also varies a lot *between* tickers: liquid, heavily-traded instruments (like the
+  large Satrix ETFs this app is built around) tend to have tight spreads; thinly-traded
+  tickers can have much wider ones. Both are standard market-structure facts, not
+  something inferred from this app's data.
+- **Why we shouldn't approximate it with a guessed flat %**: our current price source
+  carries zero spread information, so any hardcoded "add X%" adjustment would be a
+  fabricated number presented as if it were real JSE data — worse than being upfront
+  about the estimate. Not implemented for this reason.
+- **Real fix**: a licensed real-time Level 1 quote feed with actual bid/ask (e.g. Twelve
+  Data's paid Pro tier, already flagged as the fallback vendor in the architecture doc if
+  Yahoo's unofficial endpoint ever becomes unreliable) — the same class of change as the
+  FX-rate item above: a new, isolated Edge Function following the existing `get-quote`
+  pattern, not a rearchitecture.
+- **Cheap interim mitigation** (worth doing regardless of the above): add a small note on
+  the Add Transaction page that the calculated share count is an *estimate* based on the
+  last traded price, not a guaranteed fill — the historical form's manual-price override
+  already covers the case where the user knows their actual fill price after the fact.
+
 ### Near-term (after multi-account support)
 - [x] Uninvested capital tracking (COMPLETED ✅)
       - Created deposits table with RLS policies (supabase/migrations/0004_deposits_table.sql)
@@ -553,6 +608,258 @@ Based on current state and user feedback, tackle in this order:
       - Added "Profit/Loss" column showing absolute and percentage change
       - Color-coded gains (green) and losses (red)
       - Added total portfolio summary at top with Total Invested, Current Value, Total Profit/Loss, and Return %
+
+## Design system v2 (2026-08-14, COMPLETED ✅)
+
+Adopted a new visual design system from a workshop mockup (Barlow/Barlow Condensed
+typography, "blueprint" wireframe card style with corner brackets, hairline borders,
+tabular-mono figures) and rebuilt the app's chrome and Overview page around it.
+
+- New tokens/component classes in `apps/web/app/globals.css` (`.btn*`, `.card`,
+  `.field`/`.input`, `.seg`/`.seg-opt`, `.tag*`, `.blueprint`/`.corner`, `.table`, `.nav`, etc.)
+- Deleted `apps/web/tailwind.config.ts` (inert under Tailwind v4) and the dead
+  `apps/web/app/dashboard/page.tsx` route
+- New shared `apps/web/components/Nav.tsx` mounted via `apps/web/app/(app)/layout.tsx`
+  (a route group); every authenticated page moved under `app/(app)/` and had its
+  duplicated inline header removed in favor of Nav
+- Rebuilt `apps/web/app/(app)/page.tsx` (Overview) per the mockup: hero metrics,
+  drift/cash/best-worst strip, real allocation donut, a real (simple, proportional)
+  rebalance suggestion — all from existing data, no new schema
+- Kept product name "Portfolio Tracker" (mockup's "HOLDFOLIO" rebrand not adopted)
+
+**Deferred — mockup called for these but there's no data to back them yet:**
+- Value-over-time and drift-over-time charts — need a `portfolio_snapshots`-style
+  table (periodic value/drift snapshots); currently shown as "coming soon" placeholders
+- "Goal" progress tracking — no goal-setting feature exists yet
+- "TFSA this tax year" contribution tracking — no tax-year/contribution-limit feature yet
+- "Customise cards" panel on Overview — shown as a disabled placeholder, not wired up
+- Legacy `/portfolio` page and all secondary pages (Settings, Targets, Transactions,
+  Deposits, Import) got Nav + a class restyle only — their layouts/content are unchanged
+  from the mockup's perspective (mockup only fully specified Overview, sign-in, settings,
+  add-transaction, plan, and CSV-import screens; the dense legacy `/portfolio` table view
+  predates the mockup and wasn't in scope to redesign)
+
+## Holdings page → mockup 1a (2026-08-15, COMPLETED ✅)
+
+Rebuilt `apps/web/app/(app)/portfolio/page.tsx` ("Holdings" in Nav) to match mockup 1a
+(Ledger) exactly, and backported the same treatment to Overview's holdings table:
+
+- Ticker + description (via the new `getTickerName()` export in
+  `packages/api-client/src/jse-tickers.ts`, also used by the Plan page)
+- "Weight vs target" column using the `.weight-bar`/`.fill`/`.target` primitives, with a
+  "Set target →" link (to `/targets`) replacing the old "No target" text for untargeted holdings
+- Simplified default columns (dropped Fees / Share Value / Market P/L breakdown) with a
+  "Show details" toggle on Holdings that brings them back; Overview stays simplified with
+  no toggle (matches the smaller surface area appropriate for a landing page)
+- Account filter (All/ZAR/USD, default All) added top-left of the Holdings table — this
+  page never had one before
+- "Portfolio growth" hero card (from mockup 1b) added above the existing summary card:
+  real total value + real gain %, plus a real "N of M holdings near target" count
+
+**Deferred — added to the UI per mockup, not wired up yet:**
+- **Export CSV** button on the Holdings page — present but disabled ("Coming soon"); no
+  export implementation exists
+- **Growth chart** inside the 1b-style hero card — shown as a dashed "needs price
+  history, coming soon" placeholder instead of the mockup's sparkline; same root cause
+  as the Overview value-over-time chart above — needs a `portfolio_snapshots`-style table
+
+## Sortable holdings + Holding detail page → mockup 2b (2026-08-15, COMPLETED ✅)
+
+- Both holdings tables (Overview and `/portfolio`) are now sortable by clicking any
+  column header (new `apps/web/components/SortableTh.tsx`, ▲/▼ indicator on the active
+  column); click again to reverse direction
+- Every holdings row is a link to a new detail page, `apps/web/app/(app)/portfolio/[ticker]/page.tsx`,
+  matching mockup 2b: breadcrumb, header (ticker + overweight/underweight/on-target tag +
+  price + Set target/Buy more actions), five stat cards (shares, avg cost, market value,
+  unrealised P/L, fees paid), cost-vs-value bars, weight-vs-target bar with a real
+  rebalance suggestion (shares to sell / Rand to add), tags aggregated from that ticker's
+  transactions, and a per-ticker transactions table with Edit links
+- "Buy more" and "Set target" on the detail page (and "Set target →" on the holdings
+  tables) now carry `?ticker=&account=` context; `/transactions/new` reads it to prefill
+  the ticker/account, and `/targets` reads it to queue a new target row — the user only
+  has to fill in a number, not re-search for the ticker
+
+**Deferred — shown in the UI, not wired up yet:**
+
+- **Sell** button on the Holding detail page — disabled ("Coming soon"); this app has no
+  sell/disposal transaction type at all yet (schema only models buys via positive share
+  deltas), a bigger feature than this pass
+- **Price chart** on the Holding detail page — dashed "needs price history, coming soon"
+  placeholder, same root cause as the other deferred charts above
+- **Interactive charts** (range-tab switching, hover tooltips/crosshair) — mockup's own
+  "Open decisions" section leaves tooltip behavior undesigned; every chart in this app is
+  currently a static "coming soon" placeholder anyway pending the `portfolio_snapshots`
+  table, so there's nothing to make interactive yet. Once that table and the placeholder
+  charts are real, revisit range-tab live re-slicing and hover tooltips (square-cornered,
+  hairline-bordered, per the mockup's own guidance) as a follow-up.
+
+## Transaction currency display → reflect account currency (2026-08-15, COMPLETED ✅)
+
+- The three transaction forms (`transactions/new`, `transactions/new/historical`,
+  `transactions/[id]/edit`) and `FeeBreakdown.tsx` now show `$` instead of `R` for the
+  "Amount to Invest"/"Amount Invested" field (label, placeholder, hint text, and all fee
+  inputs/summary) when the selected account is USD — `const currencySymbol = accountType
+  === 'USD' ? '$' : 'R'`
+- Deliberately display-only: this is a cosmetic symbol swap on the amount the user is
+  putting into their own account, not real currency conversion. Share price quotes
+  (`quote.price_zar`), the historical manual-price field, and original-transaction price
+  in the edit page's hint text all stay labeled "R" — per the architecture, every quote
+  is genuinely ZAR-denominated (the ZAc → ZAR division happens once in the Edge Function),
+  so relabeling those would misrepresent the data, not just its display
+- No FX conversion math exists anywhere in the codebase yet; see "Live FX rate fetching
+  for USD transactions" below for the follow-up this implies
+
+## Deposit fee relocated from transactions to deposits (2026-08-15, COMPLETED ✅)
+
+- **Why**: a deposit fee (card ~2%, EFT ~0%) is charged when money enters an account, not
+  when shares are bought — one monthly/ad hoc deposit funds many buys over time, so the
+  fee never belonged to any single buy transaction. It's now tracked where it actually
+  happens: on the deposit.
+- **Migration** `0006_deposit_method_fee.sql` adds `deposit_method` ('card'/'eft', default
+  'card') and `deposit_fee` (numeric, default 0) to `public.deposits`. **NOTE**: needs to
+  be applied manually via the Supabase Dashboard SQL editor, same as prior migrations, and
+  `database.types.ts` was hand-updated to match (no live `gen:types` run available here).
+- **Fee model** (confirmed with user): the deposit amount is the *net* amount that lands
+  in the account; the fee is a *separate, additional* cost charged on top by the bank —
+  informational only, never deducted from the amount. So `uninvestedCapital = total
+  deposits − cost basis` is unchanged; deposit fees don't reduce investable capital.
+- **Removed** from `FeeBreakdown.tsx` and all three transaction forms (`transactions/new`,
+  `transactions/new/historical`, `transactions/[id]/edit`): the Deposit Method dropdown,
+  `depositFee` from `FeeBreakdownData`, and `deposit_method`/`deposit_fee` from
+  insert/update payloads. `transactions.deposit_method`/`deposit_fee` columns are left in
+  place (not dropped) — historical rows keep their real values and still feed the
+  cost-basis/fee aggregates on Overview, `/portfolio`, and the Holding detail page
+  unchanged; only new buys stop setting them (default to 0/'card').
+- **Deposits page** (`settings/deposits/page.tsx`) gained the Method dropdown (same
+  card/EFT + live % copy as the old transaction forms), an auto-calculated (editable) fee
+  field, per-account fee totals, a Method/Fee column in the list table, USD amounts now
+  show `$` instead of `R`, and a `?new=true` query param (wrapped in `Suspense`, matching
+  the app's existing pattern) that auto-opens the add form — used by the new "+ Add
+  Deposit" button on the Transactions page, which links to `/settings/deposits?new=true`
+  rather than duplicating the form.
+- The Transactions page's expanded fee-breakdown row now only shows the "Deposit" line for
+  legacy transactions that still carry a nonzero `deposit_fee`, labeled "(legacy)".
+- **Deployed**: migration applied to the live Supabase project (`portfolio-tracker`) via
+  `supabase migration repair --status applied 0004 0005` (those two were already live from
+  a prior manual SQL-editor apply, just untracked by the CLI) then `supabase db push` for
+  0006. All 6 migrations now show as applied both locally and remotely.
+- **Overview page fees visibility** (2026-08-15, follow-up): added a small breakdown
+  caption under the "Total return after fees" hero card — `Investing: R{x} · Deposits:
+  R{y}` — sourced from the existing tx-fee aggregation (`totalFeesPaid`) plus a new sum of
+  `deposits.deposit_fee` (`totalDepositFees`). Deliberately kept as two separate numbers,
+  not blended into one "total fees" figure: investing fees (commission/FX/other) are
+  already baked into cost basis and affect the P/L% above it; deposit fees never touch a
+  holding and would silently distort that % if merged in. Full detail (method, per-deposit
+  fee, per-account totals) still lives on the Deposits page — this is just a "the fees you
+  paid, in one place" summary.
+
+## Future: unified "Add Transaction" screen + Activity ledger (Buy/Sell/Deposit/Withdrawal) → mockup 3e
+
+Mockup 3e shows one entry screen with a Buy/Sell/Deposit segmented control at the top, but
+**only the Buy variant is actually specified** (fee breakdown fields, FX/currency-
+conversion panel for USD holdings) — Sell and Deposit are unlabeled tabs with no fields
+designed, and Withdrawal isn't in the mockup at all. Explicitly deferred rather than
+half-built, per user discussion on 2026-08-15:
+
+- **No Sell/disposal feature exists yet** — the schema only models buys (positive share
+  deltas). A working Sell tab means designing realized-gain accounting and share/cost-
+  basis reduction from scratch — a materially bigger feature than a nav rename, not
+  something to bolt on as a side effect of merging screens.
+- **No Withdrawal feature exists yet either** (money leaving an account, the mirror of a
+  deposit) — same story as Sell: needs its own design, not implied by the mockup.
+- **Resolved**: where does the Deposits list live if Settings › Deposits goes away? Answer
+  (agreed 2026-08-15): the Transactions page becomes a single "Activity" ledger — one
+  filterable table showing all four movement types (buy/sell/deposit/withdrawal), each
+  visually distinguished (tag/icon), with the "+ Add Transaction" button opening the one
+  dynamic form for whichever type is selected. This also means Settings › Deposits can be
+  retired once that lands, rather than kept as a second, parallel deposits list.
+
+When this gets picked up, in order: build Withdrawal (mirrors Deposit, lowest lift) → build
+Sell (bigger — realized gains, cost-basis reduction) → design Deposit's actual field set
+(not speced in 3e) → merge Buy/Sell/Deposit/Withdrawal into one dynamic form with a type
+selector → fold the Transactions page into the unified Activity ledger described above →
+retire Settings › Deposits. Until then, keep today's separate, purpose-built entry points
+(`/transactions/new`, `/transactions/new/historical`, `/settings/deposits`). Nav's CTA is
+already relabeled "+ Add Transaction" (2026-08-15) ahead of this, since "+ Record a buy"
+read oddly once the page itself covers more than buys conceptually.
+
+## Add-transaction screen realigned with mockup 3e (2026-08-15, COMPLETED ✅)
+
+- `/transactions/new` restyled to match 3e: title "Add a Transaction", Buy/Sell/Deposit
+  segmented control (Buy active; Sell disabled "Coming soon" — same pattern as the Holding
+  detail page's disabled Sell button; Deposit links to `/settings/deposits?new=true`),
+  Date/Currency 2-col grid (Currency now a `.seg` ZAR/USD control instead of a dropdown),
+  ticker field shows the resolved ticker's name once known (via `getTickerName`, same
+  helper already used on `/targets`), and an accent-wash "You'll pay in total" card
+  showing the grand total + shares received. Buttons relabeled "Save this buy" at a 1:2
+  Cancel:Save ratio, matching 3e.
+- `FeeBreakdown.tsx` (shared by all three transaction forms) rewritten from raw Tailwind
+  gray boxes into the actual blueprint design system: `Card`, `card-kicker` label, mono
+  figures, hairline divider before "Total fees." Historical/edit forms inherit this
+  restyle automatically with no behavior change (they still show their own fee-inclusive
+  summary; `new` passes `hideTotalSummary` since it has its own bigger total card).
+- **Fee-row layout + "Edit rates"** (2026-08-15 refinement): each fee line (Commission, FX,
+  Other) is now a single inline label/value row, matching 3e's static display exactly,
+  instead of a full-width `.field` + input per fee. A new "Edit rates" toggle button in the
+  card header swaps the read-only values for inline editable inputs — read-only by default
+  is the 3e-accurate state; editability is preserved as a deliberate toggle rather than
+  always-on, since real fee overrides are a real need this app has that the static mockup
+  didn't need to solve.
+- **Fee model: fees add on top** (confirmed 2026-08-15, matches EasyEquities' real buy
+  flow) — the amount typed is the trade value that buys shares (`shares = amount / price`,
+  unchanged from the original build); fees are calculated on that amount and *added* to
+  reach what actually leaves the account. A prior pass in this same session briefly flipped
+  this to a "fees deducted from amount" model, which was wrong — reverted back to additive
+  before it shipped. The "You'll pay in total" card = amount + fees; `FeeBreakdown`'s own
+  summary (historical/edit) shows Investment Amount → Total Fees → Total Cost (additive).
+- **Statutory fee breakdown added** (2026-08-15, matches real EasyEquities JSE buy costs):
+  `FeeBreakdown.tsx` now itemizes the full real fee stack instead of just commission —
+  Settlement & administration (0.075%), Investor protection levy & administration
+  (0.0002%), VAT (15%, levied on commission + settlement + IPL, not on the transfer tax),
+  and Securities transfer tax & admin (0.25%) — each auto-calculated, each individually
+  overridable via "Edit rates" like commission already was. Rates are hardcoded constants
+  in `FeeBreakdown.tsx` for now, not user-configurable (see "Configurable statutory fee
+  defaults" below). New `transactions` columns via migration `0007_statutory_fee_columns.sql`
+  (applied to the live project): `settlement_admin_fee`, `ipl_admin_fee`,
+  `securities_transfer_tax_fee`, `vat_fee`. Every place that sums a transaction's fees
+  (Overview, `/portfolio`, Holding detail, Transactions list) updated to include them, so
+  cost basis / P/L / "Total fees" displays stay accurate rather than silently undercounting.
+- **Notes/Tags restyled to match** (2026-08-15 refinement): `TagInput.tsx` and `Tag.tsx`
+  were still raw, never-restyled Tailwind (rounded-full pills, gray-100/indigo-100 chips) —
+  rewritten to the design system's `.field`/`.input` wrapper and `.tag`/`.tag-accent`
+  classes, so the Tags field now looks like every other field (including Notes, whose label
+  was simplified from "Notes (optional)" to just "Notes" — optionality is already implied
+  by every other optional field in the app not saying so).
+- **Ticker description inline in the field** (2026-08-15 refinement) — once a ticker
+  resolves to a known name, it now renders inside the same search input (absolutely
+  positioned, muted, right-aligned, matching 3e's single combined box) rather than as
+  separate helper text below the field.
+
+## Future: Configurable statutory fee defaults (per user, maybe per account)
+
+The four statutory fee rates added above (settlement & admin, IPL & admin, VAT, securities
+transfer tax) are hardcoded constants in `FeeBreakdown.tsx`, unlike commission and FX
+which already live in `user_settings` and are editable on the Settings page. Flagged as a
+follow-up (not built) since these rates: (a) are set by the JSE/regulator/SARS and rarely
+change, so hardcoding them isn't wrong today, but (b) users may reasonably want to tune
+them if their broker's real fees differ slightly, and (c) some brokers structure these
+differently per account (e.g., a ZAR vs. USD account, or different broker relationships) —
+hence "maybe even by account" rather than a single global default. When picked up: add
+columns to `user_settings` (or a new per-account fee-profile table if the per-account need
+is real), surface them on the Settings page next to commission/FX, and have
+`FeeBreakdown.tsx` read from `userSettings` instead of its local constants.
+
+**Deferred from this pass — logged separately, not built:**
+
+- **Weight-impact preview** ("how this buy/sell affects your plan," e.g. mockup 3e's
+  "STXNDQ weight after this buy: 28.7% → 31.2%") — needs the page to fetch current
+  holdings and targets for the ticker being transacted (this form is currently
+  standalone, no portfolio-state awareness), then compute weight-before/after live as
+  the user types an amount. Worth doing — it's exactly the kind of real-time feedback 3e
+  is going for — but is a real data-fetching feature, not a style tweak, so it's tracked
+  here rather than bolted on. Natural to build alongside the "unified Add Transaction"
+  work above, since Sell will need the same weight-impact math (shares going down
+  instead of up).
 
 ## Deferred (explicitly out of scope for now)
 

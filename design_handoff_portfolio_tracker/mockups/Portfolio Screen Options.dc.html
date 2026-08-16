@@ -1,0 +1,1580 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/industry-b1c47923-28d8-4429-83d2-25b4a1fcdb22/styles.css">
+<script src="_ds/industry-b1c47923-28d8-4429-83d2-25b4a1fcdb22/_ds_bundle.js"></script>
+<style>
+body{margin:0;background:#e8e8ea;font-family:var(--font-body)}
+.dv-turn{padding:40px 44px 32px;border-bottom:1px solid rgba(0,0,0,.08);scroll-margin-top:16px}
+.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 20px}
+.dv-tid{font:600 10px ui-monospace,Menlo,monospace;padding:3px 7px;background:#1d1f20;color:#fff;border-radius:4px;text-decoration:none}
+.dv-tname{font:600 13px/1.2 var(--font-heading);color:#1d1f20;letter-spacing:.04em;text-transform:uppercase}
+.dv-opts{display:flex;flex-wrap:wrap;gap:44px;align-items:flex-start}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:11px;scroll-margin-top:16px}
+.dv-oid{font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#1d1f20;border-radius:5px;text-decoration:none}
+.dv-olabel{display:flex;align-items:baseline;gap:8px;font:400 11.5px/1.3 var(--font-body);color:rgba(0,0,0,.55)}
+.dv-card{max-width:100%;background:var(--color-bg);border:1px solid rgba(0,0,0,.14);overflow:hidden}
+.dv-opt:target .dv-oid{background:#5980a6;color:#fff}
+.dv-next{margin:26px 0 0;font:12.5px/1.6 var(--font-body);color:rgba(0,0,0,.5)}
+.mono{font-family:ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}
+</style></helmet>
+
+<section class="dv-turn" id="t3">
+<div class="dv-thd"><a class="dv-tid" href="#t3">3</a><span class="dv-tname">Overview v2 + the six missing screens</span></div>
+<div class="dv-opts">
+
+<div class="dv-opt" id="3a">
+<div class="dv-olabel"><a class="dv-oid" href="#3a">3a</a>Overview v2 — all eight metrics, tiered so only three shout. Plain-language labels, FX toggle, drift-over-time.</div>
+<div class="dv-card" style="width:1160px" data-screen-label="3a Overview v2">
+  <div class="nav" style="border-bottom:1px solid var(--color-divider);padding:14px 26px">
+    <span class="nav-brand">HOLDFOLIO</span>
+    <span style="font-size:13px;color:var(--color-accent-700)">Overview</span>
+    <span style="font-size:13px;opacity:.6">Holdings</span>
+    <span style="font-size:13px;opacity:.6">Transactions</span>
+    <span style="font-size:13px;opacity:.6">Plan</span>
+    <span class="seg" style="margin-left:12px;font-family:var(--font-body)">
+      <span class="seg-opt" style="background:var(--color-accent);color:var(--color-bg)">ZAR</span>
+      <span class="seg-opt">USD</span>
+      <span class="seg-opt">Native</span>
+    </span>
+    <span class="btn btn-secondary">Light / Dark</span>
+    <span class="btn btn-primary">+ Record a buy</span>
+  </div>
+
+  <div style="padding:24px 26px 32px;display:flex;flex-direction:column;gap:24px">
+
+    <div style="display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:18px">
+      <div class="card blueprint" style="padding:20px;gap:6px;background:#eef6ff">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700)">What your investments are worth</div>
+        <div class="mono" style="font:600 42px/1 var(--font-heading);letter-spacing:-.02em">R 487 320</div>
+        <div style="font-size:12.5px;opacity:.6">1 USD = R 18.42 · updated 17:05</div>
+      </div>
+      <div class="card blueprint" style="padding:20px;gap:6px">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;opacity:.6">Gain since you started</div>
+        <div class="mono" style="font:600 30px/1.1 var(--font-heading);color:#3f7a63">+R 41 208</div>
+        <div class="mono" style="font-size:12.5px;color:#3f7a63">+9.23% after R 2 106 in fees</div>
+      </div>
+      <div class="card blueprint" style="padding:20px;gap:6px">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;opacity:.6">Moved today</div>
+        <div class="mono" style="font:600 30px/1.1 var(--font-heading);color:#3f7a63">+R 1 842</div>
+        <div class="mono" style="font-size:12.5px;opacity:.55">+0.38% · JSE close</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px;padding:16px 0;border-top:1px solid var(--color-divider);border-bottom:1px solid var(--color-divider)">
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.55">Off your plan by</div>
+        <div class="mono" style="font:600 19px/1.1 var(--font-heading);color:#9d5f68">6.9 pts</div>
+        <div style="height:5px;background:#e7e7ea"><div style="width:34%;height:100%;background:#c79aa1"></div></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.55">Cash ready to invest</div>
+        <div class="mono" style="font:600 19px/1.1 var(--font-heading)">R 10 000</div>
+        <div style="font-size:11.5px;opacity:.5">deposited 25 Jul</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.55">Goal · R 1 000 000</div>
+        <div class="mono" style="font:600 19px/1.1 var(--font-heading)">49%</div>
+        <div style="height:5px;background:#e7e7ea"><div style="width:49%;height:100%;background:#749dc4"></div></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.55">TFSA this tax year</div>
+        <div class="mono" style="font:600 19px/1.1 var(--font-heading)">R 24 000 <span style="font-size:12px;opacity:.5">/ 36 000</span></div>
+        <div style="height:5px;background:#e7e7ea"><div style="width:66%;height:100%;background:#94bce3"></div></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.55">Best / worst</div>
+        <div class="mono" style="font:600 15px/1.3 var(--font-heading)"><span style="color:#3f7a63">STXNDQ +36.9%</span><br><span style="color:#9d5f68">ASHGEQ −2.1%</span></div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:22px">
+      <div class="blueprint" style="padding:20px 22px 14px;position:relative">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:14px">
+          <h3 style="margin:0;font-size:18px;letter-spacing:.03em;text-transform:uppercase">What it's worth over time</h3>
+          <span class="seg" style="margin-left:auto;font-family:var(--font-body)">
+            <sc-for list="{{ rangeTabs }}" as="t" hint-placeholder-count="5">
+              <span class="seg-opt" onClick="{{ t.onClick }}" style="background:{{ t.bg }};color:{{ t.fg }};padding:6px 11px;font-size:12px">{{ t.label }}</span>
+            </sc-for>
+          </span>
+        </div>
+        <svg viewBox="0 0 780 186" style="width:100%;height:160px" preserveAspectRatio="none">
+          <line x1="0" y1="0.5" x2="780" y2="0.5" stroke="#d4d4d7"></line>
+          <line x1="0" y1="93" x2="780" y2="93" stroke="#e7e7ea"></line>
+          <line x1="0" y1="185.5" x2="780" y2="185.5" stroke="#d4d4d7"></line>
+          <polyline points="{{ pvArea }}" fill="#b5d9fd" opacity=".38" stroke="none"></polyline>
+          <polyline points="{{ pvPoints }}" fill="none" stroke="#5980a6" stroke-width="1.75" vector-effect="non-scaling-stroke"></polyline>
+        </svg>
+        <div class="mono" style="display:flex;justify-content:space-between;font-size:11px;opacity:.55;padding-top:6px">
+          <sc-for list="{{ pvTickMarks }}" as="t" hint-placeholder-count="5"><span>{{ t.label }}</span></sc-for>
+        </div>
+      </div>
+
+      <div class="blueprint" style="padding:20px 22px 14px;position:relative">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:14px">
+          <h3 style="margin:0;font-size:18px;letter-spacing:.03em;text-transform:uppercase">How far off plan, over time</h3>
+          <span style="font-size:11.5px;opacity:.55;margin-left:auto">zero line = on target</span>
+        </div>
+        <svg viewBox="0 0 780 186" style="width:100%;height:160px" preserveAspectRatio="none">
+          <line x1="0" y1="0.5" x2="780" y2="0.5" stroke="#e7e7ea"></line>
+          <line x1="0" y1="93" x2="780" y2="93" stroke="#1d1f20" stroke-width="1"></line>
+          <line x1="0" y1="185.5" x2="780" y2="185.5" stroke="#e7e7ea"></line>
+          <polyline points="0,88 78,80 156,74 234,66 312,72 390,58 468,50 546,44 624,38 702,32 780,26" fill="none" stroke="#5980a6" stroke-width="1.75" vector-effect="non-scaling-stroke"></polyline>
+          <polyline points="0,96 78,104 156,112 234,120 312,116 390,128 468,136 546,144 624,150 702,158 780,164" fill="none" stroke="#a2626c" stroke-width="1.75" vector-effect="non-scaling-stroke"></polyline>
+          <polyline points="0,94 78,92 156,96 234,90 312,95 390,91 468,97 546,93 624,90 702,95 780,92" fill="none" stroke="#94bce3" stroke-width="1.5" stroke-dasharray="4 4" vector-effect="non-scaling-stroke"></polyline>
+        </svg>
+        <div style="display:flex;gap:16px;font-size:11.5px;opacity:.7;padding-top:8px">
+          <span style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:2px;background:#5980a6"></span>STXNDQ drifting up</span>
+          <span style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:2px;background:#a2626c"></span>ASHGEQ drifting down</span>
+          <span style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:2px;background:#94bce3"></span>others</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:22px;align-items:start">
+      <div class="blueprint" style="padding:20px 22px;position:relative">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:12px">
+          <h3 style="margin:0;font-size:18px;letter-spacing:.03em;text-transform:uppercase">Where the money sits</h3>
+        </div>
+        <div style="display:flex;gap:18px;align-items:center">
+          <svg viewBox="0 0 180 180" style="width:132px;height:132px;flex:none">
+            <g transform="rotate(-90 90 90)" fill="none" stroke-width="26">
+              <circle cx="90" cy="90" r="70" stroke="#5980a6" stroke-dasharray="124.3 439.8"></circle>
+              <circle cx="90" cy="90" r="70" stroke="#749dc4" stroke-dasharray="111.9 439.8" stroke-dashoffset="-126.3"></circle>
+              <circle cx="90" cy="90" r="70" stroke="#94bce3" stroke-dasharray="105.8 439.8" stroke-dashoffset="-240.2"></circle>
+              <circle cx="90" cy="90" r="70" stroke="#c79aa1" stroke-dasharray="55.6 439.8" stroke-dashoffset="-348.0"></circle>
+              <circle cx="90" cy="90" r="70" stroke="#d6ebff" stroke-dasharray="32.3 439.8" stroke-dashoffset="-405.6"></circle>
+            </g>
+            <text x="90" y="94" text-anchor="middle" style="font:600 19px var(--font-heading);fill:#1d1f20">5 funds</text>
+          </svg>
+          <div style="flex:1;display:flex;flex-direction:column;gap:7px;font-size:12.5px">
+            <div style="display:grid;grid-template-columns:11px 1fr 46px;gap:8px;align-items:center"><span style="width:11px;height:11px;background:#5980a6"></span><span>STXNDQ</span><span class="mono" style="text-align:right">28.7%</span></div>
+            <div style="display:grid;grid-template-columns:11px 1fr 46px;gap:8px;align-items:center"><span style="width:11px;height:11px;background:#749dc4"></span><span>SYGWD</span><span class="mono" style="text-align:right">25.9%</span></div>
+            <div style="display:grid;grid-template-columns:11px 1fr 46px;gap:8px;align-items:center"><span style="width:11px;height:11px;background:#94bce3"></span><span>STX40</span><span class="mono" style="text-align:right">24.5%</span></div>
+            <div style="display:grid;grid-template-columns:11px 1fr 46px;gap:8px;align-items:center"><span style="width:11px;height:11px;background:#c79aa1"></span><span>ASHGEQ</span><span class="mono" style="text-align:right">13.1%</span></div>
+            <div style="display:grid;grid-template-columns:11px 1fr 46px;gap:8px;align-items:center"><span style="width:11px;height:11px;background:#d6ebff"></span><span>NGPLD</span><span class="mono" style="text-align:right">7.8%</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="blueprint" style="padding:20px 22px;position:relative;background:#eef6ff">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:6px">What to do next</div>
+        <h4 style="margin:0 0 8px;font-size:19px">Put your R 10 000 to work</h4>
+        <p style="font-size:13px;margin:0 0 14px;opacity:.75;text-wrap:pretty">Buy R 7 400 of ASHGEQ and R 2 600 of STX40 and you're back on plan — nothing to sell, no tax event.</p>
+        <div class="btn btn-primary btn-block" style="justify-content:center">Show me the buys</div>
+      </div>
+      <div class="blueprint" style="padding:20px 22px;position:relative;border-style:dashed">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;opacity:.55;margin-bottom:8px">Your overview, your way</div>
+        <p style="font-size:13px;margin:0 0 14px;opacity:.7;text-wrap:pretty">Pick which cards and charts appear here. Everything else stays one click away on Holdings.</p>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px">
+          <span class="tag tag-accent">Value over time</span>
+          <span class="tag tag-accent">Drift</span>
+          <span class="tag tag-neutral">Contributions</span>
+          <span class="tag tag-neutral">Benchmark</span>
+          <span class="tag tag-neutral">Dividends</span>
+        </div>
+        <div class="btn btn-secondary btn-block" style="justify-content:center">Customise cards</div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="dv-opt" id="3b">
+<div class="dv-olabel"><a class="dv-oid" href="#3b">3b</a>Overview v2, dark — same layout, tokens swapped</div>
+<div class="dv-card" style="width:1160px;--color-bg:#15181b;--color-surface:#1c2126;--color-text:#e9ebed;--color-divider:rgba(233,235,237,.16);--color-accent:#94bce3;--color-accent-700:#b5d9fd;background:#15181b;color:#e9ebed" data-screen-label="3b Overview v2 dark">
+  <div class="nav" style="border-bottom:1px solid var(--color-divider);padding:14px 26px">
+    <span class="nav-brand">HOLDFOLIO</span>
+    <span style="font-size:13px;color:#b5d9fd">Overview</span>
+    <span style="font-size:13px;opacity:.55">Holdings</span>
+    <span style="font-size:13px;opacity:.55">Transactions</span>
+    <span style="font-size:13px;opacity:.55">Plan</span>
+    <span class="seg" style="margin-left:12px;font-family:var(--font-body)">
+      <span class="seg-opt" style="background:#94bce3;color:#15181b">ZAR</span>
+      <span class="seg-opt">USD</span>
+      <span class="seg-opt">Native</span>
+    </span>
+    <span class="btn btn-secondary">Dark</span>
+    <span class="btn btn-primary" style="background:#94bce3;border-color:#94bce3;color:#15181b">+ Record a buy</span>
+  </div>
+  <div style="padding:24px 26px 32px;display:flex;flex-direction:column;gap:24px">
+    <div style="display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:18px">
+      <div class="card blueprint" style="padding:20px;gap:6px;background:rgba(148,188,227,.09)">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#b5d9fd">What your investments are worth</div>
+        <div class="mono" style="font:600 42px/1 var(--font-heading);letter-spacing:-.02em">R 487 320</div>
+        <div style="font-size:12.5px;opacity:.55">1 USD = R 18.42 · updated 17:05</div>
+      </div>
+      <div class="card blueprint" style="padding:20px;gap:6px">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;opacity:.6">Gain since you started</div>
+        <div class="mono" style="font:600 30px/1.1 var(--font-heading);color:#9ccdb6">+R 41 208</div>
+        <div class="mono" style="font-size:12.5px;color:#9ccdb6">+9.23% after R 2 106 in fees</div>
+      </div>
+      <div class="card blueprint" style="padding:20px;gap:6px">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;opacity:.6">Moved today</div>
+        <div class="mono" style="font:600 30px/1.1 var(--font-heading);color:#9ccdb6">+R 1 842</div>
+        <div class="mono" style="font-size:12.5px;opacity:.55">+0.38% · JSE close</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px;padding:16px 0;border-top:1px solid var(--color-divider);border-bottom:1px solid var(--color-divider)">
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.55">Off your plan by</div>
+        <div class="mono" style="font:600 19px/1.1 var(--font-heading);color:#d9a3ab">6.9 pts</div>
+        <div style="height:5px;background:rgba(233,235,237,.1)"><div style="width:34%;height:100%;background:#a8737d"></div></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.55">Cash ready to invest</div>
+        <div class="mono" style="font:600 19px/1.1 var(--font-heading)">R 10 000</div>
+        <div style="font-size:11.5px;opacity:.5">deposited 25 Jul</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.55">Goal · R 1 000 000</div>
+        <div class="mono" style="font:600 19px/1.1 var(--font-heading)">49%</div>
+        <div style="height:5px;background:rgba(233,235,237,.1)"><div style="width:49%;height:100%;background:#6d94ba"></div></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.55">TFSA this tax year</div>
+        <div class="mono" style="font:600 19px/1.1 var(--font-heading)">R 24 000 <span style="font-size:12px;opacity:.5">/ 36 000</span></div>
+        <div style="height:5px;background:rgba(233,235,237,.1)"><div style="width:66%;height:100%;background:#94bce3"></div></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.55">Best / worst</div>
+        <div class="mono" style="font:600 15px/1.3 var(--font-heading)"><span style="color:#9ccdb6">STXNDQ +36.9%</span><br><span style="color:#d9a3ab">ASHGEQ −2.1%</span></div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:22px">
+      <div class="blueprint" style="padding:20px 22px 14px;position:relative">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:14px">
+          <h3 style="margin:0;font-size:18px;letter-spacing:.03em;text-transform:uppercase">What it's worth over time</h3>
+          <span class="seg" style="margin-left:auto;font-family:var(--font-body)">
+            <sc-for list="{{ rangeTabs }}" as="t" hint-placeholder-count="5">
+              <span class="seg-opt" onClick="{{ t.onClick }}" style="padding:6px 11px;font-size:12px">{{ t.label }}</span>
+            </sc-for>
+          </span>
+        </div>
+        <svg viewBox="0 0 780 186" style="width:100%;height:160px" preserveAspectRatio="none">
+          <line x1="0" y1="93" x2="780" y2="93" stroke="rgba(233,235,237,.12)"></line>
+          <polyline points="{{ pvArea }}" fill="#94bce3" opacity=".16" stroke="none"></polyline>
+          <polyline points="{{ pvPoints }}" fill="none" stroke="#94bce3" stroke-width="1.75" vector-effect="non-scaling-stroke"></polyline>
+        </svg>
+        <div class="mono" style="display:flex;justify-content:space-between;font-size:11px;opacity:.55;padding-top:6px">
+          <sc-for list="{{ pvTickMarks }}" as="t" hint-placeholder-count="5"><span>{{ t.label }}</span></sc-for>
+        </div>
+      </div>
+      <div class="blueprint" style="padding:20px 22px 14px;position:relative">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:14px">
+          <h3 style="margin:0;font-size:18px;letter-spacing:.03em;text-transform:uppercase">How far off plan, over time</h3>
+          <span style="font-size:11.5px;opacity:.55;margin-left:auto">zero line = on target</span>
+        </div>
+        <svg viewBox="0 0 780 186" style="width:100%;height:160px" preserveAspectRatio="none">
+          <line x1="0" y1="93" x2="780" y2="93" stroke="#e9ebed" stroke-opacity=".7"></line>
+          <polyline points="0,88 78,80 156,74 234,66 312,72 390,58 468,50 546,44 624,38 702,32 780,26" fill="none" stroke="#94bce3" stroke-width="1.75" vector-effect="non-scaling-stroke"></polyline>
+          <polyline points="0,96 78,104 156,112 234,120 312,116 390,128 468,136 546,144 624,150 702,158 780,164" fill="none" stroke="#d9a3ab" stroke-width="1.75" vector-effect="non-scaling-stroke"></polyline>
+          <polyline points="0,94 78,92 156,96 234,90 312,95 390,91 468,97 546,93 624,90 702,95 780,92" fill="none" stroke="#6d94ba" stroke-width="1.5" stroke-dasharray="4 4" vector-effect="non-scaling-stroke"></polyline>
+        </svg>
+        <div style="display:flex;gap:16px;font-size:11.5px;opacity:.7;padding-top:8px">
+          <span style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:2px;background:#94bce3"></span>STXNDQ drifting up</span>
+          <span style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:2px;background:#d9a3ab"></span>ASHGEQ drifting down</span>
+          <span style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:2px;background:#6d94ba"></span>others</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="dv-opt" id="3c">
+<div class="dv-olabel"><a class="dv-oid" href="#3c">3c</a>First run — nothing tracked yet, three ways in</div>
+<div class="dv-card" style="width:1160px" data-screen-label="3c First run">
+  <div class="nav" style="border-bottom:1px solid var(--color-divider);padding:14px 26px">
+    <span class="nav-brand">HOLDFOLIO</span>
+    <span style="font-size:13px;color:var(--color-accent-700)">Overview</span>
+    <span style="font-size:13px;opacity:.4">Holdings</span>
+    <span style="font-size:13px;opacity:.4">Transactions</span>
+    <span style="font-size:13px;opacity:.4">Plan</span>
+    <span class="btn btn-secondary" style="margin-left:12px">Light / Dark</span>
+  </div>
+  <div style="padding:56px 26px 60px;display:flex;flex-direction:column;align-items:center;gap:34px">
+    <div style="text-align:center;max-width:560px">
+      <div style="font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:10px">Step 1 of 3</div>
+      <h2 style="margin:0 0 10px;font-size:36px">Let's get your holdings in</h2>
+      <p style="font-size:15px;opacity:.7;margin:0;text-wrap:pretty">Add what you already own, or import a statement. Once something's in here we'll work out your weights, drift and returns for you.</p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,300px);gap:26px">
+      <div class="card blueprint" style="padding:22px;gap:10px;background:#eef6ff">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div class="card-kicker">Fastest</div>
+        <div style="font:600 22px/1.15 var(--font-heading)">Type in one holding</div>
+        <p style="font-size:13px;opacity:.7;margin:0;text-wrap:pretty">Ticker, how many shares, what you paid. About 30 seconds.</p>
+        <div class="btn btn-primary btn-block" style="justify-content:center">Add a holding</div>
+      </div>
+      <div class="card blueprint" style="padding:22px;gap:10px">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div class="card-kicker">Bulk</div>
+        <div style="font:600 22px/1.15 var(--font-heading)">Import a CSV</div>
+        <p style="font-size:13px;opacity:.7;margin:0;text-wrap:pretty">Export from EasyEquities, Standard Bank or your broker. We'll map the columns.</p>
+        <div class="btn btn-secondary btn-block" style="justify-content:center">Choose a file</div>
+      </div>
+      <div class="card blueprint" style="padding:22px;gap:10px">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div class="card-kicker">Just looking</div>
+        <div style="font:600 22px/1.15 var(--font-heading)">Try demo data</div>
+        <p style="font-size:13px;opacity:.7;margin:0;text-wrap:pretty">A sample five-fund portfolio so you can see every screen filled in.</p>
+        <div class="btn btn-secondary btn-block" style="justify-content:center">Load the demo</div>
+      </div>
+    </div>
+    <div class="blueprint" style="position:relative;width:820px;padding:26px;border-style:dashed;display:flex;flex-direction:column;gap:12px;align-items:center">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <svg viewBox="0 0 780 120" style="width:100%;height:100px;opacity:.35" preserveAspectRatio="none">
+        <line x1="0" y1="119.5" x2="780" y2="119.5" stroke="#98989b"></line>
+        <polyline points="0,104 90,96 180,100 270,84 360,88 450,70 540,62 630,50 720,38 780,30" fill="none" stroke="#98989b" stroke-width="1.5" stroke-dasharray="5 5" vector-effect="non-scaling-stroke"></polyline>
+      </svg>
+      <div style="font-size:13px;opacity:.55">Your value chart, drift lines and allocation ring appear here once you've added a holding.</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="dv-opt" id="3d">
+<div class="dv-olabel"><a class="dv-oid" href="#3d">3d</a>Sign in — magic link, light and dark</div>
+<div style="display:flex;gap:24px">
+<div class="dv-card" style="width:440px" data-screen-label="3d Login light">
+  <div style="padding:44px 36px 40px;display:flex;flex-direction:column;gap:22px">
+    <span class="nav-brand" style="font-size:19px">HOLDFOLIO</span>
+    <div>
+      <h2 style="margin:0 0 8px;font-size:30px">Sign in</h2>
+      <p style="font-size:14px;opacity:.7;margin:0;text-wrap:pretty">We'll email you a link. No password to remember, nothing to reset.</p>
+    </div>
+    <div class="field">
+      <label>Your email</label>
+      <div class="input" style="display:flex;align-items:center;color:rgba(29,31,32,.45)">you@example.co.za</div>
+    </div>
+    <div class="btn btn-primary btn-block" style="justify-content:center;min-height:44px">Email me a link</div>
+    <div style="display:flex;align-items:center;gap:12px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;opacity:.45">
+      <span style="flex:1;height:1px;background:var(--color-divider)"></span>or<span style="flex:1;height:1px;background:var(--color-divider)"></span>
+    </div>
+    <div class="btn btn-secondary btn-block" style="justify-content:center;min-height:44px">Continue with Google</div>
+    <p style="font-size:12px;opacity:.55;margin:0;text-wrap:pretty">Your holdings are private to your account. We never see your broker login.</p>
+  </div>
+</div>
+<div class="dv-card" style="width:440px;--color-bg:#15181b;--color-surface:#1c2126;--color-text:#e9ebed;--color-divider:rgba(233,235,237,.16);--color-accent:#94bce3;--color-accent-700:#b5d9fd;background:#15181b;color:#e9ebed" data-screen-label="3d Login dark">
+  <div style="padding:44px 36px 40px;display:flex;flex-direction:column;gap:22px">
+    <span class="nav-brand" style="font-size:19px">HOLDFOLIO</span>
+    <div>
+      <h2 style="margin:0 0 8px;font-size:30px">Check your email</h2>
+      <p style="font-size:14px;opacity:.7;margin:0;text-wrap:pretty">We sent a sign-in link to <span class="mono">thabo@example.co.za</span>. It works once and expires in 15 minutes.</p>
+    </div>
+    <div class="blueprint" style="position:relative;padding:18px;background:rgba(148,188,227,.09);font-size:13.5px">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      Didn't arrive? Check spam, or send it again in <span class="mono">00:41</span>.
+    </div>
+    <div class="btn btn-secondary btn-block" style="justify-content:center;min-height:44px">Use a different email</div>
+    <p style="font-size:12px;opacity:.5;margin:0">Same screen, dark tokens — one variable swap.</p>
+  </div>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="3e">
+<div class="dv-olabel"><a class="dv-oid" href="#3e">3e</a>Record a buy — with the fee breakdown spelled out, light and dark</div>
+<div style="display:flex;gap:24px">
+<div class="dv-card" style="width:560px" data-screen-label="3e Add transaction light">
+  <div style="padding:26px 26px 30px;display:flex;flex-direction:column;gap:20px">
+    <div style="display:flex;align-items:baseline;gap:10px">
+      <h2 style="margin:0;font-size:26px">Record a buy</h2>
+      <span style="font-size:12px;opacity:.55;margin-left:auto" class="mono">Step 1 of 1</span>
+    </div>
+    <div class="seg" style="font-family:var(--font-body);width:100%">
+      <span class="seg-opt" style="flex:1;justify-content:center;background:var(--color-accent);color:var(--color-bg)">Buy</span>
+      <span class="seg-opt" style="flex:1;justify-content:center">Sell</span>
+      <span class="seg-opt" style="flex:1;justify-content:center">Deposit</span>
+    </div>
+    <div class="field">
+      <label>What did you buy?</label>
+      <div class="input" style="display:flex;align-items:center;justify-content:space-between"><span class="mono">STXNDQ</span><span style="font-size:12px;opacity:.55">Satrix Nasdaq 100 · JSE</span></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="field"><label>Date</label><div class="input mono" style="display:flex;align-items:center">14 Aug 2026</div></div>
+      <div class="field"><label>Currency</label>
+        <div class="seg" style="font-family:var(--font-body);width:100%">
+          <span class="seg-opt" style="flex:1;justify-content:center;background:var(--color-accent);color:var(--color-bg)">ZAR</span>
+          <span class="seg-opt" style="flex:1;justify-content:center">USD</span>
+        </div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="field"><label>How many shares</label><div class="input mono" style="display:flex;align-items:center">420.00</div></div>
+      <div class="field"><label>Price per share</label><div class="input mono" style="display:flex;align-items:center">R 44.90</div></div>
+    </div>
+    <div class="blueprint" style="position:relative;padding:18px 20px">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px">
+        <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;opacity:.6">What the fees are</div>
+        <span class="btn btn-ghost" style="font-size:12px">Edit rates</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:9px;font-size:13.5px">
+        <div style="display:flex;justify-content:space-between"><span style="opacity:.7">Brokerage · 0.25%</span><span class="mono">R 47.15</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="opacity:.7">Investor protection levy</span><span class="mono">R 0.05</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="opacity:.7">Securities transfer tax · 0.25%</span><span class="mono">R 47.15</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="opacity:.7">VAT on brokerage · 15%</span><span class="mono">R 7.07</span></div>
+        <div style="display:flex;justify-content:space-between;padding-top:9px;border-top:1px solid var(--color-divider);font-weight:500"><span>Total fees</span><span class="mono">R 101.42</span></div>
+      </div>
+    </div>
+    <div class="blueprint" style="position:relative;padding:18px 20px;background:#eef6ff">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <div>
+          <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700)">You'll pay in total</div>
+          <div class="mono" style="font:600 28px/1.15 var(--font-heading)">R 18 959.42</div>
+        </div>
+        <div style="text-align:right;font-size:12.5px;opacity:.7">
+          <div>STXNDQ weight after this buy</div>
+          <div class="mono" style="font-size:15px">28.7% → 31.2%</div>
+          <div style="color:#9d5f68">takes you further off plan</div>
+        </div>
+      </div>
+    </div>
+    <div class="field"><label>Note or tag (optional)</label><div class="input" style="display:flex;align-items:center;gap:8px"><span class="tag tag-accent">TFSA</span><span style="opacity:.4;font-size:13px">Monthly debit order</span></div></div>
+    <div style="display:flex;gap:12px"><span class="btn btn-secondary" style="flex:1;justify-content:center">Cancel</span><span class="btn btn-primary" style="flex:2;justify-content:center">Save this buy</span></div>
+  </div>
+</div>
+<div class="dv-card" style="width:560px;--color-bg:#15181b;--color-surface:#1c2126;--color-text:#e9ebed;--color-divider:rgba(233,235,237,.16);--color-accent:#94bce3;--color-accent-700:#b5d9fd;background:#15181b;color:#e9ebed" data-screen-label="3e Add transaction dark">
+  <div style="padding:26px 26px 30px;display:flex;flex-direction:column;gap:20px">
+    <div style="display:flex;align-items:baseline;gap:10px">
+      <h2 style="margin:0;font-size:26px">Record a buy</h2>
+      <span style="font-size:12px;opacity:.55;margin-left:auto" class="mono">USD holding</span>
+    </div>
+    <div class="seg" style="font-family:var(--font-body);width:100%">
+      <span class="seg-opt" style="flex:1;justify-content:center;background:#94bce3;color:#15181b">Buy</span>
+      <span class="seg-opt" style="flex:1;justify-content:center">Sell</span>
+      <span class="seg-opt" style="flex:1;justify-content:center">Deposit</span>
+    </div>
+    <div class="field">
+      <label>What did you buy?</label>
+      <div class="input" style="display:flex;align-items:center;justify-content:space-between;background:transparent"><span class="mono">VWRA</span><span style="font-size:12px;opacity:.55">Vanguard FTSE All-World · LSE</span></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="field"><label>How many shares</label><div class="input mono" style="display:flex;align-items:center;background:transparent">18.00</div></div>
+      <div class="field"><label>Price per share</label><div class="input mono" style="display:flex;align-items:center;background:transparent">$ 142.60</div></div>
+    </div>
+    <div class="blueprint" style="position:relative;padding:18px 20px">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;opacity:.6;margin-bottom:12px">Currency conversion</div>
+      <div style="display:flex;flex-direction:column;gap:9px;font-size:13.5px">
+        <div style="display:flex;justify-content:space-between"><span style="opacity:.7">Cost in USD</span><span class="mono">$ 2 566.80</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="opacity:.7">Rate used · 14 Aug</span><span class="mono">R 18.42 / $</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="opacity:.7">FX spread · 0.35%</span><span class="mono">R 165.42</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="opacity:.7">Broker fees</span><span class="mono">R 118.30</span></div>
+        <div style="display:flex;justify-content:space-between;padding-top:9px;border-top:1px solid var(--color-divider);font-weight:500"><span>Recorded in ZAR</span><span class="mono">R 47 559.14</span></div>
+      </div>
+    </div>
+    <div class="blueprint" style="position:relative;padding:18px 20px;background:rgba(148,188,227,.09)">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#b5d9fd">Both currencies are kept</div>
+      <p style="font-size:13px;margin:6px 0 0;opacity:.75;text-wrap:pretty">We store the USD price and the rate on the day, so switching the top-bar toggle to USD shows this holding untouched by FX.</p>
+    </div>
+    <div style="display:flex;gap:12px"><span class="btn btn-secondary" style="flex:1;justify-content:center">Cancel</span><span class="btn btn-primary" style="flex:2;justify-content:center;background:#94bce3;border-color:#94bce3;color:#15181b">Save this buy</span></div>
+  </div>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="3f">
+<div class="dv-olabel"><a class="dv-oid" href="#3f">3f</a>Your plan — set target weights, must total 100%</div>
+<div class="dv-card" style="width:900px" data-screen-label="3f Targets">
+  <div class="nav" style="border-bottom:1px solid var(--color-divider);padding:14px 24px">
+    <span class="nav-brand">HOLDFOLIO</span>
+    <span style="font-size:13px;opacity:.6">Overview</span>
+    <span style="font-size:13px;opacity:.6">Holdings</span>
+    <span style="font-size:13px;color:var(--color-accent-700)">Plan</span>
+  </div>
+  <div style="padding:26px 24px 30px;display:flex;flex-direction:column;gap:22px">
+    <div>
+      <h2 style="margin:0 0 6px;font-size:28px">What share should each fund be?</h2>
+      <p style="font-size:14px;opacity:.7;margin:0;text-wrap:pretty">Set the split you're aiming for. We'll tell you when real life drifts away from it — we never move money for you.</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <div style="display:grid;grid-template-columns:170px 1fr 96px 92px;gap:16px;align-items:center">
+        <div><div style="font:600 17px var(--font-heading)">STXNDQ</div><div style="font-size:11.5px;opacity:.55">Satrix Nasdaq 100</div></div>
+        <div style="height:10px;background:#e7e7ea;position:relative"><div style="position:absolute;inset:0 75% 0 0;background:#5980a6"></div><div style="position:absolute;top:-5px;bottom:-5px;left:25%;width:2px;background:#1d1f20"></div></div>
+        <div class="input mono" style="min-height:34px;display:flex;align-items:center;justify-content:flex-end">25.0%</div>
+        <div class="mono" style="font-size:12.5px;opacity:.6;text-align:right">now 28.7%</div>
+      </div>
+      <div style="display:grid;grid-template-columns:170px 1fr 96px 92px;gap:16px;align-items:center">
+        <div><div style="font:600 17px var(--font-heading)">SYGWD</div><div style="font-size:11.5px;opacity:.55">Sygnia World Equity</div></div>
+        <div style="height:10px;background:#e7e7ea;position:relative"><div style="position:absolute;inset:0 75% 0 0;background:#749dc4"></div><div style="position:absolute;top:-5px;bottom:-5px;left:25%;width:2px;background:#1d1f20"></div></div>
+        <div class="input mono" style="min-height:34px;display:flex;align-items:center;justify-content:flex-end">25.0%</div>
+        <div class="mono" style="font-size:12.5px;opacity:.6;text-align:right">now 25.9%</div>
+      </div>
+      <div style="display:grid;grid-template-columns:170px 1fr 96px 92px;gap:16px;align-items:center">
+        <div><div style="font:600 17px var(--font-heading)">STX40</div><div style="font-size:11.5px;opacity:.55">Satrix Top 40</div></div>
+        <div style="height:10px;background:#e7e7ea;position:relative"><div style="position:absolute;inset:0 75% 0 0;background:#94bce3"></div><div style="position:absolute;top:-5px;bottom:-5px;left:25%;width:2px;background:#1d1f20"></div></div>
+        <div class="input mono" style="min-height:34px;display:flex;align-items:center;justify-content:flex-end">25.0%</div>
+        <div class="mono" style="font-size:12.5px;opacity:.6;text-align:right">now 24.5%</div>
+      </div>
+      <div style="display:grid;grid-template-columns:170px 1fr 96px 92px;gap:16px;align-items:center">
+        <div><div style="font:600 17px var(--font-heading)">ASHGEQ</div><div style="font-size:11.5px;opacity:.55">Ashburton Global 1200</div></div>
+        <div style="height:10px;background:#e7e7ea;position:relative"><div style="position:absolute;inset:0 80% 0 0;background:#c79aa1"></div><div style="position:absolute;top:-5px;bottom:-5px;left:20%;width:2px;background:#1d1f20"></div></div>
+        <div class="input mono" style="min-height:34px;display:flex;align-items:center;justify-content:flex-end">20.0%</div>
+        <div class="mono" style="font-size:12.5px;color:#9d5f68;text-align:right">now 13.1%</div>
+      </div>
+      <div style="display:grid;grid-template-columns:170px 1fr 96px 92px;gap:16px;align-items:center">
+        <div><div style="font:600 17px var(--font-heading)">NGPLD</div><div style="font-size:11.5px;opacity:.55">NewGold Palladium</div></div>
+        <div style="height:10px;background:#e7e7ea;position:relative"><div style="position:absolute;inset:0 95% 0 0;background:#d6ebff"></div><div style="position:absolute;top:-5px;bottom:-5px;left:5%;width:2px;background:#1d1f20"></div></div>
+        <div class="input mono" style="min-height:34px;display:flex;align-items:center;justify-content:flex-end">5.0%</div>
+        <div class="mono" style="font-size:12.5px;opacity:.6;text-align:right">now 7.8%</div>
+      </div>
+    </div>
+    <div class="blueprint" style="position:relative;padding:16px 20px;display:flex;align-items:center;gap:16px;background:#eef6ff">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="mono" style="font:600 22px var(--font-heading)">100.0%</div>
+      <div style="font-size:13px;opacity:.75">Adds up — you're good to save. If it doesn't, we'll show you what's left over rather than silently rounding.</div>
+      <span class="btn btn-primary" style="margin-left:auto">Save plan</span>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="dv-opt" id="3g">
+<div class="dv-olabel"><a class="dv-oid" href="#3g">3g</a>CSV import — column mapping and a preview before anything is saved</div>
+<div class="dv-card" style="width:1040px" data-screen-label="3g CSV import">
+  <div class="nav" style="border-bottom:1px solid var(--color-divider);padding:14px 24px">
+    <span class="nav-brand">HOLDFOLIO</span>
+    <span style="font-size:13px;opacity:.6">Overview</span>
+    <span style="font-size:13px;color:var(--color-accent-700)">Import</span>
+  </div>
+  <div style="padding:26px 24px 30px;display:flex;flex-direction:column;gap:22px">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px">
+      <div>
+        <h2 style="margin:0 0 6px;font-size:28px">Check this looks right</h2>
+        <p style="font-size:14px;opacity:.7;margin:0"><span class="mono">easyequities-aug-2026.csv</span> · 42 rows found</p>
+      </div>
+      <div style="display:flex;gap:12px"><span class="btn btn-secondary">Choose another file</span><span class="btn btn-primary">Import 40 rows</span></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px">
+      <div class="card blueprint" style="padding:14px;gap:3px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.6">Ready</div><div class="mono" style="font:600 21px var(--font-heading);color:#3f7a63">40</div></div>
+      <div class="card blueprint" style="padding:14px;gap:3px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.6">Need a look</div><div class="mono" style="font:600 21px var(--font-heading);color:#9d5f68">2</div></div>
+      <div class="card blueprint" style="padding:14px;gap:3px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.6">New tickers</div><div class="mono" style="font:600 21px var(--font-heading)">1</div></div>
+      <div class="card blueprint" style="padding:14px;gap:3px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.6">Date range</div><div class="mono" style="font:600 15px/1.3 var(--font-heading)">Nov 2025<br>– Aug 2026</div></div>
+    </div>
+
+    <div class="blueprint" style="position:relative;padding:18px 20px">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;opacity:.6;margin-bottom:14px">Which column is what</div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px">
+        <div class="field"><label>Trade Date</label><div class="input" style="display:flex;align-items:center;font-size:13px">Date</div></div>
+        <div class="field"><label>Contract Code</label><div class="input" style="display:flex;align-items:center;font-size:13px">Ticker</div></div>
+        <div class="field"><label>Qty</label><div class="input" style="display:flex;align-items:center;font-size:13px">Shares</div></div>
+        <div class="field"><label>Avg Price (c)</label><div class="input" style="display:flex;align-items:center;font-size:13px">Price ÷ 100</div></div>
+        <div class="field"><label>Costs</label><div class="input" style="display:flex;align-items:center;font-size:13px">Total fees</div></div>
+      </div>
+      <div style="font-size:12px;opacity:.6;margin-top:10px">Cents are converted to rands once, on import — the same rule your price feed uses.</div>
+    </div>
+
+    <table class="table" style="width:100%;border-collapse:collapse;font-size:13.5px">
+      <thead><tr><th style="width:34px"></th><th>Date</th><th>Ticker</th><th style="text-align:right">Shares</th><th style="text-align:right">Price</th><th style="text-align:right">Fees</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>✓</td><td class="mono">02 Aug 2026</td><td class="mono">STXNDQ</td><td class="mono" style="text-align:right">420.00</td><td class="mono" style="text-align:right">R 44.90</td><td class="mono" style="text-align:right">R 96.40</td><td><span class="tag tag-neutral">Ready</span></td></tr>
+        <tr><td>✓</td><td class="mono">04 Jul 2026</td><td class="mono">STXNDQ</td><td class="mono" style="text-align:right">395.00</td><td class="mono" style="text-align:right">R 43.10</td><td class="mono" style="text-align:right">R 91.20</td><td><span class="tag tag-neutral">Ready</span></td></tr>
+        <tr style="background:#fbf1f2"><td>!</td><td class="mono">04 Jul 2026</td><td class="mono">STXNDQ</td><td class="mono" style="text-align:right">395.00</td><td class="mono" style="text-align:right">R 43.10</td><td class="mono" style="text-align:right">R 91.20</td><td><span class="tag" style="background:#f3dfe1;color:#7a4750">Looks like a duplicate</span></td></tr>
+        <tr><td>✓</td><td class="mono">03 Jun 2026</td><td class="mono">SYGWD</td><td class="mono" style="text-align:right">180.00</td><td class="mono" style="text-align:right">R 66.20</td><td class="mono" style="text-align:right">R 58.40</td><td><span class="tag tag-neutral">Ready</span></td></tr>
+        <tr style="background:#fbf1f2"><td>!</td><td class="mono">03 Jun 2026</td><td class="mono">SYG4IR</td><td class="mono" style="text-align:right">240.00</td><td class="mono" style="text-align:right">R 21.05</td><td class="mono" style="text-align:right">R 44.10</td><td><span class="tag tag-outline">New ticker · set a target?</span></td></tr>
+        <tr><td>✓</td><td class="mono">06 Apr 2026</td><td class="mono">ASHGEQ</td><td class="mono" style="text-align:right">310.00</td><td class="mono" style="text-align:right">R 84.60</td><td class="mono" style="text-align:right">R 78.90</td><td><span class="tag tag-neutral">Ready</span></td></tr>
+      </tbody>
+    </table>
+    <div style="font-size:12.5px;opacity:.6">Nothing is saved until you press Import. Rows flagged above stay out unless you tick them in.</div>
+  </div>
+</div>
+</div>
+
+<div class="dv-opt" id="3h">
+<div class="dv-olabel"><a class="dv-oid" href="#3h">3h</a>Settings — theme, currency and FX, tax year</div>
+<div class="dv-card" style="width:900px" data-screen-label="3h Settings">
+  <div class="nav" style="border-bottom:1px solid var(--color-divider);padding:14px 24px">
+    <span class="nav-brand">HOLDFOLIO</span>
+    <span style="font-size:13px;opacity:.6">Overview</span>
+    <span style="font-size:13px;color:var(--color-accent-700)">Settings</span>
+  </div>
+  <div style="padding:26px 24px 32px;display:flex;flex-direction:column;gap:26px">
+    <h2 style="margin:0;font-size:28px">Settings</h2>
+
+    <div style="display:grid;grid-template-columns:210px 1fr;gap:22px;align-items:start;padding-bottom:22px;border-bottom:1px solid var(--color-divider)">
+      <div><h4 style="margin:0 0 4px;font-size:17px">Appearance</h4><p style="font-size:12.5px;opacity:.6;margin:0">Follows your device unless you pick one.</p></div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="seg" style="font-family:var(--font-body);align-self:flex-start">
+          <span class="seg-opt">Light</span><span class="seg-opt">Dark</span><span class="seg-opt" style="background:var(--color-accent);color:var(--color-bg)">Match device</span>
+        </div>
+        <div style="display:flex;gap:14px">
+          <div class="blueprint" style="position:relative;width:150px;padding:12px;background:#f2f2f3">
+            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <div class="mono" style="font-size:11px;color:#1d1f20">R 487 320</div>
+            <div style="height:5px;background:#5980a6;margin-top:8px;width:70%"></div>
+          </div>
+          <div class="blueprint" style="position:relative;width:150px;padding:12px;background:#15181b">
+            <i class="corner tl" style="color:rgba(233,235,237,.5)"></i><i class="corner tr" style="color:rgba(233,235,237,.5)"></i><i class="corner bl" style="color:rgba(233,235,237,.5)"></i><i class="corner br" style="color:rgba(233,235,237,.5)"></i>
+            <div class="mono" style="font-size:11px;color:#e9ebed">R 487 320</div>
+            <div style="height:5px;background:#94bce3;margin-top:8px;width:70%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:210px 1fr;gap:22px;align-items:start;padding-bottom:22px;border-bottom:1px solid var(--color-divider)">
+      <div><h4 style="margin:0 0 4px;font-size:17px">Money</h4><p style="font-size:12.5px;opacity:.6;margin:0">Everything is stored in the currency you bought in; totals are shown in your display currency.</p></div>
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div class="field" style="max-width:280px"><label>Show totals in</label><div class="input" style="display:flex;align-items:center;justify-content:space-between"><span>South African Rand (ZAR)</span><span style="opacity:.5">▾</span></div></div>
+        <div style="display:flex;gap:14px;align-items:flex-end">
+          <div class="field" style="width:220px"><label>Exchange rates from</label><div class="input" style="display:flex;align-items:center;justify-content:space-between"><span>Daily close</span><span style="opacity:.5">▾</span></div></div>
+          <div class="field" style="width:180px"><label>FX spread assumed</label><div class="input mono" style="display:flex;align-items:center">0.35%</div></div>
+        </div>
+        <div style="display:flex;gap:10px;font-size:12.5px;opacity:.7;align-items:center"><span class="tag tag-accent">USD</span><span class="tag tag-accent">GBP</span><span class="tag tag-neutral">EUR</span><span>currencies in use · 1 USD = R 18.42</span></div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:210px 1fr;gap:22px;align-items:start;padding-bottom:22px;border-bottom:1px solid var(--color-divider)">
+      <div><h4 style="margin:0 0 4px;font-size:17px">Tax year</h4><p style="font-size:12.5px;opacity:.6;margin:0">Used for contribution limits and yearly summaries.</p></div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;gap:14px">
+          <div class="field" style="width:200px"><label>Year runs</label><div class="input" style="display:flex;align-items:center">1 Mar – 28 Feb</div></div>
+          <div class="field" style="width:200px"><label>TFSA annual limit</label><div class="input mono" style="display:flex;align-items:center">R 36 000</div></div>
+        </div>
+        <div class="blueprint" style="position:relative;padding:14px 16px;display:flex;align-items:center;gap:14px">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div style="flex:1"><div style="font-size:12.5px;margin-bottom:6px">Contributed so far this year</div><div style="height:8px;background:#e7e7ea"><div style="width:66%;height:100%;background:#94bce3"></div></div></div>
+          <div class="mono" style="font-size:13px">R 24 000 / R 36 000</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:210px 1fr;gap:22px;align-items:start">
+      <div><h4 style="margin:0 0 4px;font-size:17px">Your data</h4><p style="font-size:12.5px;opacity:.6;margin:0">It's yours — take it or delete it.</p></div>
+      <div style="display:flex;gap:12px"><span class="btn btn-secondary">Export everything as CSV</span><span class="btn btn-ghost" style="color:#9d5f68">Delete my account</span></div>
+    </div>
+  </div>
+</div>
+</div>
+
+</div>
+<p class="dv-next">Try next: "dark twins for <a class="dv-oid" href="#3f">3f</a>, <a class="dv-oid" href="#3g">3g</a> and <a class="dv-oid" href="#3h">3h</a>" · "mobile versions of <a class="dv-oid" href="#3a">3a</a> and <a class="dv-oid" href="#3e">3e</a>" · "add the customise-cards panel as a real screen"</p>
+</section>
+
+<section class="dv-turn" id="t2">
+<div class="dv-thd"><a class="dv-tid" href="#t2">2</a><span class="dv-tname">Overview landing + holding detail — with charts</span></div>
+<div class="dv-opts">
+
+<div class="dv-opt" id="2a">
+<div class="dv-olabel"><a class="dv-oid" href="#2a">2a</a>Landing = Overview. Key metrics, adjustable trend line, actual-vs-target donuts. Range tabs are live — click them.</div>
+<div class="dv-card" style="width:1160px" data-screen-label="2a Overview">
+  <div class="nav" style="border-bottom:1px solid var(--color-divider);padding:14px 26px">
+    <span class="nav-brand">HOLDFOLIO</span>
+    <span style="font-size:13px;color:var(--color-accent-700)">Overview</span>
+    <span style="font-size:13px;opacity:.6">Holdings</span>
+    <span style="font-size:13px;opacity:.6">Transactions</span>
+    <span style="font-size:13px;opacity:.6">Targets</span>
+    <span class="btn btn-secondary" style="margin-left:12px">Light / Dark</span>
+    <span class="btn btn-primary">+ Add transaction</span>
+  </div>
+
+  <div style="padding:26px 26px 32px;display:flex;flex-direction:column;gap:26px">
+
+    <div style="display:grid;grid-template-columns:1.35fr 1fr 1fr 1fr;gap:18px;align-items:stretch">
+      <div class="card blueprint" style="padding:18px;gap:6px;background:#eef6ff">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700)">Total value · ZAR</div>
+        <div class="mono" style="font:600 40px/1 var(--font-heading);letter-spacing:-.02em">R 487 320</div>
+        <div class="mono" style="font-size:13px;color:#3f7a63">▲ R 41 208 · +9.23% all time</div>
+      </div>
+      <div class="card blueprint" style="padding:18px;gap:6px">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;opacity:.6">Invested</div>
+        <div class="mono" style="font:600 27px/1.1 var(--font-heading)">R 446 112</div>
+        <div style="font-size:12px;opacity:.55">across 5 holdings</div>
+      </div>
+      <div class="card blueprint" style="padding:18px;gap:6px">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;opacity:.6">Today</div>
+        <div class="mono" style="font:600 27px/1.1 var(--font-heading);color:#3f7a63">+R 1 842</div>
+        <div style="font-size:12px;opacity:.55">+0.38% · JSE close</div>
+      </div>
+      <div class="card blueprint" style="padding:18px;gap:6px">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;opacity:.6">Max drift</div>
+        <div class="mono" style="font:600 27px/1.1 var(--font-heading);color:#9d5f68">−6.9 pts</div>
+        <div style="font-size:12px;opacity:.55">ASHGEQ under target</div>
+      </div>
+    </div>
+
+    <div class="blueprint" style="padding:20px 22px 16px;position:relative">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div style="display:flex;align-items:baseline;gap:14px;margin-bottom:16px">
+        <h3 style="margin:0;font-size:19px;letter-spacing:.03em;text-transform:uppercase">Portfolio value</h3>
+        <span style="font-size:12px;opacity:.55">{{ pvRangeLabel }} · fees included</span>
+        <span class="seg" style="margin-left:auto;font-family:var(--font-body)">
+          <sc-for list="{{ rangeTabs }}" as="t" hint-placeholder-count="5">
+            <span class="seg-opt" onClick="{{ t.onClick }}" style="background:{{ t.bg }};color:{{ t.fg }};padding:7px 13px">{{ t.label }}</span>
+          </sc-for>
+        </span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 62px;gap:8px">
+        <svg viewBox="0 0 780 210" style="width:100%;height:210px" preserveAspectRatio="none">
+          <line x1="0" y1="0.5" x2="780" y2="0.5" stroke="#d4d4d7" stroke-width="1"></line>
+          <line x1="0" y1="93" x2="780" y2="93" stroke="#e7e7ea" stroke-width="1"></line>
+          <line x1="0" y1="186" x2="780" y2="186" stroke="#d4d4d7" stroke-width="1"></line>
+          <polyline points="{{ pvArea }}" fill="#b5d9fd" opacity=".38" stroke="none"></polyline>
+          <polyline points="{{ pvPoints }}" fill="none" stroke="#5980a6" stroke-width="1.75" vector-effect="non-scaling-stroke"></polyline>
+        </svg>
+        <div class="mono" style="display:flex;flex-direction:column;justify-content:space-between;font-size:11px;opacity:.6;height:186px">
+          <span>{{ pvHi }}</span><span>{{ pvMid }}</span><span>{{ pvLo }}</span>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 62px">
+        <div style="display:flex;justify-content:space-between;font-size:11px;opacity:.55;padding-top:6px" class="mono">
+          <sc-for list="{{ pvTickMarks }}" as="t" hint-placeholder-count="5">
+            <span>{{ t.label }}</span>
+          </sc-for>
+        </div>
+        <div></div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1.15fr 1fr;gap:22px">
+      <div class="blueprint" style="padding:20px 22px;position:relative">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:14px">
+          <h3 style="margin:0;font-size:19px;letter-spacing:.03em;text-transform:uppercase">Allocation</h3>
+          <span style="font-size:12px;opacity:.55">actual vs target weight</span>
+        </div>
+        <div style="display:flex;gap:26px;align-items:center">
+          <div style="display:flex;gap:18px">
+            <figure style="text-align:center">
+              <svg viewBox="0 0 180 180" style="width:150px;height:150px">
+                <g transform="rotate(-90 90 90)" fill="none" stroke-width="26">
+                  <circle cx="90" cy="90" r="70" stroke="#5980a6" stroke-dasharray="124.3 439.8" stroke-dashoffset="0"></circle>
+                  <circle cx="90" cy="90" r="70" stroke="#749dc4" stroke-dasharray="111.9 439.8" stroke-dashoffset="-126.3"></circle>
+                  <circle cx="90" cy="90" r="70" stroke="#94bce3" stroke-dasharray="105.8 439.8" stroke-dashoffset="-240.2"></circle>
+                  <circle cx="90" cy="90" r="70" stroke="#c79aa1" stroke-dasharray="55.6 439.8" stroke-dashoffset="-348.0"></circle>
+                  <circle cx="90" cy="90" r="70" stroke="#d6ebff" stroke-dasharray="32.3 439.8" stroke-dashoffset="-405.6"></circle>
+                </g>
+                <text x="90" y="86" text-anchor="middle" style="font:600 20px var(--font-heading);fill:#1d1f20">R 487k</text>
+                <text x="90" y="103" text-anchor="middle" style="font:400 10px var(--font-body);letter-spacing:.12em;fill:#7a7a7d">ACTUAL</text>
+              </svg>
+              <figcaption>Where your money sits now</figcaption>
+            </figure>
+            <figure style="text-align:center">
+              <svg viewBox="0 0 180 180" style="width:150px;height:150px">
+                <g transform="rotate(-90 90 90)" fill="none" stroke-width="26" opacity=".55">
+                  <circle cx="90" cy="90" r="70" stroke="#5980a6" stroke-dasharray="108 439.8" stroke-dashoffset="0"></circle>
+                  <circle cx="90" cy="90" r="70" stroke="#749dc4" stroke-dasharray="108 439.8" stroke-dashoffset="-109.9"></circle>
+                  <circle cx="90" cy="90" r="70" stroke="#94bce3" stroke-dasharray="108 439.8" stroke-dashoffset="-219.9"></circle>
+                  <circle cx="90" cy="90" r="70" stroke="#c79aa1" stroke-dasharray="86 439.8" stroke-dashoffset="-329.9"></circle>
+                  <circle cx="90" cy="90" r="70" stroke="#d6ebff" stroke-dasharray="20 439.8" stroke-dashoffset="-417.8"></circle>
+                </g>
+                <text x="90" y="86" text-anchor="middle" style="font:600 20px var(--font-heading);fill:#1d1f20">100%</text>
+                <text x="90" y="103" text-anchor="middle" style="font:400 10px var(--font-body);letter-spacing:.12em;fill:#7a7a7d">TARGET</text>
+              </svg>
+              <figcaption>The plan you set</figcaption>
+            </figure>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:9px;font-size:13px">
+            <div style="display:grid;grid-template-columns:12px 1fr 62px 54px;align-items:center;gap:10px">
+              <span style="width:12px;height:12px;background:#5980a6;display:block"></span><span>STXNDQ</span><span class="mono" style="text-align:right">28.7%</span><span class="mono" style="text-align:right;color:#9d5f68">+3.7</span>
+            </div>
+            <div style="display:grid;grid-template-columns:12px 1fr 62px 54px;align-items:center;gap:10px">
+              <span style="width:12px;height:12px;background:#749dc4;display:block"></span><span>SYGWD</span><span class="mono" style="text-align:right">25.9%</span><span class="mono" style="text-align:right;opacity:.55">+0.9</span>
+            </div>
+            <div style="display:grid;grid-template-columns:12px 1fr 62px 54px;align-items:center;gap:10px">
+              <span style="width:12px;height:12px;background:#94bce3;display:block"></span><span>STX40</span><span class="mono" style="text-align:right">24.5%</span><span class="mono" style="text-align:right;opacity:.55">−0.5</span>
+            </div>
+            <div style="display:grid;grid-template-columns:12px 1fr 62px 54px;align-items:center;gap:10px">
+              <span style="width:12px;height:12px;background:#c79aa1;display:block"></span><span>ASHGEQ</span><span class="mono" style="text-align:right">13.1%</span><span class="mono" style="text-align:right;color:#9d5f68">−6.9</span>
+            </div>
+            <div style="display:grid;grid-template-columns:12px 1fr 62px 54px;align-items:center;gap:10px">
+              <span style="width:12px;height:12px;background:#d6ebff;display:block"></span><span>NGPLD</span><span class="mono" style="text-align:right">7.8%</span><span class="mono" style="text-align:right;opacity:.55">+2.8</span>
+            </div>
+            <div style="font-size:11.5px;opacity:.5;margin-top:2px">Right column = drift in percentage points.</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:22px">
+        <div class="blueprint" style="padding:18px 20px;position:relative">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;opacity:.6;margin-bottom:12px">Movers · today</div>
+          <div style="display:flex;flex-direction:column;gap:12px;font-size:13.5px">
+            <div style="display:grid;grid-template-columns:78px 1fr 62px;align-items:center;gap:10px">
+              <span class="mono">STXNDQ</span>
+              <div style="height:7px;background:#e7e7ea;position:relative"><div style="position:absolute;inset:0 0 0 50%;background:#8fb7a4"></div><div style="position:absolute;top:-3px;bottom:-3px;left:50%;width:1px;background:#1d1f20"></div></div>
+              <span class="mono" style="text-align:right;color:#3f7a63">+1.4%</span>
+            </div>
+            <div style="display:grid;grid-template-columns:78px 1fr 62px;align-items:center;gap:10px">
+              <span class="mono">NGPLD</span>
+              <div style="height:7px;background:#e7e7ea;position:relative"><div style="position:absolute;inset:0 20% 0 50%;background:#8fb7a4"></div><div style="position:absolute;top:-3px;bottom:-3px;left:50%;width:1px;background:#1d1f20"></div></div>
+              <span class="mono" style="text-align:right;color:#3f7a63">+0.8%</span>
+            </div>
+            <div style="display:grid;grid-template-columns:78px 1fr 62px;align-items:center;gap:10px">
+              <span class="mono">STX40</span>
+              <div style="height:7px;background:#e7e7ea;position:relative"><div style="position:absolute;inset:0 40% 0 50%;background:#8fb7a4"></div><div style="position:absolute;top:-3px;bottom:-3px;left:50%;width:1px;background:#1d1f20"></div></div>
+              <span class="mono" style="text-align:right;color:#3f7a63">+0.3%</span>
+            </div>
+            <div style="display:grid;grid-template-columns:78px 1fr 62px;align-items:center;gap:10px">
+              <span class="mono">ASHGEQ</span>
+              <div style="height:7px;background:#e7e7ea;position:relative"><div style="position:absolute;inset:0 50% 0 34%;background:#c79aa1"></div><div style="position:absolute;top:-3px;bottom:-3px;left:50%;width:1px;background:#1d1f20"></div></div>
+              <span class="mono" style="text-align:right;color:#9d5f68">−0.6%</span>
+            </div>
+          </div>
+        </div>
+        <div class="blueprint" style="padding:18px 20px;position:relative;background:#eef6ff">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:6px">Next step</div>
+          <h4 style="margin:0 0 8px;font-size:19px">Put R 10 000 to work</h4>
+          <p style="font-size:13px;margin:0 0 12px;opacity:.75;text-wrap:pretty">Buying R 7 400 of ASHGEQ and R 2 600 of STX40 closes your drift to 1.2 pts — no selling, no capital gains event.</p>
+          <div class="btn btn-primary btn-block" style="justify-content:center">See rebalance plan</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="dv-opt" id="2b">
+<div class="dv-olabel"><a class="dv-oid" href="#2b">2b</a>Holding detail — one instrument: price trend with buy markers, position maths, full transaction history</div>
+<div class="dv-card" style="width:1160px" data-screen-label="2b Holding detail">
+  <div class="nav" style="border-bottom:1px solid var(--color-divider);padding:14px 26px">
+    <span class="nav-brand">HOLDFOLIO</span>
+    <span style="font-size:13px;opacity:.6">Overview</span>
+    <span style="font-size:13px;color:var(--color-accent-700)">Holdings</span>
+    <span style="font-size:13px;opacity:.6">Transactions</span>
+    <span style="font-size:13px;opacity:.6">Targets</span>
+    <span class="btn btn-primary" style="margin-left:12px">+ Add transaction</span>
+  </div>
+
+  <div style="padding:22px 26px 32px;display:flex;flex-direction:column;gap:24px">
+    <div style="font-size:12px;opacity:.55" class="mono">Holdings / <span style="color:var(--color-accent-700)">STXNDQ</span></div>
+
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px">
+      <div>
+        <div style="display:flex;align-items:baseline;gap:12px">
+          <h2 style="margin:0;font-size:34px">STXNDQ</h2>
+          <span class="tag tag-accent">Overweight · +3.7 pts</span>
+        </div>
+        <div style="font-size:13.5px;opacity:.6">Satrix Nasdaq 100 Feeder ETF · JSE · ZAR</div>
+      </div>
+      <div style="text-align:right">
+        <div class="mono" style="font:600 34px/1 var(--font-heading)">R 45.02</div>
+        <div class="mono" style="font-size:13px;color:#3f7a63">+R 0.62 · +1.4% today</div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <span class="btn btn-secondary">Set target</span>
+        <span class="btn btn-secondary">Sell</span>
+        <span class="btn btn-primary">Buy more</span>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px">
+      <div class="card blueprint" style="padding:15px;gap:4px">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.6">Shares</div>
+        <div class="mono" style="font:600 22px/1.1 var(--font-heading)">3 105.00</div>
+      </div>
+      <div class="card blueprint" style="padding:15px;gap:4px">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.6">Avg cost</div>
+        <div class="mono" style="font:600 22px/1.1 var(--font-heading)">R 32.88</div>
+      </div>
+      <div class="card blueprint" style="padding:15px;gap:4px">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.6">Market value</div>
+        <div class="mono" style="font:600 22px/1.1 var(--font-heading)">R 139 787</div>
+      </div>
+      <div class="card blueprint" style="padding:15px;gap:4px">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.6">Unrealised P/L</div>
+        <div class="mono" style="font:600 22px/1.1 var(--font-heading);color:#3f7a63">+R 37 690</div>
+      </div>
+      <div class="card blueprint" style="padding:15px;gap:4px">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.6">Fees paid</div>
+        <div class="mono" style="font:600 22px/1.1 var(--font-heading)">R 612.40</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 320px;gap:22px;align-items:start">
+      <div class="blueprint" style="padding:20px 22px 16px;position:relative">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="display:flex;align-items:baseline;gap:14px;margin-bottom:16px">
+          <h3 style="margin:0;font-size:19px;letter-spacing:.03em;text-transform:uppercase">Price</h3>
+          <span style="font-size:12px;opacity:.55">{{ hpRangeLabel }} · ● marks your buys</span>
+          <span class="seg" style="margin-left:auto;font-family:var(--font-body)">
+            <sc-for list="{{ hRangeTabs }}" as="t" hint-placeholder-count="5">
+              <span class="seg-opt" onClick="{{ t.onClick }}" style="background:{{ t.bg }};color:{{ t.fg }};padding:7px 13px">{{ t.label }}</span>
+            </sc-for>
+          </span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 62px;gap:8px">
+          <svg viewBox="0 0 700 200" style="width:100%;height:200px" preserveAspectRatio="none">
+            <line x1="0" y1="0.5" x2="700" y2="0.5" stroke="#d4d4d7" stroke-width="1"></line>
+            <line x1="0" y1="88" x2="700" y2="88" stroke="#e7e7ea" stroke-width="1"></line>
+            <line x1="0" y1="176" x2="700" y2="176" stroke="#d4d4d7" stroke-width="1"></line>
+            <polyline points="{{ hpArea }}" fill="#b5d9fd" opacity=".34" stroke="none"></polyline>
+            <polyline points="{{ hpPoints }}" fill="none" stroke="#5980a6" stroke-width="1.75" vector-effect="non-scaling-stroke"></polyline>
+            <sc-for list="{{ hpMarks }}" as="m" hint-placeholder-count="3">
+              <circle cx="{{ m.cx }}" cy="{{ m.cy }}" r="4" fill="#f2f2f3" stroke="#416180" stroke-width="1.5" vector-effect="non-scaling-stroke"></circle>
+            </sc-for>
+          </svg>
+          <div class="mono" style="display:flex;flex-direction:column;justify-content:space-between;font-size:11px;opacity:.6;height:176px">
+            <span>{{ hpHi }}</span><span>{{ hpMid }}</span><span>{{ hpLo }}</span>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 62px">
+          <div style="display:flex;justify-content:space-between;font-size:11px;opacity:.55;padding-top:6px" class="mono">
+            <sc-for list="{{ hpTickMarks }}" as="t" hint-placeholder-count="5">
+              <span>{{ t.label }}</span>
+            </sc-for>
+          </div>
+          <div></div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:22px">
+        <div class="blueprint" style="padding:18px 20px;position:relative">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;opacity:.6;margin-bottom:12px">Cost vs value</div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:5px"><span style="opacity:.6">Cost basis</span><span class="mono">R 102 097</span></div>
+              <div style="height:14px;background:#e7e7ea"><div style="width:73%;height:100%;background:#b5d9fd"></div></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:5px"><span style="opacity:.6">Market value</span><span class="mono">R 139 787</span></div>
+              <div style="height:14px;background:#e7e7ea"><div style="width:100%;height:100%;background:#5980a6"></div></div>
+            </div>
+            <div style="font-size:12.5px;color:#3f7a63" class="mono">Growth of R 37 690 · +36.9%</div>
+          </div>
+        </div>
+        <div class="blueprint" style="padding:18px 20px;position:relative">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;opacity:.6;margin-bottom:10px">Weight in portfolio</div>
+          <div style="height:12px;background:#e7e7ea;position:relative"><div style="position:absolute;inset:0 71% 0 0;background:#94bce3"></div><div style="position:absolute;top:-4px;bottom:-4px;left:25%;width:1px;background:#1d1f20"></div></div>
+          <div class="mono" style="display:flex;justify-content:space-between;font-size:11.5px;opacity:.6;margin-top:5px"><span>28.7% now</span><span>25% target</span></div>
+          <p style="font-size:12.5px;margin:12px 0 0;opacity:.7;text-wrap:pretty">Sell 410 shares — or simply direct your next deposits elsewhere until it drifts back.</p>
+        </div>
+        <div class="blueprint" style="padding:18px 20px;position:relative">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;opacity:.6;margin-bottom:10px">Tags</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <span class="tag tag-accent">offshore</span><span class="tag tag-accent">tech</span><span class="tag tag-neutral">TFSA</span><span class="tag tag-outline">+ add</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:12px">
+        <h3 style="margin:0;font-size:19px;letter-spacing:.03em;text-transform:uppercase">Transactions</h3>
+        <span style="font-size:12px;opacity:.55">6 records · all in ZAR, fees shown separately</span>
+        <span class="btn btn-ghost" style="margin-left:auto">Export CSV</span>
+      </div>
+      <table class="table" style="width:100%;border-collapse:collapse;font-size:14px">
+        <thead><tr>
+          <th style="width:110px">Date</th>
+          <th style="width:70px">Type</th>
+          <th style="text-align:right">Shares</th>
+          <th style="text-align:right">Price</th>
+          <th style="text-align:right">Fees</th>
+          <th style="text-align:right">Total</th>
+          <th>Note</th>
+          <th style="width:60px"></th>
+        </tr></thead>
+        <tbody>
+          <tr>
+            <td class="mono">02 Aug 2026</td><td><span class="tag tag-accent">Buy</span></td>
+            <td class="mono" style="text-align:right">420.00</td><td class="mono" style="text-align:right">R 44.90</td>
+            <td class="mono" style="text-align:right">R 96.40</td><td class="mono" style="text-align:right;font-weight:500">R 18 954</td>
+            <td style="opacity:.7">Monthly debit order</td><td style="text-align:right"><span class="btn btn-ghost">Edit</span></td>
+          </tr>
+          <tr>
+            <td class="mono">04 Jul 2026</td><td><span class="tag tag-accent">Buy</span></td>
+            <td class="mono" style="text-align:right">395.00</td><td class="mono" style="text-align:right">R 43.10</td>
+            <td class="mono" style="text-align:right">R 91.20</td><td class="mono" style="text-align:right;font-weight:500">R 17 116</td>
+            <td style="opacity:.7">Monthly debit order</td><td style="text-align:right"><span class="btn btn-ghost">Edit</span></td>
+          </tr>
+          <tr>
+            <td class="mono">03 Jun 2026</td><td><span class="tag tag-accent">Buy</span></td>
+            <td class="mono" style="text-align:right">460.00</td><td class="mono" style="text-align:right">R 41.05</td>
+            <td class="mono" style="text-align:right">R 98.10</td><td class="mono" style="text-align:right;font-weight:500">R 18 981</td>
+            <td style="opacity:.7">Bonus top-up</td><td style="text-align:right"><span class="btn btn-ghost">Edit</span></td>
+          </tr>
+          <tr>
+            <td class="mono">05 May 2026</td><td><span class="tag" style="background:#f3dfe1;color:#7a4750">Sell</span></td>
+            <td class="mono" style="text-align:right">150.00</td><td class="mono" style="text-align:right">R 40.20</td>
+            <td class="mono" style="text-align:right">R 62.80</td><td class="mono" style="text-align:right;font-weight:500">R 5 967</td>
+            <td style="opacity:.7">Trimmed to 25% target</td><td style="text-align:right"><span class="btn btn-ghost">Edit</span></td>
+          </tr>
+          <tr>
+            <td class="mono">06 Apr 2026</td><td><span class="tag tag-accent">Buy</span></td>
+            <td class="mono" style="text-align:right">880.00</td><td class="mono" style="text-align:right">R 36.40</td>
+            <td class="mono" style="text-align:right">R 132.60</td><td class="mono" style="text-align:right;font-weight:500">R 32 165</td>
+            <td style="opacity:.7">Lump sum</td><td style="text-align:right"><span class="btn btn-ghost">Edit</span></td>
+          </tr>
+          <tr>
+            <td class="mono">14 Nov 2025</td><td><span class="tag tag-accent">Buy</span></td>
+            <td class="mono" style="text-align:right">1 100.00</td><td class="mono" style="text-align:right">R 28.15</td>
+            <td class="mono" style="text-align:right">R 131.30</td><td class="mono" style="text-align:right;font-weight:500">R 31 096</td>
+            <td style="opacity:.7">Opening position</td><td style="text-align:right"><span class="btn btn-ghost">Edit</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+</div>
+
+</div>
+<p class="dv-next">Try next: "make <a class="dv-oid" href="#2a">2a</a> and <a class="dv-oid" href="#2b">2b</a> in dark mode too" · "add a mobile version of <a class="dv-oid" href="#2b">2b</a>" · "swap the donuts for a treemap"</p>
+</section>
+
+<section class="dv-turn" id="t1">
+<div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">Portfolio screen — four densities</span></div>
+<div class="dv-opts">
+
+<div class="dv-opt" id="1a">
+<div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>Ledger — every number on one line, desktop-dense</div>
+<div class="dv-card" style="width:1160px" data-screen-label="1a Ledger">
+  <div class="nav" style="border-bottom:1px solid var(--color-divider);padding:14px 26px">
+    <span class="nav-brand">HOLDFOLIO</span>
+    <span style="font-size:13px;color:var(--color-accent-700)">Portfolio</span>
+    <span style="font-size:13px;opacity:.6">Transactions</span>
+    <span style="font-size:13px;opacity:.6">Targets</span>
+    <span style="font-size:13px;opacity:.6">Settings</span>
+    <span class="btn btn-secondary" style="margin-left:12px">Light / Dark</span>
+    <span class="btn btn-primary">+ Add transaction</span>
+  </div>
+  <div style="padding:26px 26px 30px;display:flex;flex-direction:column;gap:22px">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px">
+      <div>
+        <div style="font:10px/1 var(--font-body);letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:8px">Total value · ZAR</div>
+        <div class="mono" style="font:600 44px/1 var(--font-heading);letter-spacing:-.02em">R 487 320.55</div>
+        <div style="display:flex;gap:14px;margin-top:10px;font-size:13px">
+          <span class="mono" style="color:#3f7a63">▲ R 41 208.10 &nbsp;+9.23%</span>
+          <span style="opacity:.5">all time · after R2 106 fees</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:14px">
+        <div class="card blueprint" style="width:168px;padding:14px 16px;gap:4px">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.6">Invested</div>
+          <div class="mono" style="font:600 22px/1.1 var(--font-heading)">R 446 112</div>
+        </div>
+        <div class="card blueprint" style="width:168px;padding:14px 16px;gap:4px">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.6">Today</div>
+          <div class="mono" style="font:600 22px/1.1 var(--font-heading);color:#3f7a63">+R 1 842</div>
+        </div>
+        <div class="card blueprint" style="width:168px;padding:14px 16px;gap:4px">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.6">Max drift</div>
+          <div class="mono" style="font:600 22px/1.1 var(--font-heading);color:#9d5f68">−4.8 pts</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:12px">
+      <span class="seg" style="font-family:var(--font-body)">
+        <span class="seg-opt" style="background:var(--color-accent);color:var(--color-bg)">Holdings</span>
+        <span class="seg-opt">Allocation</span>
+        <span class="seg-opt">Performance</span>
+      </span>
+      <span style="margin-left:auto;font-size:12px;opacity:.55">Prices 14 Aug 2026, 17:05 · JSE close</span>
+    </div>
+
+    <table class="table" style="width:100%;border-collapse:collapse;font-size:14px">
+      <thead><tr>
+        <th style="width:190px">Holding</th>
+        <th style="text-align:right">Shares</th>
+        <th style="text-align:right">Avg cost</th>
+        <th style="text-align:right">Price</th>
+        <th style="text-align:right">Value</th>
+        <th style="text-align:right">P/L</th>
+        <th style="width:150px">Weight vs target</th>
+        <th style="text-align:right;width:74px">Drift</th>
+      </tr></thead>
+      <tbody>
+        <tr>
+          <td><div style="font:600 15px var(--font-heading)">STX40</div><div style="font-size:11.5px;opacity:.55">Satrix Top 40 ETF</div></td>
+          <td class="mono" style="text-align:right">1 240.00</td>
+          <td class="mono" style="text-align:right">R 84.12</td>
+          <td class="mono" style="text-align:right">R 96.40</td>
+          <td class="mono" style="text-align:right;font-weight:500">R 119 536</td>
+          <td class="mono" style="text-align:right;color:#3f7a63">+14.6%</td>
+          <td><div style="height:8px;background:#d6ebff;position:relative"><div style="position:absolute;inset:0 76% 0 0;background:#749dc4"></div><div style="position:absolute;top:-3px;bottom:-3px;left:25%;width:1px;background:#1d1f20"></div></div><div style="font-size:11px;opacity:.55;margin-top:3px" class="mono">24.5% / 25.0%</div></td>
+          <td class="mono" style="text-align:right;opacity:.6">−0.5</td>
+        </tr>
+        <tr>
+          <td><div style="font:600 15px var(--font-heading)">STXNDQ</div><div style="font-size:11.5px;opacity:.55">Satrix Nasdaq 100</div></td>
+          <td class="mono" style="text-align:right">3 105.00</td>
+          <td class="mono" style="text-align:right">R 32.88</td>
+          <td class="mono" style="text-align:right">R 45.02</td>
+          <td class="mono" style="text-align:right;font-weight:500">R 139 787</td>
+          <td class="mono" style="text-align:right;color:#3f7a63">+36.9%</td>
+          <td><div style="height:8px;background:#d6ebff;position:relative"><div style="position:absolute;inset:0 71% 0 0;background:#749dc4"></div><div style="position:absolute;top:-3px;bottom:-3px;left:25%;width:1px;background:#1d1f20"></div></div><div style="font-size:11px;opacity:.55;margin-top:3px" class="mono">28.7% / 25.0%</div></td>
+          <td class="mono" style="text-align:right;color:#9d5f68">+3.7</td>
+        </tr>
+        <tr>
+          <td><div style="font:600 15px var(--font-heading)">SYGWD</div><div style="font-size:11.5px;opacity:.55">Sygnia World Equity</div></td>
+          <td class="mono" style="text-align:right">1 880.00</td>
+          <td class="mono" style="text-align:right">R 61.40</td>
+          <td class="mono" style="text-align:right">R 67.15</td>
+          <td class="mono" style="text-align:right;font-weight:500">R 126 242</td>
+          <td class="mono" style="text-align:right;color:#3f7a63">+9.4%</td>
+          <td><div style="height:8px;background:#d6ebff;position:relative"><div style="position:absolute;inset:0 74% 0 0;background:#749dc4"></div><div style="position:absolute;top:-3px;bottom:-3px;left:25%;width:1px;background:#1d1f20"></div></div><div style="font-size:11px;opacity:.55;margin-top:3px" class="mono">25.9% / 25.0%</div></td>
+          <td class="mono" style="text-align:right;opacity:.6">+0.9</td>
+        </tr>
+        <tr>
+          <td><div style="font:600 15px var(--font-heading)">ASHGEQ</div><div style="font-size:11.5px;opacity:.55">Ashburton Global 1200</div></td>
+          <td class="mono" style="text-align:right">742.00</td>
+          <td class="mono" style="text-align:right">R 88.05</td>
+          <td class="mono" style="text-align:right">R 86.20</td>
+          <td class="mono" style="text-align:right;font-weight:500">R 63 960</td>
+          <td class="mono" style="text-align:right;color:#9d5f68">−2.1%</td>
+          <td><div style="height:8px;background:#d6ebff;position:relative"><div style="position:absolute;inset:0 87% 0 0;background:#749dc4"></div><div style="position:absolute;top:-3px;bottom:-3px;left:20%;width:1px;background:#1d1f20"></div></div><div style="font-size:11px;opacity:.55;margin-top:3px" class="mono">13.1% / 20.0%</div></td>
+          <td class="mono" style="text-align:right;color:#9d5f68">−6.9</td>
+        </tr>
+        <tr>
+          <td><div style="font:600 15px var(--font-heading)">NGPLD</div><div style="font-size:11.5px;opacity:.55">NewGold Palladium</div></td>
+          <td class="mono" style="text-align:right">410.00</td>
+          <td class="mono" style="text-align:right">R 88.90</td>
+          <td class="mono" style="text-align:right">R 92.18</td>
+          <td class="mono" style="text-align:right;font-weight:500">R 37 794</td>
+          <td class="mono" style="text-align:right;color:#3f7a63">+3.7%</td>
+          <td><div style="height:8px;background:#d6ebff;position:relative"><div style="position:absolute;inset:0 92% 0 0;background:#749dc4"></div><div style="position:absolute;top:-3px;bottom:-3px;left:5%;width:1px;background:#1d1f20"></div></div><div style="font-size:11px;opacity:.55;margin-top:3px" class="mono">7.8% / 5.0%</div></td>
+          <td class="mono" style="text-align:right;color:#9d5f68">+2.8</td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="display:flex;gap:10px"><span class="btn btn-secondary">Export CSV</span><span class="btn btn-ghost">Rebalance plan →</span></div>
+  </div>
+</div>
+</div>
+
+<div class="dv-opt" id="1b">
+<div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>Calm cards — one holding per tile, beginner-legible</div>
+<div class="dv-card" style="width:1040px" data-screen-label="1b Cards">
+  <div class="nav" style="border-bottom:1px solid var(--color-divider);padding:14px 24px">
+    <span class="nav-brand">HOLDFOLIO</span>
+    <span style="font-size:13px;color:var(--color-accent-700)">Portfolio</span>
+    <span style="font-size:13px;opacity:.6">Transactions</span>
+    <span style="font-size:13px;opacity:.6">Targets</span>
+    <span class="btn btn-primary">+ Add transaction</span>
+  </div>
+  <div style="padding:30px 24px 34px;display:flex;flex-direction:column;gap:24px">
+    <div style="display:flex;align-items:center;gap:26px;padding:22px 24px;background:#eef6ff;border:1px solid var(--color-divider);position:relative" class="blueprint">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div>
+        <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700)">You own</div>
+        <div class="mono" style="font:600 38px/1.1 var(--font-heading)">R 487 320</div>
+        <div class="mono" style="font-size:13px;color:#3f7a63;margin-top:2px">+R 41 208 &nbsp;+9.2% since you started</div>
+      </div>
+      <svg viewBox="0 0 320 72" style="width:320px;height:72px;margin-left:auto" preserveAspectRatio="none">
+        <polyline points="0,58 32,54 64,60 96,44 128,48 160,36 192,30 224,34 256,22 288,16 320,10" fill="none" stroke="#5980a6" stroke-width="1.5"></polyline>
+        <polyline points="0,58 32,54 64,60 96,44 128,48 160,36 192,30 224,34 256,22 288,16 320,10 320,72 0,72" fill="#b5d9fd" opacity=".45" stroke="none"></polyline>
+      </svg>
+      <div style="text-align:right;padding-left:22px;border-left:1px solid var(--color-divider)">
+        <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;opacity:.6">On track</div>
+        <div style="font:600 30px/1.1 var(--font-heading);color:var(--color-accent-700)">4 of 5</div>
+        <div style="font-size:12px;opacity:.6">holdings near target</div>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:baseline;gap:10px">
+      <h3 style="font-size:20px;margin:0">Your holdings</h3>
+      <span style="font-size:12px;opacity:.55">sorted by value</span>
+      <span class="tag tag-outline" style="margin-left:auto">1 needs a top-up</span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:22px">
+      <div class="card blueprint" style="padding:18px;gap:10px">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="display:flex;justify-content:space-between;align-items:baseline">
+          <div><div style="font:600 19px/1.1 var(--font-heading)">STXNDQ</div><div style="font-size:11.5px;opacity:.55">Satrix Nasdaq 100</div></div>
+          <span class="tag tag-accent">Overweight</span>
+        </div>
+        <div class="mono" style="font:600 26px/1.1 var(--font-heading)">R 139 787</div>
+        <div class="mono" style="font-size:13px;color:#3f7a63">+R 37 690 · +36.9%</div>
+        <div style="margin-top:4px">
+          <div style="height:10px;background:#e7e7ea;position:relative"><div style="position:absolute;inset:0 71% 0 0;background:#94bce3"></div><div style="position:absolute;top:-3px;bottom:-3px;left:25%;width:1px;background:#1d1f20"></div></div>
+          <div class="mono" style="display:flex;justify-content:space-between;font-size:11px;opacity:.6;margin-top:4px"><span>28.7% now</span><span>25% target</span></div>
+        </div>
+      </div>
+      <div class="card blueprint" style="padding:18px;gap:10px">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="display:flex;justify-content:space-between;align-items:baseline">
+          <div><div style="font:600 19px/1.1 var(--font-heading)">SYGWD</div><div style="font-size:11.5px;opacity:.55">Sygnia World Equity</div></div>
+          <span class="tag tag-neutral">On target</span>
+        </div>
+        <div class="mono" style="font:600 26px/1.1 var(--font-heading)">R 126 242</div>
+        <div class="mono" style="font-size:13px;color:#3f7a63">+R 10 810 · +9.4%</div>
+        <div style="margin-top:4px">
+          <div style="height:10px;background:#e7e7ea;position:relative"><div style="position:absolute;inset:0 74% 0 0;background:#94bce3"></div><div style="position:absolute;top:-3px;bottom:-3px;left:25%;width:1px;background:#1d1f20"></div></div>
+          <div class="mono" style="display:flex;justify-content:space-between;font-size:11px;opacity:.6;margin-top:4px"><span>25.9% now</span><span>25% target</span></div>
+        </div>
+      </div>
+      <div class="card blueprint" style="padding:18px;gap:10px">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="display:flex;justify-content:space-between;align-items:baseline">
+          <div><div style="font:600 19px/1.1 var(--font-heading)">STX40</div><div style="font-size:11.5px;opacity:.55">Satrix Top 40 ETF</div></div>
+          <span class="tag tag-neutral">On target</span>
+        </div>
+        <div class="mono" style="font:600 26px/1.1 var(--font-heading)">R 119 536</div>
+        <div class="mono" style="font-size:13px;color:#3f7a63">+R 15 227 · +14.6%</div>
+        <div style="margin-top:4px">
+          <div style="height:10px;background:#e7e7ea;position:relative"><div style="position:absolute;inset:0 76% 0 0;background:#94bce3"></div><div style="position:absolute;top:-3px;bottom:-3px;left:25%;width:1px;background:#1d1f20"></div></div>
+          <div class="mono" style="display:flex;justify-content:space-between;font-size:11px;opacity:.6;margin-top:4px"><span>24.5% now</span><span>25% target</span></div>
+        </div>
+      </div>
+      <div class="card blueprint" style="padding:18px;gap:10px;background:#fbf1f2">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="display:flex;justify-content:space-between;align-items:baseline">
+          <div><div style="font:600 19px/1.1 var(--font-heading)">ASHGEQ</div><div style="font-size:11.5px;opacity:.55">Ashburton Global 1200</div></div>
+          <span class="tag" style="background:#f3dfe1;color:#7a4750">Underweight</span>
+        </div>
+        <div class="mono" style="font:600 26px/1.1 var(--font-heading)">R 63 960</div>
+        <div class="mono" style="font-size:13px;color:#9d5f68">−R 1 373 · −2.1%</div>
+        <div style="margin-top:4px">
+          <div style="height:10px;background:#e7e7ea;position:relative"><div style="position:absolute;inset:0 87% 0 0;background:#c79aa1"></div><div style="position:absolute;top:-3px;bottom:-3px;left:20%;width:1px;background:#1d1f20"></div></div>
+          <div class="mono" style="display:flex;justify-content:space-between;font-size:11px;opacity:.6;margin-top:4px"><span>13.1% now</span><span>20% target</span></div>
+        </div>
+        <div style="font-size:12px;color:#7a4750">Add ~R 33 500 to reach target</div>
+      </div>
+      <div class="card blueprint" style="padding:18px;gap:10px">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="display:flex;justify-content:space-between;align-items:baseline">
+          <div><div style="font:600 19px/1.1 var(--font-heading)">NGPLD</div><div style="font-size:11.5px;opacity:.55">NewGold Palladium</div></div>
+          <span class="tag tag-accent">Overweight</span>
+        </div>
+        <div class="mono" style="font:600 26px/1.1 var(--font-heading)">R 37 794</div>
+        <div class="mono" style="font-size:13px;color:#3f7a63">+R 1 345 · +3.7%</div>
+        <div style="margin-top:4px">
+          <div style="height:10px;background:#e7e7ea;position:relative"><div style="position:absolute;inset:0 92% 0 0;background:#94bce3"></div><div style="position:absolute;top:-3px;bottom:-3px;left:5%;width:1px;background:#1d1f20"></div></div>
+          <div class="mono" style="display:flex;justify-content:space-between;font-size:11px;opacity:.6;margin-top:4px"><span>7.8% now</span><span>5% target</span></div>
+        </div>
+      </div>
+      <div class="card blueprint" style="padding:18px;gap:8px;align-items:flex-start;justify-content:center;border-style:dashed">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="font:600 19px/1.1 var(--font-heading);color:var(--color-accent-700)">+ Add a holding</div>
+        <div style="font-size:12.5px;opacity:.6;max-width:200px">Record a buy and we work out shares, fees and weight for you.</div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="dv-opt" id="1c">
+<div class="dv-olabel"><a class="dv-oid" href="#1c">1c</a>Allocation-first, dark — the drift board leads, the list follows</div>
+<div class="dv-card" style="width:1160px;--color-bg:#15181b;--color-surface:#1c2126;--color-text:#e9ebed;--color-divider:rgba(233,235,237,.16);--color-accent:#94bce3;--color-accent-700:#b5d9fd;background:#15181b;color:#e9ebed" data-screen-label="1c Allocation dark">
+  <div class="nav" style="border-bottom:1px solid var(--color-divider);padding:14px 26px">
+    <span class="nav-brand">HOLDFOLIO</span>
+    <span style="font-size:13px;color:#b5d9fd">Portfolio</span>
+    <span style="font-size:13px;opacity:.55">Transactions</span>
+    <span style="font-size:13px;opacity:.55">Targets</span>
+    <span class="btn btn-secondary">Dark</span>
+    <span class="btn btn-primary" style="background:#94bce3;border-color:#94bce3;color:#15181b">+ Add transaction</span>
+  </div>
+  <div style="padding:28px 26px 34px;display:grid;grid-template-columns:1fr 340px;gap:30px">
+    <div style="display:flex;flex-direction:column;gap:24px">
+      <div style="display:flex;align-items:flex-end;gap:30px">
+        <div>
+          <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#b5d9fd">Total value</div>
+          <div class="mono" style="font:600 46px/1 var(--font-heading)">R 487 320.55</div>
+        </div>
+        <div class="mono" style="font-size:14px;color:#9ccdb6;padding-bottom:6px">+9.23% all time · +0.38% today</div>
+      </div>
+
+      <div class="blueprint" style="padding:22px 20px 18px;position:relative">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:18px">
+          <h4 style="margin:0;font-size:16px;letter-spacing:.04em;text-transform:uppercase">Actual vs target weight</h4>
+          <span style="font-size:11.5px;opacity:.55">bar = actual · tick = target</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div style="display:grid;grid-template-columns:96px 1fr 84px;align-items:center;gap:14px">
+            <span class="mono" style="font-size:13px">STXNDQ</span>
+            <div style="height:22px;background:rgba(233,235,237,.07);position:relative"><div style="position:absolute;inset:0 43% 0 0;background:#6d94ba"></div><div style="position:absolute;top:-4px;bottom:-4px;left:50%;width:1px;background:#e9ebed"></div></div>
+            <span class="mono" style="font-size:13px;color:#d9a3ab;text-align:right">+3.7 pts</span>
+          </div>
+          <div style="display:grid;grid-template-columns:96px 1fr 84px;align-items:center;gap:14px">
+            <span class="mono" style="font-size:13px">SYGWD</span>
+            <div style="height:22px;background:rgba(233,235,237,.07);position:relative"><div style="position:absolute;inset:0 48% 0 0;background:#6d94ba"></div><div style="position:absolute;top:-4px;bottom:-4px;left:50%;width:1px;background:#e9ebed"></div></div>
+            <span class="mono" style="font-size:13px;opacity:.6;text-align:right">+0.9</span>
+          </div>
+          <div style="display:grid;grid-template-columns:96px 1fr 84px;align-items:center;gap:14px">
+            <span class="mono" style="font-size:13px">STX40</span>
+            <div style="height:22px;background:rgba(233,235,237,.07);position:relative"><div style="position:absolute;inset:0 51% 0 0;background:#6d94ba"></div><div style="position:absolute;top:-4px;bottom:-4px;left:50%;width:1px;background:#e9ebed"></div></div>
+            <span class="mono" style="font-size:13px;opacity:.6;text-align:right">−0.5</span>
+          </div>
+          <div style="display:grid;grid-template-columns:96px 1fr 84px;align-items:center;gap:14px">
+            <span class="mono" style="font-size:13px">ASHGEQ</span>
+            <div style="height:22px;background:rgba(233,235,237,.07);position:relative"><div style="position:absolute;inset:0 74% 0 0;background:#a8737d"></div><div style="position:absolute;top:-4px;bottom:-4px;left:40%;width:1px;background:#e9ebed"></div></div>
+            <span class="mono" style="font-size:13px;color:#d9a3ab;text-align:right">−6.9 pts</span>
+          </div>
+          <div style="display:grid;grid-template-columns:96px 1fr 84px;align-items:center;gap:14px">
+            <span class="mono" style="font-size:13px">NGPLD</span>
+            <div style="height:22px;background:rgba(233,235,237,.07);position:relative"><div style="position:absolute;inset:0 84% 0 0;background:#6d94ba"></div><div style="position:absolute;top:-4px;bottom:-4px;left:10%;width:1px;background:#e9ebed"></div></div>
+            <span class="mono" style="font-size:13px;color:#d9a3ab;text-align:right">+2.8</span>
+          </div>
+        </div>
+      </div>
+
+      <table class="table" style="width:100%;border-collapse:collapse;font-size:13.5px">
+        <thead><tr><th>Holding</th><th style="text-align:right">Shares</th><th style="text-align:right">Price</th><th style="text-align:right">Value</th><th style="text-align:right">P/L</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">STXNDQ</td><td class="mono" style="text-align:right">3 105.00</td><td class="mono" style="text-align:right">R 45.02</td><td class="mono" style="text-align:right">R 139 787</td><td class="mono" style="text-align:right;color:#9ccdb6">+36.9%</td></tr>
+          <tr><td class="mono">SYGWD</td><td class="mono" style="text-align:right">1 880.00</td><td class="mono" style="text-align:right">R 67.15</td><td class="mono" style="text-align:right">R 126 242</td><td class="mono" style="text-align:right;color:#9ccdb6">+9.4%</td></tr>
+          <tr><td class="mono">STX40</td><td class="mono" style="text-align:right">1 240.00</td><td class="mono" style="text-align:right">R 96.40</td><td class="mono" style="text-align:right">R 119 536</td><td class="mono" style="text-align:right;color:#9ccdb6">+14.6%</td></tr>
+          <tr><td class="mono">ASHGEQ</td><td class="mono" style="text-align:right">742.00</td><td class="mono" style="text-align:right">R 86.20</td><td class="mono" style="text-align:right">R 63 960</td><td class="mono" style="text-align:right;color:#d9a3ab">−2.1%</td></tr>
+          <tr><td class="mono">NGPLD</td><td class="mono" style="text-align:right">410.00</td><td class="mono" style="text-align:right">R 92.18</td><td class="mono" style="text-align:right">R 37 794</td><td class="mono" style="text-align:right;color:#9ccdb6">+3.7%</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:20px">
+      <div class="blueprint" style="padding:18px;position:relative;background:rgba(148,188,227,.07)">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#b5d9fd;margin-bottom:8px">Next deposit · R 10 000</div>
+        <h4 style="margin:0 0 12px;font-size:19px">Buy this to rebalance</h4>
+        <div style="display:flex;flex-direction:column;gap:12px;font-size:13.5px">
+          <div style="display:flex;justify-content:space-between;padding-bottom:12px;border-bottom:1px solid var(--color-divider)"><span class="mono">ASHGEQ</span><span class="mono">R 7 400 · 86 sh</span></div>
+          <div style="display:flex;justify-content:space-between;padding-bottom:12px;border-bottom:1px solid var(--color-divider)"><span class="mono">STX40</span><span class="mono">R 2 600 · 27 sh</span></div>
+          <div style="display:flex;justify-content:space-between;opacity:.6"><span>Est. fees</span><span class="mono">R 41.20</span></div>
+        </div>
+        <div class="btn btn-primary btn-block" style="background:#94bce3;border-color:#94bce3;color:#15181b;justify-content:center">Record these buys</div>
+        <div style="font-size:11.5px;opacity:.55;margin-top:8px">No selling needed — drift closes to 1.2 pts.</div>
+      </div>
+      <div class="blueprint" style="padding:18px;position:relative">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;opacity:.6;margin-bottom:10px">Recent activity</div>
+        <div style="display:flex;flex-direction:column;gap:10px;font-size:13px">
+          <div style="display:flex;justify-content:space-between"><span>Buy STXNDQ</span><span class="mono" style="opacity:.6">02 Aug</span></div>
+          <div style="display:flex;justify-content:space-between"><span>Buy SYGWD</span><span class="mono" style="opacity:.6">28 Jul</span></div>
+          <div style="display:flex;justify-content:space-between"><span>Deposit R 10 000</span><span class="mono" style="opacity:.6">25 Jul</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="dv-opt" id="1d">
+<div class="dv-olabel"><a class="dv-oid" href="#1d">1d</a>Mobile — same screen, light and dark</div>
+<div style="display:flex;gap:26px">
+<div class="dv-card" style="width:390px" data-screen-label="1d Mobile light">
+  <div style="display:flex;justify-content:space-between;padding:12px 18px 6px;font-size:12px;opacity:.6" class="mono"><span>09:41</span><span>▂▄ ⌁ 84%</span></div>
+  <div style="padding:6px 18px 18px;display:flex;flex-direction:column;gap:18px">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <span class="nav-brand" style="font-size:16px">HOLDFOLIO</span>
+      <span class="btn btn-secondary" style="min-height:44px;padding-inline:14px">Dark</span>
+    </div>
+    <div class="blueprint" style="padding:18px;position:relative;background:#eef6ff">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700)">You own</div>
+      <div class="mono" style="font:600 34px/1.1 var(--font-heading)">R 487 320</div>
+      <div class="mono" style="font-size:13px;color:#3f7a63">+R 41 208 · +9.2%</div>
+      <svg viewBox="0 0 300 56" style="width:100%;height:56px;margin-top:10px" preserveAspectRatio="none">
+        <polyline points="0,46 30,42 60,48 90,34 120,38 150,28 180,22 210,26 240,16 270,12 300,8" fill="none" stroke="#5980a6" stroke-width="1.5"></polyline>
+      </svg>
+    </div>
+    <div class="seg" style="font-family:var(--font-body);width:100%">
+      <span class="seg-opt" style="flex:1;justify-content:center;min-height:44px;display:flex;align-items:center;background:var(--color-accent);color:var(--color-bg)">Holdings</span>
+      <span class="seg-opt" style="flex:1;justify-content:center;min-height:44px;display:flex;align-items:center">Targets</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="blueprint" style="padding:14px;position:relative;min-height:44px">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:600 17px var(--font-heading)">STXNDQ</span><span class="mono" style="font:600 17px var(--font-heading)">R 139 787</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-top:2px"><span style="opacity:.55">3 105 sh · R 45.02</span><span class="mono" style="color:#3f7a63">+36.9%</span></div>
+        <div style="height:8px;background:#e7e7ea;position:relative;margin-top:10px"><div style="position:absolute;inset:0 71% 0 0;background:#94bce3"></div><div style="position:absolute;top:-3px;bottom:-3px;left:25%;width:1px;background:#1d1f20"></div></div>
+      </div>
+      <div class="blueprint" style="padding:14px;position:relative">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:600 17px var(--font-heading)">SYGWD</span><span class="mono" style="font:600 17px var(--font-heading)">R 126 242</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-top:2px"><span style="opacity:.55">1 880 sh · R 67.15</span><span class="mono" style="color:#3f7a63">+9.4%</span></div>
+        <div style="height:8px;background:#e7e7ea;position:relative;margin-top:10px"><div style="position:absolute;inset:0 74% 0 0;background:#94bce3"></div><div style="position:absolute;top:-3px;bottom:-3px;left:25%;width:1px;background:#1d1f20"></div></div>
+      </div>
+      <div class="blueprint" style="padding:14px;position:relative;background:#fbf1f2">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:600 17px var(--font-heading)">ASHGEQ</span><span class="mono" style="font:600 17px var(--font-heading)">R 63 960</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-top:2px"><span style="opacity:.55">742 sh · R 86.20</span><span class="mono" style="color:#9d5f68">−2.1%</span></div>
+        <div style="height:8px;background:#e7e7ea;position:relative;margin-top:10px"><div style="position:absolute;inset:0 87% 0 0;background:#c79aa1"></div><div style="position:absolute;top:-3px;bottom:-3px;left:20%;width:1px;background:#1d1f20"></div></div>
+        <div style="font-size:12px;color:#7a4750;margin-top:8px">6.9 pts under target</div>
+      </div>
+    </div>
+    <div class="btn btn-primary btn-block" style="min-height:48px;justify-content:center">+ Add transaction</div>
+    <div style="display:flex;justify-content:space-between;padding-top:14px;border-top:1px solid var(--color-divider);font-size:11.5px;text-align:center">
+      <span style="flex:1;color:var(--color-accent-700)">Portfolio</span><span style="flex:1;opacity:.55">Activity</span><span style="flex:1;opacity:.55">Targets</span><span style="flex:1;opacity:.55">Settings</span>
+    </div>
+  </div>
+</div>
+<div class="dv-card" style="width:390px;--color-bg:#15181b;--color-surface:#1c2126;--color-text:#e9ebed;--color-divider:rgba(233,235,237,.16);--color-accent:#94bce3;--color-accent-700:#b5d9fd;background:#15181b;color:#e9ebed" data-screen-label="1d Mobile dark">
+  <div style="display:flex;justify-content:space-between;padding:12px 18px 6px;font-size:12px;opacity:.6" class="mono"><span>21:41</span><span>▂▄ ⌁ 62%</span></div>
+  <div style="padding:6px 18px 18px;display:flex;flex-direction:column;gap:18px">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <span class="nav-brand" style="font-size:16px">HOLDFOLIO</span>
+      <span class="btn btn-secondary" style="min-height:44px;padding-inline:14px">Light</span>
+    </div>
+    <div class="blueprint" style="padding:18px;position:relative;background:rgba(148,188,227,.09)">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#b5d9fd">You own</div>
+      <div class="mono" style="font:600 34px/1.1 var(--font-heading)">R 487 320</div>
+      <div class="mono" style="font-size:13px;color:#9ccdb6">+R 41 208 · +9.2%</div>
+      <svg viewBox="0 0 300 56" style="width:100%;height:56px;margin-top:10px" preserveAspectRatio="none">
+        <polyline points="0,46 30,42 60,48 90,34 120,38 150,28 180,22 210,26 240,16 270,12 300,8" fill="none" stroke="#94bce3" stroke-width="1.5"></polyline>
+      </svg>
+    </div>
+    <div class="seg" style="font-family:var(--font-body);width:100%">
+      <span class="seg-opt" style="flex:1;justify-content:center;min-height:44px;display:flex;align-items:center;background:#94bce3;color:#15181b">Holdings</span>
+      <span class="seg-opt" style="flex:1;justify-content:center;min-height:44px;display:flex;align-items:center">Targets</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="blueprint" style="padding:14px;position:relative">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:600 17px var(--font-heading)">STXNDQ</span><span class="mono" style="font:600 17px var(--font-heading)">R 139 787</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-top:2px"><span style="opacity:.55">3 105 sh · R 45.02</span><span class="mono" style="color:#9ccdb6">+36.9%</span></div>
+        <div style="height:8px;background:rgba(233,235,237,.1);position:relative;margin-top:10px"><div style="position:absolute;inset:0 71% 0 0;background:#6d94ba"></div><div style="position:absolute;top:-3px;bottom:-3px;left:25%;width:1px;background:#e9ebed"></div></div>
+      </div>
+      <div class="blueprint" style="padding:14px;position:relative">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:600 17px var(--font-heading)">SYGWD</span><span class="mono" style="font:600 17px var(--font-heading)">R 126 242</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-top:2px"><span style="opacity:.55">1 880 sh · R 67.15</span><span class="mono" style="color:#9ccdb6">+9.4%</span></div>
+        <div style="height:8px;background:rgba(233,235,237,.1);position:relative;margin-top:10px"><div style="position:absolute;inset:0 74% 0 0;background:#6d94ba"></div><div style="position:absolute;top:-3px;bottom:-3px;left:25%;width:1px;background:#e9ebed"></div></div>
+      </div>
+      <div class="blueprint" style="padding:14px;position:relative;background:rgba(217,163,171,.1)">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:600 17px var(--font-heading)">ASHGEQ</span><span class="mono" style="font:600 17px var(--font-heading)">R 63 960</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-top:2px"><span style="opacity:.55">742 sh · R 86.20</span><span class="mono" style="color:#d9a3ab">−2.1%</span></div>
+        <div style="height:8px;background:rgba(233,235,237,.1);position:relative;margin-top:10px"><div style="position:absolute;inset:0 87% 0 0;background:#a8737d"></div><div style="position:absolute;top:-3px;bottom:-3px;left:20%;width:1px;background:#e9ebed"></div></div>
+        <div style="font-size:12px;color:#d9a3ab;margin-top:8px">6.9 pts under target</div>
+      </div>
+    </div>
+    <div class="btn btn-primary btn-block" style="min-height:48px;justify-content:center;background:#94bce3;border-color:#94bce3;color:#15181b">+ Add transaction</div>
+    <div style="display:flex;justify-content:space-between;padding-top:14px;border-top:1px solid var(--color-divider);font-size:11.5px;text-align:center">
+      <span style="flex:1;color:#b5d9fd">Portfolio</span><span style="flex:1;opacity:.55">Activity</span><span style="flex:1;opacity:.55">Targets</span><span style="flex:1;opacity:.55">Settings</span>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+</div>
+<p class="dv-next">Try next: "take <a class="dv-oid" href="#1b">1b</a>'s cards but keep <a class="dv-oid" href="#1a">1a</a>'s dense table below them" · "make <a class="dv-oid" href="#1c">1c</a> in light mode" · "show the add-transaction flow next"</p>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">class Component extends DCLogic {
+  state = { range: "1Y", hRange: "1Y" };
+
+  pv = {
+    "1M": [452,455,449,458,462,459,468,472,470,479,483,487],
+    "3M": [418,425,421,433,430,441,438,449,456,452,463,470,466,478,487],
+    "6M": [388,395,391,402,412,405,418,414,428,437,431,445,452,448,462,470,466,479,487],
+    "1Y": [352,346,361,358,372,381,375,390,398,392,408,417,411,426,435,429,444,455,449,463,472,468,481,487],
+    "ALL": [180,205,198,232,255,241,278,296,285,312,338,325,358,372,395,382,412,435,428,455,470,462,487]
+  };
+  pvTicks = {
+    "1M": ["15 Jul","22 Jul","29 Jul","5 Aug","14 Aug"],
+    "3M": ["May","Jun","Jul","Aug"],
+    "6M": ["Feb","Apr","Jun","Aug"],
+    "1Y": ["Aug 25","Nov","Feb","May","Aug 26"],
+    "ALL": ["2023","2024","2025","2026"]
+  };
+  hp = {
+    "1M": [43.1,43.6,42.9,43.8,44.2,44.0,44.6,45.1,44.8,45.3,44.9,45.02],
+    "3M": [39.8,40.5,40.1,41.3,41.0,42.1,41.8,42.9,43.6,43.2,44.3,45.0,44.6,44.8,45.02],
+    "6M": [36.2,37.0,36.5,38.1,38.8,38.2,39.6,39.1,40.8,41.7,41.1,42.5,43.2,42.8,44.2,44.6,44.1,44.9,45.02],
+    "1Y": [31.5,30.8,32.4,32.0,33.6,34.5,33.9,35.4,36.2,35.6,37.4,38.3,37.7,39.2,40.1,39.5,41.4,42.5,41.9,43.3,44.2,43.8,44.9,45.02],
+    "ALL": [22.4,24.1,23.5,26.2,25.4,28.1,29.6,28.8,31.2,33.5,32.4,35.1,36.8,38.5,37.6,40.2,42.1,41.4,43.5,44.6,45.02]
+  };
+  hpTicks = {
+    "1M": ["15 Jul","22 Jul","29 Jul","5 Aug","14 Aug"],
+    "3M": ["May","Jun","Jul","Aug"],
+    "6M": ["Feb","Apr","Jun","Aug"],
+    "1Y": ["Aug 25","Nov","Feb","May","Aug 26"],
+    "ALL": ["2022","2023","2024","2025","2026"]
+  };
+
+  chart(vals, w, h) {
+    const min = Math.min(...vals), max = Math.max(...vals);
+    const span = (max - min) || 1, lo = min - span * 0.12, hi = max + span * 0.12;
+    const x = i => (i / (vals.length - 1)) * w;
+    const y = v => h - ((v - lo) / (hi - lo)) * h;
+    const pts = vals.map((v, i) => x(i).toFixed(1) + "," + y(v).toFixed(1));
+    return {
+      line: pts.join(" "),
+      area: pts.join(" ") + " " + w + "," + h + " 0," + h,
+      lo, hi, mid: (lo + hi) / 2, x, y
+    };
+  }
+  tickMarks(labels, w) {
+    return labels.map((t, i) => ({ label: t, x: ((i / (labels.length - 1)) * w).toFixed(0) }));
+  }
+  tabs(list, active, key) {
+    return list.map(label => ({
+      label,
+      bg: label === active ? "#5980a6" : "transparent",
+      fg: label === active ? "#f2f2f3" : "inherit",
+      onClick: () => this.setState({ [key]: label })
+    }));
+  }
+  darkTabs(list, active, key) {
+    return list.map(label => ({
+      label,
+      bg: label === active ? "#94bce3" : "transparent",
+      fg: label === active ? "#15181b" : "inherit",
+      onClick: () => this.setState({ [key]: label })
+    }));
+  }
+
+  renderVals() {
+    const RANGES = ["1M","3M","6M","1Y","ALL"];
+    const r = this.state.range, hr = this.state.hRange;
+    const p = this.chart(this.pv[r], 780, 186);
+    const h = this.chart(this.hp[hr], 700, 176);
+    const hv = this.hp[hr];
+    const marks = [0.18, 0.52, 0.84].map(f => {
+      const i = Math.floor((hv.length - 1) * f);
+      return { cx: p ? h.x(i).toFixed(1) : 0, cy: h.y(hv[i]).toFixed(1) };
+    });
+    const kZ = v => "R " + Math.round(v) + "k";
+    return {
+      pvPoints: p.line, pvArea: p.area,
+      pvHi: kZ(p.hi), pvMid: kZ(p.mid), pvLo: kZ(p.lo),
+      pvTickMarks: this.tickMarks(this.pvTicks[r], 780),
+      pvRangeLabel: r === "ALL" ? "since you started" : "last " + r,
+      rangeTabs: this.tabs(RANGES, r, "range"),
+      hpPoints: h.line, hpArea: h.area,
+      hpHi: "R " + h.hi.toFixed(2), hpMid: "R " + h.mid.toFixed(2), hpLo: "R " + h.lo.toFixed(2),
+      hpTickMarks: this.tickMarks(this.hpTicks[hr], 700),
+      hpRangeLabel: hr === "ALL" ? "since first buy" : "last " + hr,
+      hpMarks: marks,
+      hRangeTabs: this.tabs(RANGES, hr, "hRange")
+    };
+  }
+}</script>
+</body>
+</html>

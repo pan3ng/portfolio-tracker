@@ -1,0 +1,121 @@
+/* ==========================================================================
+   Holdfolio — app-level design tokens
+   Layer this AFTER the Industry design-system stylesheet (styles.css).
+   styles.css owns: ground, text, steel accent + ramps, type, spacing, radius.
+   This file owns only what a portfolio tracker needs on top:
+     1. gain / loss pastels (finance semantics)
+     2. chart palette (allocation series)
+     3. the dark-mode token overrides
+   ========================================================================== */
+
+:root {
+  /* — finance semantics: muted pastels, harmonious with the steel accent — */
+  --color-gain:        #3f7a63;   /* text / numbers on light ground */
+  --color-gain-fill:   #8fb7a4;   /* bars, positive fills */
+  --color-gain-tint:   #e2efe8;   /* card wash */
+  --color-loss:        #9d5f68;
+  --color-loss-fill:   #c79aa1;
+  --color-loss-tint:   #fbf1f2;
+
+  /* — allocation / series palette: the accent ramp, plus loss-fill as the
+       one non-steel series so "underweight" reads instantly — */
+  --chart-1: var(--color-accent);        /* #5980a6 */
+  --chart-2: var(--color-accent-500);    /* #749dc4 */
+  --chart-3: var(--color-accent-400);    /* #94bce3 */
+  --chart-4: var(--color-loss-fill);     /* #c79aa1 */
+  --chart-5: var(--color-accent-200);    /* #d6ebff */
+  --chart-track: var(--color-neutral-200);   /* unfilled bar track */
+  --chart-grid: var(--color-neutral-300);
+  --chart-grid-soft: var(--color-neutral-200);
+  --chart-area-fill: var(--color-accent-300);  /* at opacity .38 */
+  --chart-marker-stroke: var(--color-accent-700);
+
+  /* — numerics: every money/quantity value is tabular monospace — */
+  --font-mono: ui-monospace, Menlo, Consolas, monospace;
+}
+
+/* — dark mode. Same layout, tokens swapped. Applied on <html class="dark">
+     (matches the repo's ThemeProvider, which toggles that class). — */
+html.dark {
+  color-scheme: dark;
+
+  --color-bg: #15181b;
+  --color-surface: #1c2126;
+  --color-text: #e9ebed;
+  --color-divider: rgba(233, 235, 237, 0.16);
+
+  --color-accent: #94bce3;        /* one ramp step lighter than the light-mode accent */
+  --color-accent-700: #b5d9fd;    /* deep step inverts: used for accent-on-dark text */
+  --color-accent-600: #b5d9fd;    /* hover goes lighter on a dark ground */
+  --color-accent-400: #6d94ba;    /* pressed / fills */
+
+  --color-gain:        #9ccdb6;
+  --color-gain-fill:   #6f9e86;
+  --color-gain-tint:   rgba(156, 205, 182, 0.10);
+  --color-loss:        #d9a3ab;
+  --color-loss-fill:   #a8737d;
+  --color-loss-tint:   rgba(217, 163, 171, 0.10);
+
+  --chart-1: #94bce3;
+  --chart-2: #6d94ba;
+  --chart-3: #4f7396;
+  --chart-4: #a8737d;
+  --chart-5: #2c455d;
+  --chart-track: rgba(233, 235, 237, 0.10);
+  --chart-grid: rgba(233, 235, 237, 0.16);
+  --chart-grid-soft: rgba(233, 235, 237, 0.10);
+  --chart-area-fill: #94bce3;      /* at opacity .16 on dark */
+  --chart-marker-stroke: #b5d9fd;
+
+  /* accent tint panels ("what to do next", hero card) */
+  --color-accent-wash: rgba(148, 188, 227, 0.09);
+}
+
+:root { --color-accent-wash: var(--color-accent-100); }  /* #eef6ff on light */
+
+/* ==========================================================================
+   Patterns used across the mockups. Three primitives cover every screen.
+   ========================================================================== */
+
+/* 1. Tabular numbers — mandatory on all money, share counts, percentages,
+      dates and tickers. Never render money in the body font. */
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 2. Weight bar: actual weight as a fill, target weight as a tick that
+      overhangs the track. This one primitive appears in the table, the
+      cards, the mobile rows, the holding detail and the targets screen. */
+.weight-bar {
+  position: relative;
+  height: 8px;                 /* 8 in tables, 10 in cards, 12–14 in detail */
+  background: var(--chart-track);
+}
+.weight-bar > .fill {
+  position: absolute; inset: 0 auto 0 0;
+  background: var(--chart-3);
+}
+.weight-bar > .fill.under { background: var(--color-loss-fill); }
+.weight-bar > .target {
+  position: absolute; top: -3px; bottom: -3px;
+  width: 1px; background: var(--color-text);
+}
+
+/* 3. Delta text */
+.delta-up   { color: var(--color-gain); }
+.delta-down { color: var(--color-loss); }
+
+/* Section eyebrow above every metric value */
+.metric-label {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-text) 60%, transparent);
+}
+.metric-value {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}

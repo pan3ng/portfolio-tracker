@@ -2,10 +2,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { Card } from '@/components/Card'
 
 export interface FeeBreakdownData {
   commissionFee: number
-  depositFee: number
+  settlementAdminFee: number
+  iplAdminFee: number
+  securitiesTransferTaxFee: number
+  vatFee: number
   fxFee: number
   otherFees: number
   totalFees: number
@@ -13,41 +17,56 @@ export interface FeeBreakdownData {
 
 interface UserSettings {
   default_commission_pct: number
-  default_card_deposit_pct: number
-  default_eft_deposit_pct: number
   default_fx_pct: number
 }
 
+// Statutory/regulatory rates (JSE settlement authority, FSCA, SARS, VAT) — not user
+// configurable yet. See TODO.md "Configurable statutory fee defaults" for making these
+// editable per user (and eventually per account) like commission/FX already are.
+const SETTLEMENT_ADMIN_PCT = 0.075
+const IPL_PCT = 0.0002
+const SECURITIES_TRANSFER_TAX_PCT = 0.25
+const VAT_PCT = 15 // levied on brokerage-related services (commission, settlement, IPL), not on the transfer tax itself
+
 interface FeeBreakdownProps {
   investmentAmount: number
-  depositMethod: 'card' | 'eft'
   accountType: 'ZAR' | 'USD'
   userSettings: UserSettings
   initialFees?: Partial<FeeBreakdownData>
   onChange: (fees: FeeBreakdownData) => void
   showExpanded?: boolean
+  hideTotalSummary?: boolean
 }
+
+type FeeField = 'commissionFee' | 'settlementAdminFee' | 'iplAdminFee' | 'securitiesTransferTaxFee' | 'vatFee' | 'fxFee' | 'otherFees'
 
 export default function FeeBreakdown({
   investmentAmount,
-  depositMethod,
   accountType,
   userSettings,
   initialFees,
   onChange,
   showExpanded = true,
+  hideTotalSummary = false,
 }: FeeBreakdownProps) {
   const [isExpanded, setIsExpanded] = useState(showExpanded)
+  const [isEditingRates, setIsEditingRates] = useState(false)
   const [fees, setFees] = useState<FeeBreakdownData>({
     commissionFee: initialFees?.commissionFee ?? 0,
-    depositFee: initialFees?.depositFee ?? 0,
+    settlementAdminFee: initialFees?.settlementAdminFee ?? 0,
+    iplAdminFee: initialFees?.iplAdminFee ?? 0,
+    securitiesTransferTaxFee: initialFees?.securitiesTransferTaxFee ?? 0,
+    vatFee: initialFees?.vatFee ?? 0,
     fxFee: initialFees?.fxFee ?? 0,
     otherFees: initialFees?.otherFees ?? 0,
     totalFees: initialFees?.totalFees ?? 0,
   })
   const [manualOverrides, setManualOverrides] = useState({
     commission: false,
-    deposit: false,
+    settlementAdmin: false,
+    iplAdmin: false,
+    securitiesTransferTax: false,
+    vat: false,
     fx: false,
   })
 
@@ -56,7 +75,10 @@ export default function FeeBreakdown({
     if (investmentAmount <= 0) {
       const zeroFees = {
         commissionFee: 0,
-        depositFee: 0,
+        settlementAdminFee: 0,
+        iplAdminFee: 0,
+        securitiesTransferTaxFee: 0,
+        vatFee: 0,
         fxFee: 0,
         otherFees: fees.otherFees, // Keep other fees
         totalFees: fees.otherFees,
@@ -68,194 +90,140 @@ export default function FeeBreakdown({
 
     const newFees = { ...fees }
 
-    // Calculate commission if not manually overridden
     if (!manualOverrides.commission) {
       newFees.commissionFee = (investmentAmount * userSettings.default_commission_pct) / 100
     }
-
-    // Calculate deposit fee if not manually overridden
-    if (!manualOverrides.deposit) {
-      const depositPct = depositMethod === 'card'
-        ? userSettings.default_card_deposit_pct
-        : userSettings.default_eft_deposit_pct
-      newFees.depositFee = (investmentAmount * depositPct) / 100
+    if (!manualOverrides.settlementAdmin) {
+      newFees.settlementAdminFee = (investmentAmount * SETTLEMENT_ADMIN_PCT) / 100
     }
-
-    // Calculate FX fee if not manually overridden
+    if (!manualOverrides.iplAdmin) {
+      newFees.iplAdminFee = (investmentAmount * IPL_PCT) / 100
+    }
+    if (!manualOverrides.securitiesTransferTax) {
+      newFees.securitiesTransferTaxFee = (investmentAmount * SECURITIES_TRANSFER_TAX_PCT) / 100
+    }
+    if (!manualOverrides.vat) {
+      newFees.vatFee = ((newFees.commissionFee + newFees.settlementAdminFee + newFees.iplAdminFee) * VAT_PCT) / 100
+    }
     if (!manualOverrides.fx) {
       // For now, FX fee is 0 for ZAR, will add USD support later
       newFees.fxFee = accountType === 'USD' ? (investmentAmount * userSettings.default_fx_pct) / 100 : 0
     }
 
-    // Calculate total
-    newFees.totalFees = newFees.commissionFee + newFees.depositFee + newFees.fxFee + newFees.otherFees
+    newFees.totalFees = newFees.commissionFee + newFees.settlementAdminFee + newFees.iplAdminFee
+      + newFees.securitiesTransferTaxFee + newFees.vatFee + newFees.fxFee + newFees.otherFees
 
     setFees(newFees)
     onChange(newFees)
-  }, [investmentAmount, depositMethod, accountType, userSettings, manualOverrides, fees.otherFees])
+  }, [investmentAmount, accountType, userSettings, manualOverrides, fees.otherFees])
 
-  const handleFeeChange = (field: 'commissionFee' | 'depositFee' | 'fxFee' | 'otherFees', value: number) => {
+  const handleFeeChange = (field: FeeField, value: number) => {
     const newFees = { ...fees, [field]: value }
-    newFees.totalFees = newFees.commissionFee + newFees.depositFee + newFees.fxFee + newFees.otherFees
+    newFees.totalFees = newFees.commissionFee + newFees.settlementAdminFee + newFees.iplAdminFee
+      + newFees.securitiesTransferTaxFee + newFees.vatFee + newFees.fxFee + newFees.otherFees
 
     setFees(newFees)
     onChange(newFees)
 
     // Mark as manually overridden (except for otherFees which is always manual)
-    if (field === 'commissionFee') setManualOverrides({ ...manualOverrides, commission: true })
-    if (field === 'depositFee') setManualOverrides({ ...manualOverrides, deposit: true })
-    if (field === 'fxFee') setManualOverrides({ ...manualOverrides, fx: true })
+    if (field === 'commissionFee') setManualOverrides((o) => ({ ...o, commission: true }))
+    if (field === 'settlementAdminFee') setManualOverrides((o) => ({ ...o, settlementAdmin: true }))
+    if (field === 'iplAdminFee') setManualOverrides((o) => ({ ...o, iplAdmin: true }))
+    if (field === 'securitiesTransferTaxFee') setManualOverrides((o) => ({ ...o, securitiesTransferTax: true }))
+    if (field === 'vatFee') setManualOverrides((o) => ({ ...o, vat: true }))
+    if (field === 'fxFee') setManualOverrides((o) => ({ ...o, fx: true }))
   }
 
   const resetToCalculated = () => {
-    setManualOverrides({ commission: false, deposit: false, fx: false })
+    setManualOverrides({ commission: false, settlementAdmin: false, iplAdmin: false, securitiesTransferTax: false, vat: false, fx: false })
+  }
+
+  const currencySymbol = accountType === 'USD' ? '$' : 'R'
+  const isAdjusted = Object.values(manualOverrides).some(Boolean)
+
+  const FeeRow = ({ label, field, show = true }: { label: string; field: FeeField; show?: boolean }) => {
+    if (!show) return null
+    return (
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span className="text-muted">{label}</span>
+        {isEditingRates ? (
+          <input
+            type="number" step="0.01" min="0" className="input num" style={{ width: 100, textAlign: 'right' }}
+            value={fees[field].toFixed(2)}
+            onChange={(e) => handleFeeChange(field, parseFloat(e.target.value) || 0)}
+          />
+        ) : (
+          <span className="num">{currencySymbol}{fees[field].toFixed(2)}</span>
+        )}
+      </div>
+    )
   }
 
   return (
-    <div className="border border-gray-200 rounded-md p-4 bg-gray-50">
-      {/* Header with expand/collapse */}
-      <div className="flex justify-between items-center cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
-        <h3 className="text-sm font-medium text-gray-900">
-          Fee Breakdown
-          {manualOverrides.commission || manualOverrides.deposit || manualOverrides.fx ? (
-            <span className="ml-2 text-xs text-orange-600">(Manually Adjusted)</span>
-          ) : null}
-        </h3>
-        <div className="flex items-center gap-4">
-          <span className="text-sm font-medium text-gray-900">
-            Total: R{fees.totalFees.toFixed(2)}
-          </span>
-          <svg
-            className={`h-5 w-5 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
+    <Card style={{ padding: '18px 20px' }}>
+      <div
+        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', cursor: 'pointer' }}
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+          <span className="card-kicker">What the fees are</span>
+          {isAdjusted && <span className="text-muted" style={{ fontSize: 11 }}>(edited)</span>}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span className="num" style={{ fontSize: 13, fontWeight: 500 }}>{currencySymbol}{fees.totalFees.toFixed(2)}</span>
+          {isExpanded && (
+            <button
+              type="button"
+              className="btn btn-ghost"
+              style={{ fontSize: 12 }}
+              onClick={(e) => { e.stopPropagation(); setIsEditingRates((v) => !v) }}
+            >
+              {isEditingRates ? 'Done' : 'Edit rates'}
+            </button>
+          )}
+          <span className="text-muted" style={{ fontSize: 11, transform: isExpanded ? 'rotate(180deg)' : undefined, display: 'inline-block' }}>▼</span>
         </div>
       </div>
 
-      {/* Expanded fee details */}
       {isExpanded && (
-        <div className="mt-4 space-y-4">
-          {/* Commission Fee */}
-          <div>
-            <label htmlFor="commissionFee" className="block text-xs font-medium text-gray-700">
-              Commission ({userSettings.default_commission_pct}%)
-              {manualOverrides.commission && <span className="ml-1 text-orange-600">*</span>}
-            </label>
-            <div className="mt-1 relative rounded-md shadow-sm">
-              <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 text-sm">
-                R
-              </span>
-              <input
-                type="number"
-                id="commissionFee"
-                step="0.01"
-                min="0"
-                value={fees.commissionFee.toFixed(2)}
-                onChange={(e) => handleFeeChange('commissionFee', parseFloat(e.target.value) || 0)}
-                className="block w-full pl-7 pr-12 rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              />
-            </div>
-          </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginTop: 14, fontSize: 13.5 }}>
+          <FeeRow label={`Broker commission · ${userSettings.default_commission_pct}%`} field="commissionFee" />
+          <FeeRow label={`Settlement & administration · ${SETTLEMENT_ADMIN_PCT}%`} field="settlementAdminFee" />
+          <FeeRow label={`Investor protection levy & administration · ${IPL_PCT}%`} field="iplAdminFee" />
+          <FeeRow label={`VAT · ${VAT_PCT}%`} field="vatFee" />
+          <FeeRow label={`Securities transfer tax & admin · ${SECURITIES_TRANSFER_TAX_PCT}%`} field="securitiesTransferTaxFee" />
+          <FeeRow label={`Foreign exchange fee · ${userSettings.default_fx_pct}%`} field="fxFee" show={accountType === 'USD'} />
+          <FeeRow label="Other fees (donations, misc)" field="otherFees" />
 
-          {/* Deposit Fee */}
-          <div>
-            <label htmlFor="depositFee" className="block text-xs font-medium text-gray-700">
-              Deposit Fee ({depositMethod === 'card' ? userSettings.default_card_deposit_pct : userSettings.default_eft_deposit_pct}% - {depositMethod.toUpperCase()})
-              {manualOverrides.deposit && <span className="ml-1 text-orange-600">*</span>}
-            </label>
-            <div className="mt-1 relative rounded-md shadow-sm">
-              <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 text-sm">
-                R
-              </span>
-              <input
-                type="number"
-                id="depositFee"
-                step="0.01"
-                min="0"
-                value={fees.depositFee.toFixed(2)}
-                onChange={(e) => handleFeeChange('depositFee', parseFloat(e.target.value) || 0)}
-                className="block w-full pl-7 pr-12 rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              />
-            </div>
-          </div>
-
-          {/* FX Fee */}
-          {accountType === 'USD' && (
-            <div>
-              <label htmlFor="fxFee" className="block text-xs font-medium text-gray-700">
-                Foreign Exchange Fee ({userSettings.default_fx_pct}%)
-                {manualOverrides.fx && <span className="ml-1 text-orange-600">*</span>}
-              </label>
-              <div className="mt-1 relative rounded-md shadow-sm">
-                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 text-sm">
-                  R
-                </span>
-                <input
-                  type="number"
-                  id="fxFee"
-                  step="0.01"
-                  min="0"
-                  value={fees.fxFee.toFixed(2)}
-                  onChange={(e) => handleFeeChange('fxFee', parseFloat(e.target.value) || 0)}
-                  className="block w-full pl-7 pr-12 rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Other Fees */}
-          <div>
-            <label htmlFor="otherFees" className="block text-xs font-medium text-gray-700">
-              Other Fees (donations, misc)
-            </label>
-            <div className="mt-1 relative rounded-md shadow-sm">
-              <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 text-sm">
-                R
-              </span>
-              <input
-                type="number"
-                id="otherFees"
-                step="0.01"
-                min="0"
-                value={fees.otherFees.toFixed(2)}
-                onChange={(e) => handleFeeChange('otherFees', parseFloat(e.target.value) || 0)}
-                className="block w-full pl-7 pr-12 rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              />
-            </div>
-          </div>
-
-          {/* Reset button */}
-          {(manualOverrides.commission || manualOverrides.deposit || manualOverrides.fx) && (
-            <button
-              type="button"
-              onClick={resetToCalculated}
-              className="text-xs text-indigo-600 hover:text-indigo-800"
-            >
+          {isEditingRates && isAdjusted && (
+            <button type="button" onClick={resetToCalculated} className="btn btn-ghost" style={{ alignSelf: 'flex-start', fontSize: 12 }}>
               Reset to calculated values
             </button>
           )}
 
-          {/* Total Cost Summary */}
-          <div className="border-t border-gray-300 pt-3">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Investment Amount:</span>
-              <span className="font-medium">R{investmentAmount.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between text-sm mt-1">
-              <span className="text-gray-600">Total Fees:</span>
-              <span className="font-medium">R{fees.totalFees.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between text-base font-bold mt-2 pt-2 border-t border-gray-200">
-              <span>Total Cost:</span>
-              <span>R{(investmentAmount + fees.totalFees).toFixed(2)}</span>
-            </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 9, borderTop: '1px solid var(--color-divider)', fontWeight: 500 }}>
+            <span>Total fees</span>
+            <span className="num">{currencySymbol}{fees.totalFees.toFixed(2)}</span>
           </div>
+
+          {!hideTotalSummary && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 13 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span className="text-muted">Investment amount</span>
+                <span className="num">{currencySymbol}{investmentAmount.toFixed(2)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span className="text-muted">Total fees</span>
+                <span className="num">+{currencySymbol}{fees.totalFees.toFixed(2)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, fontSize: 15 }}>
+                <span>Total cost</span>
+                <span className="num">{currencySymbol}{(investmentAmount + fees.totalFees).toFixed(2)}</span>
+              </div>
+            </div>
+          )}
         </div>
       )}
-    </div>
+    </Card>
   )
 }

@@ -1,7 +1,7 @@
 // File: apps/web/components/TickerSearch.tsx
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, type CSSProperties } from 'react'
 import { searchJSETickers, type JSETicker } from '@portfolio-tracker/api-client'
 
 interface TickerSearchProps {
@@ -10,6 +10,8 @@ interface TickerSearchProps {
   onSelect?: (ticker: JSETicker) => void
   disabled?: boolean
   placeholder?: string
+  inputClassName?: string
+  inputStyle?: CSSProperties
 }
 
 export default function TickerSearch({
@@ -18,6 +20,8 @@ export default function TickerSearch({
   onSelect,
   disabled = false,
   placeholder = 'Search ticker (e.g., STX40, STXNDQ)',
+  inputClassName = 'input',
+  inputStyle,
 }: TickerSearchProps) {
   const [showDropdown, setShowDropdown] = useState(false)
   const [searchResults, setSearchResults] = useState<JSETicker[]>([])
@@ -97,7 +101,7 @@ export default function TickerSearch({
   }
 
   return (
-    <div ref={wrapperRef} className="relative">
+    <div ref={wrapperRef} style={{ position: 'relative', flex: 1, minWidth: 0 }}>
       <input
         type="text"
         value={value}
@@ -106,53 +110,56 @@ export default function TickerSearch({
         onFocus={handleFocus}
         placeholder={placeholder}
         disabled={disabled}
-        className="flex-1 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+        className={inputClassName}
+        style={inputStyle}
       />
 
       {showDropdown && searchResults.length > 0 && (
-        <div className="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
-          {searchResults.map((ticker, index) => (
-            <button
-              key={ticker.symbol}
-              type="button"
-              onClick={() => handleSelectTicker(ticker)}
-              className={`w-full text-left px-4 py-2 cursor-pointer ${
-                index === highlightedIndex
-                  ? 'bg-indigo-600 text-white'
-                  : 'text-gray-900 hover:bg-gray-100'
-              }`}
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0">
-                  <p className={`text-sm font-medium truncate ${
-                    index === highlightedIndex ? 'text-white' : 'text-gray-900'
-                  }`}>
+        <div
+          style={{
+            position: 'absolute', zIndex: 10, marginTop: 4, width: '100%',
+            background: 'var(--color-surface)', border: '1px solid var(--color-divider)',
+            boxShadow: 'var(--elev-md)', maxHeight: 240, overflow: 'auto',
+          }}
+        >
+          {searchResults.map((ticker, index) => {
+            const active = index === highlightedIndex
+            return (
+              <button
+                key={ticker.symbol}
+                type="button"
+                onClick={() => handleSelectTicker(ticker)}
+                style={{
+                  display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8,
+                  width: '100%', textAlign: 'left', padding: '8px 12px', cursor: 'pointer',
+                  border: 'none', background: active ? 'var(--color-accent)' : 'transparent',
+                  color: active ? 'var(--color-bg)' : 'var(--color-text)',
+                }}
+              >
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="num" style={{ fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {ticker.symbol}
-                  </p>
-                  <p className={`text-xs truncate ${
-                    index === highlightedIndex ? 'text-indigo-100' : 'text-gray-500'
-                  }`}>
+                  </div>
+                  <div style={{ fontSize: 11, opacity: active ? 0.85 : 0.6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {ticker.name}
-                  </p>
+                  </div>
                 </div>
-                <div className="ml-2 flex-shrink-0">
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                    index === highlightedIndex
-                      ? 'bg-indigo-500 text-white'
-                      : 'bg-gray-100 text-gray-800'
-                  }`}>
-                    {ticker.provider}
-                  </span>
-                </div>
-              </div>
-            </button>
-          ))}
+                <span className="tag tag-neutral" style={{ flexShrink: 0 }}>{ticker.provider}</span>
+              </button>
+            )
+          })}
         </div>
       )}
 
       {showDropdown && value.trim().length > 0 && searchResults.length === 0 && (
-        <div className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md py-3 px-4 text-sm text-gray-500 ring-1 ring-black ring-opacity-5">
-          No tickers found matching "{value}". You can still enter it manually if it's valid.
+        <div
+          style={{
+            position: 'absolute', zIndex: 10, marginTop: 4, width: '100%',
+            background: 'var(--color-surface)', border: '1px solid var(--color-divider)',
+            boxShadow: 'var(--elev-md)', padding: '12px 16px', fontSize: 13, color: 'var(--color-text)',
+          }}
+        >
+          No tickers found matching &quot;{value}&quot;. You can still enter it manually if it&apos;s valid.
         </div>
       )}
     </div>

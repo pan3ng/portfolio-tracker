@@ -77,6 +77,15 @@ export const JSE_TICKERS: JSETicker[] = [
 ]
 
 /**
+ * Look up a ticker's descriptive name, e.g. "STXNDQ" -> "Satrix Nasdaq 100".
+ * Returns undefined for tickers not in the curated list (real portfolio
+ * holdings aren't limited to it).
+ */
+export function getTickerName(symbol: string): string | undefined {
+  return JSE_TICKERS.find((t) => t.symbol === symbol.toUpperCase())?.name
+}
+
+/**
  * Search JSE tickers by symbol or name.
  * Case-insensitive search across symbol, name, provider, and category.
  */

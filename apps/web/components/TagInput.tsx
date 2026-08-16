@@ -83,11 +83,12 @@ export default function TagInput({
   }
 
   return (
-    <div className="relative">
-      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-        Tags (optional)
-      </label>
-      <div className="flex flex-wrap items-center gap-2 p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 min-h-[42px]">
+    <div className="field" style={{ position: 'relative' }}>
+      <label>Tags</label>
+      <div
+        className="input"
+        style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6, minHeight: 38, height: 'auto' }}
+      >
         {tags.map((tag) => (
           <Tag key={tag} label={tag} onRemove={() => removeTag(tag)} variant="primary" />
         ))}
@@ -101,19 +102,26 @@ export default function TagInput({
             onFocus={() => inputValue && setShowSuggestions(true)}
             onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
             placeholder={tags.length === 0 ? placeholder : ''}
-            className="flex-1 min-w-[120px] outline-none bg-transparent text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400"
+            style={{ flex: 1, minWidth: 120, border: 'none', outline: 'none', background: 'transparent', padding: 0, font: 'inherit', color: 'inherit' }}
           />
         )}
       </div>
 
       {showSuggestions && filteredSuggestions.length > 0 && (
-        <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-48 overflow-auto">
+        <div
+          style={{
+            position: 'absolute', zIndex: 10, marginTop: 4, width: '100%',
+            background: 'var(--color-surface)', border: '1px solid var(--color-divider)',
+            boxShadow: 'var(--elev-md)', maxHeight: 192, overflow: 'auto',
+          }}
+        >
           {filteredSuggestions.map((suggestion) => (
             <button
               key={suggestion}
               type="button"
               onClick={() => addTag(suggestion)}
-              className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100"
+              className="btn-ghost"
+              style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', fontSize: 13 }}
             >
               {suggestion}
             </button>
@@ -121,15 +129,11 @@ export default function TagInput({
         </div>
       )}
 
-      {tags.length >= maxTags && (
-        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-          Maximum {maxTags} tags reached
-        </p>
+      {tags.length >= maxTags ? (
+        <p className="text-muted" style={{ fontSize: 11, marginTop: 4 }}>Maximum {maxTags} tags reached</p>
+      ) : (
+        <p className="text-muted" style={{ fontSize: 11, marginTop: 4 }}>Press Enter to add a tag, or select from suggestions</p>
       )}
-
-      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-        Press Enter to add a tag, or select from suggestions
-      </p>
     </div>
   )
 }
