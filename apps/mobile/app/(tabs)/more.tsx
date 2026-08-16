@@ -16,8 +16,8 @@ export default function MoreScreen() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? null))
-    supabase.from('deposits').select('amount').then(({ data }) => {
-      if (data) setCashReady(data.reduce((s, d) => s + d.amount, 0))
+    supabase.from('deposits').select('amount, movement_type').then(({ data }) => {
+      if (data) setCashReady(data.reduce((s, d) => s + (d.movement_type === 'withdrawal' ? -d.amount : d.amount), 0))
     })
   }, [])
 
@@ -27,7 +27,7 @@ export default function MoreScreen() {
 
       <MenuRow label="Plan — target weights" onPress={() => router.push('/plan')} colors={colors} />
       <MenuRow
-        label="Deposits & cash"
+        label="Deposits & withdrawals"
         value={cashReady !== null ? `R ${cashReady.toFixed(0)}` : undefined}
         onPress={() => router.push('/deposits')}
         colors={colors}

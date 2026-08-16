@@ -8,98 +8,125 @@ import Tag from '@/components/Tag'
 import { Card } from '@/components/Card'
 
 type AccountFilter = 'all' | 'ZAR' | 'USD'
+type ActivityKind = 'buy' | 'deposit' | 'withdrawal'
+type TypeFilter = 'all' | ActivityKind
+
+interface ActivityRow {
+  id: string
+  kind: ActivityKind
+  date: string
+  account_type: string
+  // buy
+  ticker?: string
+  shares?: number
+  price_at_transaction?: number
+  tags?: string[] | null
+  notes?: string | null
+  commission_fee?: number
+  settlement_admin_fee?: number
+  ipl_admin_fee?: number
+  vat_fee?: number
+  securities_transfer_tax_fee?: number
+  fx_fee?: number
+  other_fees?: number
+  // deposit/withdrawal
+  amount?: number
+  deposit_method?: string
+  deposit_fee?: number
+  description?: string | null
+}
+
+function getTotalFees(row: ActivityRow): number {
+  return (row.commission_fee || 0) + (row.settlement_admin_fee || 0) + (row.ipl_admin_fee || 0)
+    + (row.securities_transfer_tax_fee || 0) + (row.vat_fee || 0) + (row.fx_fee || 0) + (row.other_fees || 0)
+}
 
 export default function TransactionsPage() {
   const supabase = createClient()
 
-  const [transactions, setTransactions] = useState<any[]>([])
-  const [filteredTransactions, setFilteredTransactions] = useState<any[]>([])
+  const [rows, setRows] = useState<ActivityRow[]>([])
+  const [filteredRows, setFilteredRows] = useState<ActivityRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Filters
   const [accountFilter, setAccountFilter] = useState<AccountFilter>('all')
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>('all')
   const [tickerFilter, setTickerFilter] = useState('')
   const [tagFilter, setTagFilter] = useState('')
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
 
   useEffect(() => {
-    loadTransactions()
+    loadActivity()
   }, [])
 
   useEffect(() => {
     applyFilters()
-  }, [accountFilter, tickerFilter, tagFilter, transactions])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accountFilter, typeFilter, tickerFilter, tagFilter, rows])
 
-  const loadTransactions = async () => {
+  const loadActivity = async () => {
     setLoading(true)
     setError(null)
 
     try {
-      const { data, error: fetchError } = await supabase
-        .from('transactions')
-        .select('*')
-        .order('date', { ascending: false })
+      const [{ data: transactions, error: txError }, { data: deposits, error: depError }] = await Promise.all([
+        supabase.from('transactions').select('*').order('date', { ascending: false }),
+        supabase.from('deposits').select('*').order('date', { ascending: false }),
+      ])
+      if (txError) throw txError
+      if (depError) throw depError
 
-      if (fetchError) throw fetchError
+      const txRows: ActivityRow[] = (transactions || []).map((tx: any) => ({
+        id: tx.id, kind: 'buy', date: tx.date, account_type: tx.account_type || 'ZAR',
+        ticker: tx.ticker, shares: tx.shares, price_at_transaction: tx.price_at_transaction,
+        tags: tx.tags, notes: tx.notes,
+        commission_fee: tx.commission_fee, settlement_admin_fee: tx.settlement_admin_fee,
+        ipl_admin_fee: tx.ipl_admin_fee, vat_fee: tx.vat_fee,
+        securities_transfer_tax_fee: tx.securities_transfer_tax_fee, fx_fee: tx.fx_fee, other_fees: tx.other_fees,
+      }))
+      const depRows: ActivityRow[] = (deposits || []).map((d: any) => ({
+        id: d.id, kind: d.movement_type === 'withdrawal' ? 'withdrawal' : 'deposit', date: d.date,
+        account_type: d.account_type, amount: d.amount, deposit_method: d.deposit_method,
+        deposit_fee: d.deposit_fee, description: d.description,
+      }))
 
-      setTransactions(data || [])
+      setRows([...txRows, ...depRows].sort((a, b) => +new Date(b.date) - +new Date(a.date)))
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load transactions')
+      setError(err instanceof Error ? err.message : 'Failed to load activity')
     } finally {
       setLoading(false)
     }
   }
 
   const applyFilters = () => {
-    let filtered = [...transactions]
+    let filtered = [...rows]
 
-    // Account filter
     if (accountFilter !== 'all') {
-      filtered = filtered.filter(tx => (tx.account_type || 'ZAR') === accountFilter)
+      filtered = filtered.filter((r) => r.account_type === accountFilter)
     }
-
-    // Ticker filter
+    if (typeFilter !== 'all') {
+      filtered = filtered.filter((r) => r.kind === typeFilter)
+    }
     if (tickerFilter.trim()) {
       const searchTerm = tickerFilter.trim().toUpperCase()
-      filtered = filtered.filter(tx => tx.ticker.toUpperCase().includes(searchTerm))
+      filtered = filtered.filter((r) => r.kind === 'buy' && r.ticker?.toUpperCase().includes(searchTerm))
     }
-
-    // Tag filter
     if (tagFilter.trim()) {
       const searchTag = tagFilter.trim().toLowerCase()
-      filtered = filtered.filter(tx =>
-        tx.tags && tx.tags.some((tag: string) => tag.toLowerCase().includes(searchTag))
-      )
+      filtered = filtered.filter((r) => r.kind === 'buy' && r.tags?.some((tag) => tag.toLowerCase().includes(searchTag)))
     }
 
-    setFilteredTransactions(filtered)
+    setFilteredRows(filtered)
   }
 
-  const toggleRowExpansion = (txId: string) => {
+  const toggleRowExpansion = (id: string) => {
     const newExpanded = new Set(expandedRows)
-    if (newExpanded.has(txId)) {
-      newExpanded.delete(txId)
-    } else {
-      newExpanded.add(txId)
-    }
+    newExpanded.has(id) ? newExpanded.delete(id) : newExpanded.add(id)
     setExpandedRows(newExpanded)
   }
 
-  const getTotalFees = (tx: any) => {
-    const commission = tx.commission_fee || 0
-    const deposit = tx.deposit_fee || 0
-    const settlementAdmin = tx.settlement_admin_fee || 0
-    const iplAdmin = tx.ipl_admin_fee || 0
-    const securitiesTransferTax = tx.securities_transfer_tax_fee || 0
-    const vat = tx.vat_fee || 0
-    const fx = tx.fx_fee || 0
-    const other = tx.other_fees || 0
-    return commission + deposit + settlementAdmin + iplAdmin + securitiesTransferTax + vat + fx + other
-  }
-
   if (loading) {
-    return <div style={{ padding: 'var(--space-8)', textAlign: 'center' }}><p className="text-muted">Loading transactions...</p></div>
+    return <div style={{ padding: 'var(--space-8)', textAlign: 'center' }}><p className="text-muted">Loading activity...</p></div>
   }
 
   if (error) {
@@ -115,12 +142,21 @@ export default function TransactionsPage() {
   return (
     <div style={{ maxWidth: 1160, margin: '0 auto', padding: 'var(--space-6) var(--space-4)', display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-        <Link href="/settings/deposits?new=true" className="btn btn-primary">+ Add Deposit</Link>
+        <Link href="/transactions/new" className="btn btn-primary">+ Add Transaction</Link>
       </div>
 
       {/* Filters */}
       <Card style={{ padding: 'var(--space-4)' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--space-4)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 'var(--space-4)' }}>
+          <div className="field">
+            <label htmlFor="typeFilter">Type</label>
+            <select id="typeFilter" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value as TypeFilter)} className="input">
+              <option value="all">All Types</option>
+              <option value="buy">Buy</option>
+              <option value="deposit">Deposit</option>
+              <option value="withdrawal">Withdrawal</option>
+            </select>
+          </div>
           <div className="field">
             <label htmlFor="accountFilter">Account</label>
             <select
@@ -154,17 +190,17 @@ export default function TransactionsPage() {
           </div>
         </div>
         <p className="text-muted" style={{ fontSize: 12, marginTop: 'var(--space-3)', marginBottom: 0 }}>
-          Showing {filteredTransactions.length} of {transactions.length} transactions
+          Showing {filteredRows.length} of {rows.length}
         </p>
       </Card>
 
-      {/* Transactions Table */}
-      {filteredTransactions.length === 0 ? (
+      {/* Activity Table */}
+      {filteredRows.length === 0 ? (
         <Card dashed style={{ padding: 'var(--space-8)', textAlign: 'center' }}>
-          <p className="text-muted">No transactions found matching your filters.</p>
-          {(accountFilter !== 'all' || tickerFilter || tagFilter) && (
+          <p className="text-muted">No activity found matching your filters.</p>
+          {(accountFilter !== 'all' || typeFilter !== 'all' || tickerFilter || tagFilter) && (
             <button
-              onClick={() => { setAccountFilter('all'); setTickerFilter(''); setTagFilter('') }}
+              onClick={() => { setAccountFilter('all'); setTypeFilter('all'); setTickerFilter(''); setTagFilter('') }}
               className="btn btn-ghost"
               style={{ marginTop: 'var(--space-2)' }}
             >
@@ -178,79 +214,79 @@ export default function TransactionsPage() {
             <thead>
               <tr>
                 <th>Date</th>
-                <th>Ticker</th>
+                <th>Type</th>
+                <th>Details</th>
                 <th>Account</th>
-                <th>Tags</th>
-                <th style={{ textAlign: 'right' }}>Shares</th>
-                <th style={{ textAlign: 'right' }}>Price</th>
                 <th style={{ textAlign: 'right' }}>Amount</th>
-                <th style={{ textAlign: 'right' }}>Total Fees</th>
-                <th style={{ textAlign: 'right' }}>Total Cost</th>
+                <th style={{ textAlign: 'right' }}>Fees</th>
                 <th style={{ textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filteredTransactions.map((tx) => {
-                const isExpanded = expandedRows.has(tx.id)
-                const investmentAmount = tx.shares * tx.price_at_transaction
-                const totalFees = getTotalFees(tx)
-                const totalCost = investmentAmount + totalFees
+              {filteredRows.map((row) => {
+                const isExpanded = expandedRows.has(row.id)
+                const isBuy = row.kind === 'buy'
+                const amount = isBuy ? (row.shares || 0) * (row.price_at_transaction || 0) : row.amount || 0
+                const fees = isBuy ? getTotalFees(row) : row.deposit_fee || 0
+                const editHref = isBuy ? `/transactions/${row.id}/edit` : `/deposits/${row.id}/edit`
+                const typeTagClass = row.kind === 'buy' ? 'tag-accent' : row.kind === 'withdrawal' ? 'tag-outline' : 'tag-neutral'
 
                 return (
-                  <Fragment key={tx.id}>
+                  <Fragment key={row.id}>
                     <tr>
-                      <td className="num">{new Date(tx.date).toLocaleDateString()}</td>
-                      <td style={{ fontWeight: 600 }}>{tx.ticker}</td>
-                      <td><span className="tag tag-neutral">{tx.account_type || 'ZAR'}</span></td>
+                      <td className="num">{new Date(row.date).toLocaleDateString()}</td>
                       <td>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                          {tx.tags && tx.tags.length > 0 ? (
-                            tx.tags.map((tag: string) => (
-                              <Tag key={tag} label={tag} variant="primary" />
-                            ))
-                          ) : (
-                            <span className="text-muted">-</span>
-                          )}
-                        </div>
+                        <span
+                          className={`tag ${typeTagClass}`}
+                          style={row.kind === 'withdrawal' ? { borderColor: 'var(--color-loss)', color: 'var(--color-loss)' } : undefined}
+                        >
+                          {row.kind === 'buy' ? 'Buy' : row.kind === 'deposit' ? 'Deposit' : 'Withdrawal'}
+                        </span>
                       </td>
-                      <td className="num" style={{ textAlign: 'right' }}>{tx.shares.toFixed(6)}</td>
-                      <td className="num" style={{ textAlign: 'right' }}>R{tx.price_at_transaction.toFixed(2)}</td>
-                      <td className="num" style={{ textAlign: 'right' }}>R{investmentAmount.toFixed(2)}</td>
+                      <td style={{ fontWeight: isBuy ? 600 : 400 }}>
+                        {isBuy ? row.ticker : (row.description || <span className="text-muted">{(row.deposit_method || 'card').toUpperCase()}</span>)}
+                      </td>
+                      <td><span className="tag tag-neutral">{row.account_type}</span></td>
+                      <td className="num" style={{ textAlign: 'right' }}>R{amount.toFixed(2)}</td>
                       <td className="num" style={{ textAlign: 'right' }}>
-                        <button onClick={() => toggleRowExpansion(tx.id)} className="btn btn-ghost num">
-                          R{totalFees.toFixed(2)}{isExpanded ? ' ▼' : ' ▶'}
-                        </button>
+                        {isBuy ? (
+                          <button onClick={() => toggleRowExpansion(row.id)} className="btn btn-ghost num">
+                            R{fees.toFixed(2)}{isExpanded ? ' ▼' : ' ▶'}
+                          </button>
+                        ) : (
+                          `R${fees.toFixed(2)}`
+                        )}
                       </td>
-                      <td className="num" style={{ textAlign: 'right', fontWeight: 600 }}>R{totalCost.toFixed(2)}</td>
                       <td style={{ textAlign: 'right' }}>
-                        <Link href={`/transactions/${tx.id}/edit`} className="btn btn-ghost">Edit</Link>
+                        <Link href={editHref} className="btn btn-ghost">Edit</Link>
                       </td>
                     </tr>
 
-                    {/* Expanded Fee Breakdown Row */}
-                    {isExpanded && (
+                    {isExpanded && isBuy && (
                       <tr>
-                        <td colSpan={10} style={{ background: 'var(--color-surface)' }}>
+                        <td colSpan={7} style={{ background: 'var(--color-surface)' }}>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', padding: 'var(--space-2) 0' }}>
                             <div>
                               <h5 style={{ marginBottom: 8 }}>Fee Breakdown</h5>
                               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 'var(--space-3)', fontSize: 13 }}>
-                                <div><span className="text-muted">Commission: </span><span className="num">R{(tx.commission_fee || 0).toFixed(2)}</span></div>
-                                <div><span className="text-muted">Settlement & admin: </span><span className="num">R{(tx.settlement_admin_fee || 0).toFixed(2)}</span></div>
-                                <div><span className="text-muted">Investor protection levy: </span><span className="num">R{(tx.ipl_admin_fee || 0).toFixed(2)}</span></div>
-                                <div><span className="text-muted">VAT: </span><span className="num">R{(tx.vat_fee || 0).toFixed(2)}</span></div>
-                                <div><span className="text-muted">Securities transfer tax: </span><span className="num">R{(tx.securities_transfer_tax_fee || 0).toFixed(2)}</span></div>
-                                {(tx.deposit_fee || 0) > 0 && (
-                                  <div><span className="text-muted">Deposit ({tx.deposit_method || 'card'}, legacy): </span><span className="num">R{tx.deposit_fee.toFixed(2)}</span></div>
-                                )}
-                                <div><span className="text-muted">FX Fee: </span><span className="num">R{(tx.fx_fee || 0).toFixed(2)}</span></div>
-                                <div><span className="text-muted">Other: </span><span className="num">R{(tx.other_fees || 0).toFixed(2)}</span></div>
+                                <div><span className="text-muted">Commission: </span><span className="num">R{(row.commission_fee || 0).toFixed(2)}</span></div>
+                                <div><span className="text-muted">Settlement & admin: </span><span className="num">R{(row.settlement_admin_fee || 0).toFixed(2)}</span></div>
+                                <div><span className="text-muted">Investor protection levy: </span><span className="num">R{(row.ipl_admin_fee || 0).toFixed(2)}</span></div>
+                                <div><span className="text-muted">VAT: </span><span className="num">R{(row.vat_fee || 0).toFixed(2)}</span></div>
+                                <div><span className="text-muted">Securities transfer tax: </span><span className="num">R{(row.securities_transfer_tax_fee || 0).toFixed(2)}</span></div>
+                                <div><span className="text-muted">FX Fee: </span><span className="num">R{(row.fx_fee || 0).toFixed(2)}</span></div>
+                                <div><span className="text-muted">Other: </span><span className="num">R{(row.other_fees || 0).toFixed(2)}</span></div>
                               </div>
                             </div>
-                            {tx.notes && (
+                            {row.tags && row.tags.length > 0 && (
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                                {row.tags.map((tag) => <Tag key={tag} label={tag} variant="primary" />)}
+                              </div>
+                            )}
+                            {row.notes && (
                               <div>
                                 <h5 style={{ marginBottom: 4 }}>Notes</h5>
-                                <p style={{ margin: 0, fontSize: 13 }}>{tx.notes}</p>
+                                <p style={{ margin: 0, fontSize: 13 }}>{row.notes}</p>
                               </div>
                             )}
                           </div>

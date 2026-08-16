@@ -11,6 +11,7 @@ export interface TransactionRow {
   shares: number
   price_at_transaction: number
   account_type?: string | null
+  transaction_type?: string | null
   commission_fee?: number | null
   deposit_fee?: number | null
   settlement_admin_fee?: number | null
@@ -24,6 +25,7 @@ export interface TransactionRow {
 export interface DepositRow {
   amount: number
   deposit_fee?: number | null
+  movement_type?: string | null
 }
 
 export interface TargetRow {
@@ -87,7 +89,13 @@ export function calculatePortfolio(
   targets: TargetRow[],
   prices: Map<string, number>
 ): PortfolioCalcResult {
-  const totalDeposited = deposits.reduce((sum, d) => sum + d.amount, 0)
+  // amount is always positive; movement_type carries direction. Rows without a
+  // movement_type (pre-migration data) are treated as deposits, matching the
+  // column's DB default.
+  const totalDeposited = deposits.reduce(
+    (sum, d) => sum + (d.movement_type === 'withdrawal' ? -d.amount : d.amount),
+    0
+  )
   const totalDepositFees = deposits.reduce((sum, d) => sum + (d.deposit_fee || 0), 0)
 
   const empty: PortfolioCalcResult = {
@@ -104,6 +112,9 @@ export function calculatePortfolio(
   const costBasisByTicker = new Map<string, number>()
   const accountByTicker = new Map<string, string>()
 
+  // Every row here is a buy — transaction_type='sell' isn't produced by any UI yet
+  // (see TODO.md's Sell scoping plan). When that lands, this aggregation needs to
+  // become chronological (average-cost reduction on sell), not a simple sum.
   transactions.forEach((tx) => {
     sharesByTicker.set(tx.ticker, (sharesByTicker.get(tx.ticker) || 0) + tx.shares)
 

@@ -13,7 +13,7 @@ type AccountFilter = 'All' | 'ZAR' | 'USD'
 
 interface ActivityItem {
   id: string
-  kind: 'transaction' | 'deposit'
+  kind: 'transaction' | 'deposit' | 'withdrawal'
   date: string
   ticker?: string
   accountType: string
@@ -71,7 +71,7 @@ export default function ActivityScreen() {
         vat_fee: tx.vat_fee, securities_transfer_tax_fee: tx.securities_transfer_tax_fee, fx_fee: tx.fx_fee, other_fees: tx.other_fees,
       }))
       const depItems: ActivityItem[] = (deposits || []).map((d: any) => ({
-        id: d.id, kind: 'deposit', date: d.date, accountType: d.account_type,
+        id: d.id, kind: d.movement_type === 'withdrawal' ? 'withdrawal' : 'deposit', date: d.date, accountType: d.account_type,
         amount: d.amount, fees: d.deposit_fee || 0, depositMethod: d.deposit_method,
       }))
       setItems([...txItems, ...depItems].sort((a, b) => +new Date(b.date) - +new Date(a.date)))
@@ -92,7 +92,7 @@ export default function ActivityScreen() {
     if (search.trim()) {
       const q = search.trim().toLowerCase()
       list = list.filter((i) =>
-        (i.ticker || 'deposit').toLowerCase().includes(q) || (i.tags || []).some((t) => t.toLowerCase().includes(q))
+        (i.ticker || i.kind).toLowerCase().includes(q) || (i.tags || []).some((t) => t.toLowerCase().includes(q))
       )
     }
     return list
@@ -129,7 +129,7 @@ export default function ActivityScreen() {
       <View style={[styles.header, { borderBottomColor: colors.divider }]}>
         <View style={styles.headerTop}>
           <Text style={[styles.title, { color: colors.text, fontFamily: fonts.heading }]}>Activity</Text>
-          <Pressable onPress={() => router.push('/deposits/new')}>
+          <Pressable onPress={() => router.push('/transactions/new?kind=deposit')}>
             <Text style={{ color: colors.accent700, fontSize: 12.5 }}>+ Add deposit</Text>
           </Pressable>
         </View>
@@ -167,34 +167,35 @@ export default function ActivityScreen() {
           )}
           renderItem={({ item }) => {
             const isExpanded = expanded.has(item.id)
-            const isDeposit = item.kind === 'deposit'
+            const isTransaction = item.kind === 'transaction'
+            const isWithdrawal = item.kind === 'withdrawal'
+            const label = item.kind === 'transaction' ? item.ticker : item.kind === 'deposit' ? 'Deposit' : 'Withdrawal'
+            const tagVariant = item.kind === 'transaction' ? 'accent' : isWithdrawal ? 'outline' : 'neutral'
             return (
               <View>
                 <Pressable
                   style={[styles.row, { borderBottomColor: colors.divider }]}
-                  onPress={() => !isDeposit && toggleExpanded(item.id)}
+                  onPress={() => (isTransaction ? toggleExpanded(item.id) : router.push(`/deposits/${item.id}/edit`))}
                 >
                   <View style={styles.rowTop}>
                     <View style={styles.rowLabelLine}>
-                      <Text style={[styles.rowLabel, { color: colors.text, fontFamily: fonts.heading }]}>
-                        {isDeposit ? 'Deposit' : item.ticker}
-                      </Text>
-                      <Tag label={isDeposit ? item.accountType : 'Buy'} variant={isDeposit ? 'neutral' : 'accent'} />
+                      <Text style={[styles.rowLabel, { color: colors.text, fontFamily: fonts.heading }]}>{label}</Text>
+                      <Tag label={isTransaction ? 'Buy' : item.accountType} variant={tagVariant} />
                     </View>
                     <Text style={{ color: colors.text, fontFamily: 'ui-monospace', fontSize: 14 }}>R {item.amount.toFixed(2)}</Text>
                   </View>
                   <View style={styles.rowTop}>
                     <Text style={{ color: colors.textMuted, fontFamily: 'ui-monospace', fontSize: 11.5 }}>
                       {new Date(item.date).toLocaleDateString()}
-                      {isDeposit ? ` · ${item.depositMethod}` : ` · ${item.shares?.toFixed(6)} sh @ R ${item.price?.toFixed(2)}`}
+                      {isTransaction ? ` · ${item.shares?.toFixed(6)} sh @ R ${item.price?.toFixed(2)}` : ` · ${item.depositMethod}`}
                     </Text>
                     <Text style={{ color: isExpanded ? colors.accent700 : colors.textMuted, fontFamily: 'ui-monospace', fontSize: 11.5 }}>
-                      fees R {item.fees.toFixed(2)} {!isDeposit ? (isExpanded ? '▼' : '▶') : ''}
+                      fees R {item.fees.toFixed(2)} {isTransaction ? (isExpanded ? '▼' : '▶') : ''}
                     </Text>
                   </View>
                 </Pressable>
 
-                {isExpanded && !isDeposit && (
+                {isExpanded && isTransaction && (
                   <View style={[styles.feeBreakdown, { backgroundColor: colors.surface, borderBottomColor: colors.divider }]}>
                     <FeeLine label="Commission" value={item.commission_fee} muted={colors.textMuted} text={colors.text} />
                     <FeeLine label="Settlement & admin" value={item.settlement_admin_fee} muted={colors.textMuted} text={colors.text} />

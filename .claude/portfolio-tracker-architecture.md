@@ -171,3 +171,34 @@ branch named after a version turned out to be an easy way to lose track of not b
 gets tagged) when a batch is ready to ship. A short-lived `feature/<name>` branch off
 `dev` is available for anything large/risky enough to want isolated review first, but
 isn't the default.
+
+**v1.1.0 → v1.2.0 (2026-08-16): the native mobile app went from an unmodified Expo
+scaffold to full CRUD + design parity with web**, across six dated milestones tracked in
+TODO.md (search "Native Expo mobile app — Milestone"):
+
+1. Foundation + sign-in + Overview, sharing `calculatePortfolio()` with web via a new
+   `packages/api-client/src/portfolio-calc.ts` extraction
+2. Read-only screens for the rest of the app (Transactions, Targets, Settings, Deposits,
+   Holding detail)
+3. Add-transaction/add-deposit/edit-targets forms, plus a new
+   `packages/api-client/src/fee-calc.ts` extraction so mobile's fee math can't drift from
+   web's
+4. The "Industry" design system port (imported from a Claude Design project via the
+   `claude_design` MCP) and a navigation restructure to a 5-tab bar (Overview / Holdings /
+   **+** / Activity / More)
+5. Edit Transaction, per-fee-rate editing ("Edit rates," mirroring web's `FeeBreakdown`),
+   and "Set target" prompts for untargeted holdings
+6. Edit/Delete Deposit, closing the last CRUD gap
+
+One structural decision worth recording since it revises §4 above: the original
+architecture doc scoped mobile as "Android first, iOS later" with no further detail on
+*how* — in practice, mobile ended up sharing almost all business logic with web through
+`packages/api-client` (portfolio math, fee calculation, ticker data) rather than
+reimplementing it, which is why the two platforms haven't drifted apart on calculations
+despite being built independently, screen by screen. UI code is not shared (React Native
+vs. React DOM), only the pure calculation/data layer.
+
+Mobile runs as an EAS development build, not Expo Go — Expo Go's dynamic `exp://<LAN-IP>`
+redirect scheme turned out to be unreliably resolved by Android/Chrome for the OAuth/
+magic-link handoff, root-caused and fixed by switching to a dev build's stable
+`portfoliotracker://` custom scheme (full investigation log in TODO.md).

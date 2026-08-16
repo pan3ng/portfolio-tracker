@@ -312,11 +312,12 @@ export default function SettingsPage() {
       <Card style={{ padding: 'var(--space-6)', gap: 'var(--space-4)' }}>
         <h4 style={{ marginBottom: 0 }}>Data Management</h4>
         <div>
-          <h5 style={{ marginBottom: 4 }}>Manage Cash Deposits</h5>
+          <h5 style={{ marginBottom: 4 }}>Cash deposits &amp; withdrawals</h5>
           <p className="text-muted" style={{ fontSize: 12, marginBottom: 10 }}>
-            Track cash deposited into your accounts to calculate uninvested capital
+            Deposits and withdrawals now live in the Activity ledger alongside your buys,
+            filterable by type
           </p>
-          <Link href="/settings/deposits" className="btn btn-primary">Manage Deposits</Link>
+          <Link href="/transactions" className="btn btn-primary">View Activity</Link>
         </div>
         <div className="hr" />
         <div>
@@ -328,11 +329,11 @@ export default function SettingsPage() {
         </div>
         <div className="hr" />
         <div>
-          <h5 style={{ marginBottom: 4 }}>Add Single Historical Position</h5>
+          <h5 style={{ marginBottom: 4 }}>Add a historical position</h5>
           <p className="text-muted" style={{ fontSize: 12, marginBottom: 10 }}>
-            Manually add a historical transaction with custom date and price
+            Add Transaction has a &quot;historical purchase&quot; toggle for a custom date and price
           </p>
-          <Link href="/transactions/new/historical" className="btn btn-secondary">Add Historical Position</Link>
+          <Link href="/transactions/new" className="btn btn-secondary">Add Transaction</Link>
         </div>
       </Card>
 

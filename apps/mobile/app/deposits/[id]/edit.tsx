@@ -11,12 +11,14 @@ import Button from '../../../components/Button'
 
 type AccountType = 'ZAR' | 'USD'
 type DepositMethod = 'card' | 'eft'
+type MovementType = 'deposit' | 'withdrawal'
 
 export default function EditDepositScreen() {
   const router = useRouter()
   const { colors } = useTheme()
   const { id } = useLocalSearchParams<{ id: string }>()
 
+  const [movementType, setMovementType] = useState<MovementType>('deposit')
   const [amount, setAmount] = useState('')
   const [date, setDate] = useState('')
   const [accountType, setAccountType] = useState<AccountType>('ZAR')
@@ -51,6 +53,7 @@ export default function EditDepositScreen() {
         setLoadingDeposit(false)
         return
       }
+      setMovementType(data.movement_type === 'withdrawal' ? 'withdrawal' : 'deposit')
       setAmount(data.amount.toString())
       setDate(new Date(data.date).toISOString().split('T')[0])
       setAccountType((data.account_type || 'ZAR') as AccountType)
@@ -74,6 +77,7 @@ export default function EditDepositScreen() {
         amount: amountNum,
         date: new Date(date).toISOString(),
         account_type: accountType,
+        movement_type: movementType,
         deposit_method: method,
         deposit_fee: depositFee,
         description: description.trim() || null,
@@ -118,11 +122,23 @@ export default function EditDepositScreen() {
 
       <View style={[styles.header, { borderBottomColor: colors.divider }]}>
         <Text style={{ color: colors.accent700, fontSize: 12.5 }} onPress={() => router.back()}>Cancel</Text>
-        <Text style={[styles.headerTitle, { color: colors.text, fontFamily: fonts.heading }]}>Edit Deposit</Text>
+        <Text style={[styles.headerTitle, { color: colors.text, fontFamily: fonts.heading }]}>
+          Edit {movementType === 'deposit' ? 'Deposit' : 'Withdrawal'}
+        </Text>
         <Text style={{ fontSize: 12.5, opacity: 0 }}>—</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <View style={styles.field}>
+          <Text style={[styles.label, { color: colors.text }]}>Type</Text>
+          <Segmented
+            block size="md"
+            options={[{ value: 'deposit', label: 'Deposit' }, { value: 'withdrawal', label: 'Withdrawal' }]}
+            value={movementType}
+            onChange={(v) => setMovementType(v as MovementType)}
+          />
+        </View>
+
         <View style={styles.field}>
           <Text style={[styles.label, { color: colors.text }]}>Amount ({accountType})</Text>
           <TextInput
@@ -153,13 +169,17 @@ export default function EditDepositScreen() {
           <Segmented block size="md" options={[{ value: 'ZAR', label: 'ZAR' }, { value: 'USD', label: 'USD' }]} value={accountType} onChange={(v) => setAccountType(v as AccountType)} />
         </View>
 
-        <View style={styles.field}>
-          <Text style={[styles.label, { color: colors.text }]}>Deposit method</Text>
-          <Segmented block size="md" options={[{ value: 'card', label: 'Card' }, { value: 'eft', label: 'EFT' }]} value={method} onChange={(v) => setMethod(v as DepositMethod)} />
-        </View>
+        {movementType === 'deposit' && (
+          <View style={styles.field}>
+            <Text style={[styles.label, { color: colors.text }]}>Deposit method</Text>
+            <Segmented block size="md" options={[{ value: 'card', label: 'Card' }, { value: 'eft', label: 'EFT' }]} value={method} onChange={(v) => setMethod(v as DepositMethod)} />
+          </View>
+        )}
 
         <View style={styles.field}>
-          <Text style={[styles.label, { color: colors.text }]}>Deposit fee ({currencySymbol})</Text>
+          <Text style={[styles.label, { color: colors.text }]}>
+            {movementType === 'deposit' ? 'Deposit fee' : 'Withdrawal fee'} ({currencySymbol})
+          </Text>
           <TextInput
             style={[styles.input, { borderColor: colors.divider, backgroundColor: colors.surface, color: colors.text }]}
             value={depositFee.toFixed(2)}
@@ -167,9 +187,11 @@ export default function EditDepositScreen() {
             keyboardType="decimal-pad"
             editable={!saving && !deleting}
           />
-          <Text style={{ color: colors.textMuted, fontSize: 11.5 }}>
-            Auto-calculated at {method === 'card' ? cardPct : eftPct}% ({method}) for new deposits. Edit to override.
-          </Text>
+          {movementType === 'deposit' && (
+            <Text style={{ color: colors.textMuted, fontSize: 11.5 }}>
+              Auto-calculated at {method === 'card' ? cardPct : eftPct}% ({method}) for new deposits. Edit to override.
+            </Text>
+          )}
         </View>
 
         <View style={styles.field}>
@@ -178,7 +200,7 @@ export default function EditDepositScreen() {
             style={[styles.input, { borderColor: colors.divider, backgroundColor: colors.surface, color: colors.text }]}
             value={description}
             onChangeText={setDescription}
-            placeholder="e.g., Monthly transfer"
+            placeholder={movementType === 'deposit' ? 'e.g., Monthly transfer' : 'e.g., Cash needed elsewhere'}
             placeholderTextColor={colors.textMuted}
             editable={!saving && !deleting}
           />
