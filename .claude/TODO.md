@@ -212,6 +212,14 @@ Based on current state and user feedback, tackle in this order:
 
 ## Future Enhancements (Post Current Phase)
 
+### Onboarding for new users (2026-08-16, future — not designed)
+
+Some guided first-run experience for a brand-new account with no data yet — e.g.
+prompting a first deposit and a first target once the empty-state ("Welcome to Portfolio
+Tracker... Get started by recording your first transaction") is showing. Explicitly not
+designed in the v1.1 pass that added the landing page/Danger Zone/tooltips — flagged for
+later.
+
 ### Live FX rate fetching for USD transactions (recommendation, not started)
 
 Right now USD-account transactions store `amount` in dollars but `price_at_transaction`
@@ -850,6 +858,12 @@ retire Settings › Deposits. Until then, keep today's separate, purpose-built e
 already relabeled "+ Add Transaction" (2026-08-15) ahead of this, since "+ Record a buy"
 read oddly once the page itself covers more than buys conceptually.
 
+**Roadmap placement (2026-08-16)**: confirmed this is what "the transactions redesign"
+refers to in v1.1 planning. Sequenced *after* Mobile Milestone 1 (Foundation + Sign-in +
+Overview) — still blocked on Withdrawal and Sell, neither started. No design or
+implementation work happened on this in the v1.1 pass that added the landing page,
+Danger Zone, and tooltips.
+
 ## Add-transaction screen realigned with mockup 3e (2026-08-15, COMPLETED ✅)
 
 - `/transactions/new` restyled to match 3e: title "Add a Transaction", Buy/Sell/Deposit
@@ -927,6 +941,46 @@ is real), surface them on the Settings page next to commission/FX, and have
   here rather than bolted on. Natural to build alongside the "unified Add Transaction"
   work above, since Sell will need the same weight-impact math (shares going down
   instead of up).
+
+## v1.1: landing page, data deletion, tooltips (2026-08-16, COMPLETED ✅)
+
+- **Public landing page at `/`**: `/` is dual-purpose now rather than moved to a new URL —
+  9+ places in the app assumed `/` means "authenticated home" (`router.push('/')`,
+  `href="/"`), so moving Overview elsewhere would have rippled everywhere for no real
+  benefit. Instead: `lib/supabase/middleware.ts` lets `/` through unauthenticated (was
+  only `/login`/`/auth` before), `app/(app)/page.tsx` checks auth before fetching any
+  data and renders the new `components/LandingPage.tsx` when logged out, and `Nav.tsx`
+  renders nothing when there's no user so the authenticated app chrome never leaks to a
+  logged-out visitor. Landing content is real copy grounded in shipped features (fee
+  breakdown, target-weight planning, multi-account, deposits) plus an illustrative
+  (clearly-labeled, not-a-real-screenshot) preview table — no fabricated screenshots,
+  since there's no way to capture authenticated screens without real login credentials.
+  **Gotcha hit**: reusing the raw `.nav`/`.nav a` CSS classes for the landing page's own
+  header washed out the "Log in" button, because `.nav a` (class+element selector) has
+  higher specificity than `.btn-primary` (single class) and its `opacity: 0.6` link-dim
+  rule won. Fixed by not reusing `.nav` for a non-Nav header — replicated the layout
+  inline instead.
+- **Settings → Danger Zone**: "Clear My Data" (client-side deletes across `transactions`/
+  `targets`/`deposits`, plus `user_settings`, keeps the login) and "Delete My Account"
+  (new `supabase/functions/delete-account` Edge Function, deployed). Both require typing
+  a confirm word (CLEAR / DELETE) rather than a plain `confirm()`, given the severity.
+  The Edge Function is the app's first use of the Supabase **service role key** — it's
+  never client-exposed; `SUPABASE_SERVICE_ROLE_KEY` is auto-injected into every Edge
+  Function by Supabase, not something manually configured. Deleting the auth user via
+  `auth.admin.deleteUser` cascades to all four data tables automatically (each already had
+  `on delete cascade` from day one). Verified: calling the function without a valid JWT
+  returns 401 (Supabase's default platform-level JWT verification, not custom code).
+- **`Tooltip` component** (`components/Tooltip.tsx`): hover/focus-triggered, accessible
+  (`role="tooltip"`, `aria-describedby`), matches the blueprint design system. Applied to
+  the "Total P/L" / "P/L" column headers (explains "after fees" — the exact nuance behind
+  shortening that label a while back) on both the Overview and `/portfolio` holdings
+  tables, and to the three statutory fee labels in `FeeBreakdown.tsx` (Settlement & admin,
+  Investor protection levy, Securities transfer tax), using the real EasyEquities fee
+  descriptions supplied earlier rather than invented text. This is a starting scope, not
+  exhaustive — more spots can be added as they come up.
+- **Not done in this pass** (see "Future: unified Add Transaction..." above and Mobile
+  Milestone 1 below): onboarding (explicitly future, not designed), the transactions
+  redesign (placement confirmed, no work), native mobile app.
 
 ## Deferred (explicitly out of scope for now)
 
