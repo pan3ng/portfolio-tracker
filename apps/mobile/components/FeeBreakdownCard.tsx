@@ -36,8 +36,26 @@ export default function FeeBreakdownCard({
   const { colors } = useTheme()
   const [isEditingRates, setIsEditingRates] = useState(false)
   const [otherFees, setOtherFees] = useState(initialFees?.otherFees ?? 0)
-  const [overrides, setOverrides] = useState<Record<OverrideKey, number | null>>({
-    commission: null, settlementAdmin: null, iplAdmin: null, securitiesTransferTax: null, vat: null, fx: null,
+  // If a stored fee (initialFees, e.g. loading an existing transaction to edit)
+  // doesn't match what auto-calc would produce for it, treat it as manually
+  // overridden from the start — otherwise every field but otherFees would get
+  // silently recalculated from current rates on open, discarding any real
+  // manual override the original entry had.
+  const [overrides, setOverrides] = useState<Record<OverrideKey, number | null>>(() => {
+    if (!initialFees || investmentAmount <= 0) {
+      return { commission: null, settlementAdmin: null, iplAdmin: null, securitiesTransferTax: null, vat: null, fx: null }
+    }
+    const autoInitial = calculateStatutoryFees(investmentAmount, accountType, commissionPct, fxPct, 0, transactionType)
+    const differs = (a: number, b: number) => Math.abs(a - b) > 0.005 // half-cent tolerance for rounding
+
+    return {
+      commission: differs(initialFees.commissionFee ?? 0, autoInitial.commissionFee) ? initialFees.commissionFee ?? 0 : null,
+      settlementAdmin: differs(initialFees.settlementAdminFee ?? 0, autoInitial.settlementAdminFee) ? initialFees.settlementAdminFee ?? 0 : null,
+      iplAdmin: differs(initialFees.iplAdminFee ?? 0, autoInitial.iplAdminFee) ? initialFees.iplAdminFee ?? 0 : null,
+      securitiesTransferTax: differs(initialFees.securitiesTransferTaxFee ?? 0, autoInitial.securitiesTransferTaxFee) ? initialFees.securitiesTransferTaxFee ?? 0 : null,
+      vat: differs(initialFees.vatFee ?? 0, autoInitial.vatFee) ? initialFees.vatFee ?? 0 : null,
+      fx: differs(initialFees.fxFee ?? 0, autoInitial.fxFee) ? initialFees.fxFee ?? 0 : null,
+    }
   })
 
   const auto = calculateStatutoryFees(investmentAmount, accountType, commissionPct, fxPct, otherFees, transactionType)

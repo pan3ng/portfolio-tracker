@@ -64,13 +64,31 @@ export default function FeeBreakdown({
     otherFees: initialFees?.otherFees ?? 0,
     totalFees: initialFees?.totalFees ?? 0,
   })
-  const [manualOverrides, setManualOverrides] = useState({
-    commission: false,
-    settlementAdmin: false,
-    iplAdmin: false,
-    securitiesTransferTax: false,
-    vat: false,
-    fx: false,
+  // If a stored fee (initialFees, e.g. loading an existing transaction to edit)
+  // doesn't match what auto-calc would produce for it, treat it as manually
+  // overridden from the start — otherwise the auto-calc effect below runs on
+  // mount and silently overwrites a real manual override with a freshly
+  // recalculated value before the user ever sees it was different.
+  const [manualOverrides, setManualOverrides] = useState(() => {
+    if (!initialFees || investmentAmount <= 0) {
+      return { commission: false, settlementAdmin: false, iplAdmin: false, securitiesTransferTax: false, vat: false, fx: false }
+    }
+    const autoCommission = (investmentAmount * userSettings.default_commission_pct) / 100
+    const autoSettlementAdmin = (investmentAmount * SETTLEMENT_ADMIN_PCT) / 100
+    const autoIplAdmin = (investmentAmount * IPL_PCT) / 100
+    const autoStt = transactionType === 'sell' ? 0 : (investmentAmount * SECURITIES_TRANSFER_TAX_PCT) / 100
+    const autoVat = ((autoCommission + autoSettlementAdmin + autoIplAdmin) * VAT_PCT) / 100
+    const autoFx = accountType === 'USD' ? (investmentAmount * userSettings.default_fx_pct) / 100 : 0
+    const differs = (a: number, b: number) => Math.abs(a - b) > 0.005 // half-cent tolerance for rounding
+
+    return {
+      commission: differs(initialFees.commissionFee ?? 0, autoCommission),
+      settlementAdmin: differs(initialFees.settlementAdminFee ?? 0, autoSettlementAdmin),
+      iplAdmin: differs(initialFees.iplAdminFee ?? 0, autoIplAdmin),
+      securitiesTransferTax: differs(initialFees.securitiesTransferTaxFee ?? 0, autoStt),
+      vat: differs(initialFees.vatFee ?? 0, autoVat),
+      fx: differs(initialFees.fxFee ?? 0, autoFx),
+    }
   })
 
   // Auto-calculate fees when inputs change

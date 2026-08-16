@@ -1460,6 +1460,69 @@ is real), surface them on the Settings page next to commission/FX, and have
   work above, since Sell will need the same weight-impact math (shares going down
   instead of up).
 
+## Future: Charts + interactivity (2026-08-16, not built — recommendation below)
+
+Every "coming soon" placeholder left in the app is a chart, all blocked on the same missing
+piece: historical price data. Full current inventory:
+
+- Web Overview (`app/(app)/page.tsx:326-334`): value-over-time and drift-over-time charts
+- Web Holdings (`app/(app)/portfolio/page.tsx:298-308`): portfolio growth sparkline
+- Web Holding detail (`app/(app)/portfolio/[ticker]/page.tsx:256`): price since first buy
+- Web Overview (`app/(app)/page.tsx:391`): "pick which cards/charts appear" dashboard
+  customization — a related but separate interactivity feature, not blocked on price
+  history
+- Mobile Overview (`(tabs)/index.tsx:255`) and Holding detail (`holding/[ticker].tsx:158`):
+  same two chart types, same blocker
+
+**Recommendation: this is more buildable than it looks, and web/mobile should be scoped
+very differently.**
+
+The "needs price history" blocker turns out to be smaller than a from-scratch data
+pipeline. `supabase/functions/get-quote/index.ts` already calls Yahoo Finance's
+`/v8/finance/chart/{ticker}.JO` endpoint — the *same* unofficial endpoint (per its
+well-known public shape) also accepts `range`/`interval` query params
+(e.g. `range=1y&interval=1d`) and returns a full historical close-price series, not just
+the latest tick. `get-quote` only reads `result.meta.regularMarketPrice` today and
+ignores the rest of the payload. This means real historical prices are very likely
+available with no new data source, no accumulation table, and no backfill problem — just
+a new Edge Function (`get-price-history`, kept separate from `get-quote` rather than
+overloading its contract, per the architecture doc's "isolate the price-fetch call" — read
+architecture doc §3 rationale) requesting a range instead of the current tick. **Worth a
+short spike to confirm the range params actually return what's expected for `.JO` tickers
+specifically before committing to this as the real plan** — the unofficial endpoint's
+behavior for JSE-listed instruments hasn't been verified for this query shape the way the
+current-price shape was (see architecture doc §3's validation script).
+
+**Web**: build now, once the spike above confirms the data is real. No new dependency
+needed for basic line/area charts — either a lightweight lib (e.g. `recharts`, `visx`) or
+hand-rolled SVG sparklines (web has no native-build constraint, so this is a much lower-
+stakes choice than on mobile). Sequencing: portfolio value-over-time on Overview first
+(highest value, one chart covers the whole portfolio), then per-holding price-since-
+first-buy on Holding detail, then drift-over-time and the Holdings growth sparkline.
+Interactivity: standard hover tooltips showing the value/date at a point — cheap with any
+of the above libraries.
+
+**Mobile: defer.** Any real line/area chart needs SVG or Skia rendering — this project
+deliberately has no `react-native-svg` (Milestone 4's tab icons are plain `View`s
+specifically to avoid a native module that would force an EAS rebuild). Adding real
+charts means finally spending that rebuild. Recommendation: **batch it with the other
+already-deferred native addition** (a real date picker, `@react-native-community/
+datetimepicker`, logged in Milestone 3) rather than burning a second rebuild — pick a
+charting library that needs `react-native-svg` (e.g. `victory-native` or `react-native-
+svg-charts`) and add both native deps in one EAS build. Until that rebuild happens, the
+mobile allocation breakdown on Overview already shows one viable non-SVG pattern (a plain
+`View`-based horizontal stacked bar) — the same trick could stretch to a very simple
+bar-per-period "value over time" view without SVG at all, if a stopgap is wanted before
+the rebuild is worth spending. Interactivity on mobile once charts exist: tap-to-reveal a
+value/date label (not hover — no cursor on touch), same pattern already used for
+Activity's tap-to-expand fee rows.
+
+**Dashboard customization** ("pick which cards/charts appear," web Overview only) is
+scoped separately since it's not blocked on price history — needs a per-user layout
+preference (new `user_settings` column or its own table) and conditional rendering of the
+existing cards. Lower priority than the charts themselves; only worth doing once there
+are enough cards/charts on Overview that customization is actually useful.
+
 ## v1.1: landing page, data deletion, tooltips (2026-08-16, COMPLETED ✅)
 
 - **Public landing page at `/`**: `/` is dual-purpose now rather than moved to a new URL —

@@ -350,6 +350,7 @@ export default function EditTransactionPage() {
               investmentAmount={investmentAmount}
               accountType={accountType}
               userSettings={userSettings}
+              initialFees={feeData}
               onChange={setFeeData}
               showExpanded={true}
               transactionType={transactionType}
