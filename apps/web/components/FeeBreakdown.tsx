@@ -37,6 +37,7 @@ interface FeeBreakdownProps {
   onChange: (fees: FeeBreakdownData) => void
   showExpanded?: boolean
   hideTotalSummary?: boolean
+  transactionType?: 'buy' | 'sell'
 }
 
 type FeeField = 'commissionFee' | 'settlementAdminFee' | 'iplAdminFee' | 'securitiesTransferTaxFee' | 'vatFee' | 'fxFee' | 'otherFees'
@@ -49,6 +50,7 @@ export default function FeeBreakdown({
   onChange,
   showExpanded = true,
   hideTotalSummary = false,
+  transactionType = 'buy',
 }: FeeBreakdownProps) {
   const [isExpanded, setIsExpanded] = useState(showExpanded)
   const [isEditingRates, setIsEditingRates] = useState(false)
@@ -101,7 +103,8 @@ export default function FeeBreakdown({
       newFees.iplAdminFee = (investmentAmount * IPL_PCT) / 100
     }
     if (!manualOverrides.securitiesTransferTax) {
-      newFees.securitiesTransferTaxFee = (investmentAmount * SECURITIES_TRANSFER_TAX_PCT) / 100
+      // SA's Securities Transfer Tax Act charges this on purchases, not sales.
+      newFees.securitiesTransferTaxFee = transactionType === 'sell' ? 0 : (investmentAmount * SECURITIES_TRANSFER_TAX_PCT) / 100
     }
     if (!manualOverrides.vat) {
       newFees.vatFee = ((newFees.commissionFee + newFees.settlementAdminFee + newFees.iplAdminFee) * VAT_PCT) / 100
@@ -116,7 +119,7 @@ export default function FeeBreakdown({
 
     setFees(newFees)
     onChange(newFees)
-  }, [investmentAmount, accountType, userSettings, manualOverrides, fees.otherFees])
+  }, [investmentAmount, accountType, userSettings, manualOverrides, fees.otherFees, transactionType])
 
   const handleFeeChange = (field: FeeField, value: number) => {
     const newFees = { ...fees, [field]: value }
@@ -201,6 +204,7 @@ export default function FeeBreakdown({
           <FeeRow
             label={`Securities transfer tax & admin · ${SECURITIES_TRANSFER_TAX_PCT}%`} field="securitiesTransferTaxFee"
             tooltip="Levied by SARS on the purchase and transfer of listed and unlisted securities."
+            show={transactionType === 'buy'}
           />
           <FeeRow label={`Foreign exchange fee · ${userSettings.default_fx_pct}%`} field="fxFee" show={accountType === 'USD'} />
           <FeeRow label="Other fees (donations, misc)" field="otherFees" />

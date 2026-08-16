@@ -220,7 +220,7 @@ function HoldingDetailContent() {
         )}
         <div style={{ display: 'flex', gap: 10 }}>
           <Link href={`/targets?ticker=${ticker}&account=${account}`} className="btn btn-secondary">Set target</Link>
-          <button className="btn btn-secondary" disabled title="Coming soon" style={{ opacity: 0.5, cursor: 'not-allowed' }}>Sell</button>
+          <Link href={`/transactions/new?kind=sell&ticker=${ticker}&account=${account}`} className="btn btn-secondary">Sell</Link>
           <Link href={`/transactions/new?ticker=${ticker}&account=${account}`} className="btn btn-primary">Buy more</Link>
         </div>
       </div>

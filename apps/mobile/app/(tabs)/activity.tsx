@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { View, Text, SectionList, TextInput, StyleSheet, ActivityIndicator, Pressable, RefreshControl } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
+import { calculateRealizedGains } from '@portfolio-tracker/api-client'
 import { supabase } from '../../lib/supabase'
 import { useTheme } from '../../lib/ThemeContext'
 import { fonts } from '../../lib/theme'
@@ -14,6 +15,7 @@ type AccountFilter = 'All' | 'ZAR' | 'USD'
 interface ActivityItem {
   id: string
   kind: 'transaction' | 'deposit' | 'withdrawal'
+  transactionType?: 'buy' | 'sell'
   date: string
   ticker?: string
   accountType: string
@@ -52,6 +54,7 @@ export default function ActivityScreen() {
   const [accountFilter, setAccountFilter] = useState<AccountFilter>('All')
   const [search, setSearch] = useState('')
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
+  const [realizedGainByTxId, setRealizedGainByTxId] = useState<Map<string, number>>(new Map())
 
   const load = useCallback(async () => {
     setError(null)
@@ -64,7 +67,8 @@ export default function ActivityScreen() {
       if (depError) throw depError
 
       const txItems: ActivityItem[] = (transactions || []).map((tx: any) => ({
-        id: tx.id, kind: 'transaction', date: tx.date, ticker: tx.ticker, accountType: tx.account_type || 'ZAR',
+        id: tx.id, kind: 'transaction', transactionType: tx.transaction_type === 'sell' ? 'sell' : 'buy',
+        date: tx.date, ticker: tx.ticker, accountType: tx.account_type || 'ZAR',
         shares: tx.shares, price: tx.price_at_transaction, amount: tx.shares * tx.price_at_transaction,
         fees: totalTxFees(tx), notes: tx.notes, tags: tx.tags,
         commission_fee: tx.commission_fee, settlement_admin_fee: tx.settlement_admin_fee, ipl_admin_fee: tx.ipl_admin_fee,
@@ -74,6 +78,7 @@ export default function ActivityScreen() {
         id: d.id, kind: d.movement_type === 'withdrawal' ? 'withdrawal' : 'deposit', date: d.date, accountType: d.account_type,
         amount: d.amount, fees: d.deposit_fee || 0, depositMethod: d.deposit_method,
       }))
+      setRealizedGainByTxId(calculateRealizedGains(transactions || []).realizedGainByTransactionId)
       setItems([...txItems, ...depItems].sort((a, b) => +new Date(b.date) - +new Date(a.date)))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load activity')
@@ -168,9 +173,11 @@ export default function ActivityScreen() {
           renderItem={({ item }) => {
             const isExpanded = expanded.has(item.id)
             const isTransaction = item.kind === 'transaction'
+            const isSell = item.transactionType === 'sell'
             const isWithdrawal = item.kind === 'withdrawal'
             const label = item.kind === 'transaction' ? item.ticker : item.kind === 'deposit' ? 'Deposit' : 'Withdrawal'
-            const tagVariant = item.kind === 'transaction' ? 'accent' : isWithdrawal ? 'outline' : 'neutral'
+            const tagVariant = item.kind === 'transaction' ? (isSell ? 'outline' : 'accent') : isWithdrawal ? 'outline' : 'neutral'
+            const realizedGain = isSell ? realizedGainByTxId.get(item.id) : undefined
             return (
               <View>
                 <Pressable
@@ -180,7 +187,7 @@ export default function ActivityScreen() {
                   <View style={styles.rowTop}>
                     <View style={styles.rowLabelLine}>
                       <Text style={[styles.rowLabel, { color: colors.text, fontFamily: fonts.heading }]}>{label}</Text>
-                      <Tag label={isTransaction ? 'Buy' : item.accountType} variant={tagVariant} />
+                      <Tag label={isTransaction ? (isSell ? 'Sell' : 'Buy') : item.accountType} variant={tagVariant} />
                     </View>
                     <Text style={{ color: colors.text, fontFamily: 'ui-monospace', fontSize: 14 }}>R {item.amount.toFixed(2)}</Text>
                   </View>
@@ -197,11 +204,16 @@ export default function ActivityScreen() {
 
                 {isExpanded && isTransaction && (
                   <View style={[styles.feeBreakdown, { backgroundColor: colors.surface, borderBottomColor: colors.divider }]}>
+                    {realizedGain !== undefined && (
+                      <Text style={{ color: realizedGain >= 0 ? colors.gain : colors.loss, fontSize: 13, fontFamily: fonts.bodyMedium }}>
+                        Realized {realizedGain >= 0 ? 'gain' : 'loss'}: {realizedGain >= 0 ? '+' : ''}R {realizedGain.toFixed(2)}
+                      </Text>
+                    )}
                     <FeeLine label="Commission" value={item.commission_fee} muted={colors.textMuted} text={colors.text} />
                     <FeeLine label="Settlement & admin" value={item.settlement_admin_fee} muted={colors.textMuted} text={colors.text} />
                     <FeeLine label="Investor protection levy" value={item.ipl_admin_fee} muted={colors.textMuted} text={colors.text} />
                     <FeeLine label="VAT" value={item.vat_fee} muted={colors.textMuted} text={colors.text} />
-                    <FeeLine label="Securities transfer tax" value={item.securities_transfer_tax_fee} muted={colors.textMuted} text={colors.text} />
+                    {!isSell && <FeeLine label="Securities transfer tax" value={item.securities_transfer_tax_fee} muted={colors.textMuted} text={colors.text} />}
                     {(item.fx_fee || 0) > 0 && <FeeLine label="FX fee" value={item.fx_fee} muted={colors.textMuted} text={colors.text} />}
                     {item.tags && item.tags.length > 0 && (
                       <Text style={{ color: colors.textMuted, fontSize: 12 }}>Tags: {item.tags.join(', ')}</Text>

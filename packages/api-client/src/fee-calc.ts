@@ -26,13 +26,21 @@ export interface FeeBreakdownData {
  * Auto-calculates the full statutory + commission + FX fee breakdown for a
  * trade. `otherFees` is always manual (there's no statutory formula for it),
  * so callers pass through whatever the user has typed for it.
+ *
+ * `transactionType` defaults to 'buy' for backward compatibility with every
+ * existing call site. Securities Transfer Tax is a purchase-side tax under
+ * SA's Securities Transfer Tax Act — brokers (EasyEquities included) charge
+ * it on buys, not sells — so a 'sell' zeroes that line out. VAT still applies
+ * either way, since it's charged on the brokerage service fee itself
+ * (commission/settlement/IPL), not on the trade direction.
  */
 export function calculateStatutoryFees(
   investmentAmount: number,
   accountType: 'ZAR' | 'USD',
   commissionPct: number,
   fxPct: number,
-  otherFees = 0
+  otherFees = 0,
+  transactionType: 'buy' | 'sell' = 'buy'
 ): FeeBreakdownData {
   if (investmentAmount <= 0) {
     return {
@@ -45,7 +53,7 @@ export function calculateStatutoryFees(
   const commissionFee = (investmentAmount * commissionPct) / 100
   const settlementAdminFee = (investmentAmount * SETTLEMENT_ADMIN_PCT) / 100
   const iplAdminFee = (investmentAmount * IPL_PCT) / 100
-  const securitiesTransferTaxFee = (investmentAmount * SECURITIES_TRANSFER_TAX_PCT) / 100
+  const securitiesTransferTaxFee = transactionType === 'sell' ? 0 : (investmentAmount * SECURITIES_TRANSFER_TAX_PCT) / 100
   const vatFee = ((commissionFee + settlementAdminFee + iplAdminFee) * VAT_PCT) / 100
   // For now, FX fee is 0 for ZAR, will add broader USD support later
   const fxFee = accountType === 'USD' ? (investmentAmount * fxPct) / 100 : 0

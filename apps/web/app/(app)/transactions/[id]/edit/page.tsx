@@ -27,6 +27,7 @@ export default function EditTransactionPage() {
   const transactionId = params.id as string
 
   const [ticker, setTicker] = useState('')
+  const [transactionType, setTransactionType] = useState<'buy' | 'sell'>('buy')
   const [amount, setAmount] = useState('')
   const [accountType, setAccountType] = useState<'ZAR' | 'USD'>('ZAR')
   const [notes, setNotes] = useState('')
@@ -107,6 +108,7 @@ export default function EditTransactionPage() {
         + (data.securities_transfer_tax_fee || 0) + (data.vat_fee || 0) + (data.fx_fee || 0) + (data.other_fees || 0)
 
       setTicker(data.ticker)
+      setTransactionType(data.transaction_type === 'sell' ? 'sell' : 'buy')
       setOriginalPrice(data.price_at_transaction)
       setOriginalShares(data.shares)
       setAmount((data.shares * data.price_at_transaction).toFixed(2))
@@ -316,7 +318,7 @@ export default function EditTransactionPage() {
           )}
 
           <div className="field">
-            <label htmlFor="amount">Amount to Invest ({accountType})</label>
+            <label htmlFor="amount">{transactionType === 'sell' ? 'Amount received' : 'Amount to Invest'} ({accountType})</label>
             <input
               id="amount" type="number" step="0.01" min="0" className="input"
               value={amount}
@@ -329,7 +331,7 @@ export default function EditTransactionPage() {
           {quote && amount && shares > 0 && (
             <Card>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: 13 }}>Shares to purchase</span>
+                <span style={{ fontSize: 13 }}>{transactionType === 'sell' ? 'Shares sold' : 'Shares to purchase'}</span>
                 <span className="num" style={{ fontSize: 18, fontWeight: 600 }}>{shares.toFixed(6)}</span>
               </div>
               <p className="text-muted num" style={{ fontSize: 11, margin: 0 }}>
@@ -350,6 +352,7 @@ export default function EditTransactionPage() {
               userSettings={userSettings}
               onChange={setFeeData}
               showExpanded={true}
+              transactionType={transactionType}
             />
           )}
 

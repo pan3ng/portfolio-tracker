@@ -25,6 +25,7 @@ export default function EditTransactionScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
 
   const [ticker, setTicker] = useState('')
+  const [transactionType, setTransactionType] = useState<'buy' | 'sell'>('buy')
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [amount, setAmount] = useState('')
   const [accountType, setAccountType] = useState<AccountType>('ZAR')
@@ -66,6 +67,7 @@ export default function EditTransactionScreen() {
         return
       }
       setTicker(data.ticker)
+      setTransactionType(data.transaction_type === 'sell' ? 'sell' : 'buy')
       setOriginalPrice(data.price_at_transaction)
       setOriginalShares(data.shares)
       setAmount((data.shares * data.price_at_transaction).toFixed(2))
@@ -173,7 +175,9 @@ export default function EditTransactionScreen() {
 
       <View style={[styles.header, { borderBottomColor: colors.divider }]}>
         <Text style={{ color: colors.accent700, fontSize: 12.5 }} onPress={() => router.back()}>Cancel</Text>
-        <Text style={[styles.headerTitle, { color: colors.text, fontFamily: fonts.heading }]}>Edit Transaction</Text>
+        <Text style={[styles.headerTitle, { color: colors.text, fontFamily: fonts.heading }]}>
+          Edit {transactionType === 'sell' ? 'Sale' : 'Transaction'}
+        </Text>
         <Text style={{ fontSize: 12.5, opacity: 0 }}>—</Text>
       </View>
 
@@ -228,7 +232,7 @@ export default function EditTransactionScreen() {
         )}
 
         <View style={styles.field}>
-          <Text style={[styles.label, { color: colors.text }]}>Amount to invest ({accountType})</Text>
+          <Text style={[styles.label, { color: colors.text }]}>{transactionType === 'sell' ? 'Amount received' : 'Amount to invest'} ({accountType})</Text>
           <TextInput
             style={[styles.input, { borderColor: colors.divider, backgroundColor: colors.surface, color: colors.text }]}
             value={amount}
@@ -243,7 +247,7 @@ export default function EditTransactionScreen() {
         {quote && amount && shares > 0 && (
           <BlueprintCard>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text style={{ color: colors.text, fontSize: 13 }}>Shares to purchase</Text>
+              <Text style={{ color: colors.text, fontSize: 13 }}>{transactionType === 'sell' ? 'Shares sold' : 'Shares to purchase'}</Text>
               <Text style={{ color: colors.text, fontFamily: fonts.heading, fontSize: 18 }}>{shares.toFixed(6)}</Text>
             </View>
             {shares !== originalShares && (
@@ -262,6 +266,7 @@ export default function EditTransactionScreen() {
             fxPct={fxPct}
             initialFees={initialFees}
             onChange={setFees}
+            transactionType={transactionType}
           />
         )}
 

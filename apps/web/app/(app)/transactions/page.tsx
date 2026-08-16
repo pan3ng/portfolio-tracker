@@ -4,11 +4,12 @@
 import { Fragment, useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
+import { calculateRealizedGains } from '@portfolio-tracker/api-client'
 import Tag from '@/components/Tag'
 import { Card } from '@/components/Card'
 
 type AccountFilter = 'all' | 'ZAR' | 'USD'
-type ActivityKind = 'buy' | 'deposit' | 'withdrawal'
+type ActivityKind = 'buy' | 'sell' | 'deposit' | 'withdrawal'
 type TypeFilter = 'all' | ActivityKind
 
 interface ActivityRow {
@@ -46,6 +47,7 @@ export default function TransactionsPage() {
 
   const [rows, setRows] = useState<ActivityRow[]>([])
   const [filteredRows, setFilteredRows] = useState<ActivityRow[]>([])
+  const [realizedGainByTxId, setRealizedGainByTxId] = useState<Map<string, number>>(new Map())
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -77,7 +79,7 @@ export default function TransactionsPage() {
       if (depError) throw depError
 
       const txRows: ActivityRow[] = (transactions || []).map((tx: any) => ({
-        id: tx.id, kind: 'buy', date: tx.date, account_type: tx.account_type || 'ZAR',
+        id: tx.id, kind: tx.transaction_type === 'sell' ? 'sell' : 'buy', date: tx.date, account_type: tx.account_type || 'ZAR',
         ticker: tx.ticker, shares: tx.shares, price_at_transaction: tx.price_at_transaction,
         tags: tx.tags, notes: tx.notes,
         commission_fee: tx.commission_fee, settlement_admin_fee: tx.settlement_admin_fee,
@@ -90,6 +92,7 @@ export default function TransactionsPage() {
         deposit_fee: d.deposit_fee, description: d.description,
       }))
 
+      setRealizedGainByTxId(calculateRealizedGains(transactions || []).realizedGainByTransactionId)
       setRows([...txRows, ...depRows].sort((a, b) => +new Date(b.date) - +new Date(a.date)))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load activity')
@@ -109,11 +112,11 @@ export default function TransactionsPage() {
     }
     if (tickerFilter.trim()) {
       const searchTerm = tickerFilter.trim().toUpperCase()
-      filtered = filtered.filter((r) => r.kind === 'buy' && r.ticker?.toUpperCase().includes(searchTerm))
+      filtered = filtered.filter((r) => (r.kind === 'buy' || r.kind === 'sell') && r.ticker?.toUpperCase().includes(searchTerm))
     }
     if (tagFilter.trim()) {
       const searchTag = tagFilter.trim().toLowerCase()
-      filtered = filtered.filter((r) => r.kind === 'buy' && r.tags?.some((tag) => tag.toLowerCase().includes(searchTag)))
+      filtered = filtered.filter((r) => (r.kind === 'buy' || r.kind === 'sell') && r.tags?.some((tag) => tag.toLowerCase().includes(searchTag)))
     }
 
     setFilteredRows(filtered)
@@ -153,6 +156,7 @@ export default function TransactionsPage() {
             <select id="typeFilter" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value as TypeFilter)} className="input">
               <option value="all">All Types</option>
               <option value="buy">Buy</option>
+              <option value="sell">Sell</option>
               <option value="deposit">Deposit</option>
               <option value="withdrawal">Withdrawal</option>
             </select>
@@ -225,11 +229,13 @@ export default function TransactionsPage() {
             <tbody>
               {filteredRows.map((row) => {
                 const isExpanded = expandedRows.has(row.id)
-                const isBuy = row.kind === 'buy'
-                const amount = isBuy ? (row.shares || 0) * (row.price_at_transaction || 0) : row.amount || 0
-                const fees = isBuy ? getTotalFees(row) : row.deposit_fee || 0
-                const editHref = isBuy ? `/transactions/${row.id}/edit` : `/deposits/${row.id}/edit`
-                const typeTagClass = row.kind === 'buy' ? 'tag-accent' : row.kind === 'withdrawal' ? 'tag-outline' : 'tag-neutral'
+                const isTransaction = row.kind === 'buy' || row.kind === 'sell'
+                const amount = isTransaction ? (row.shares || 0) * (row.price_at_transaction || 0) : row.amount || 0
+                const fees = isTransaction ? getTotalFees(row) : row.deposit_fee || 0
+                const editHref = isTransaction ? `/transactions/${row.id}/edit` : `/deposits/${row.id}/edit`
+                const typeTagClass = row.kind === 'buy' ? 'tag-accent' : row.kind === 'deposit' ? 'tag-neutral' : 'tag-outline'
+                const isLossTinted = row.kind === 'sell' || row.kind === 'withdrawal'
+                const realizedGain = row.kind === 'sell' ? realizedGainByTxId.get(row.id) : undefined
 
                 return (
                   <Fragment key={row.id}>
@@ -238,18 +244,18 @@ export default function TransactionsPage() {
                       <td>
                         <span
                           className={`tag ${typeTagClass}`}
-                          style={row.kind === 'withdrawal' ? { borderColor: 'var(--color-loss)', color: 'var(--color-loss)' } : undefined}
+                          style={isLossTinted ? { borderColor: 'var(--color-loss)', color: 'var(--color-loss)' } : undefined}
                         >
-                          {row.kind === 'buy' ? 'Buy' : row.kind === 'deposit' ? 'Deposit' : 'Withdrawal'}
+                          {row.kind === 'buy' ? 'Buy' : row.kind === 'sell' ? 'Sell' : row.kind === 'deposit' ? 'Deposit' : 'Withdrawal'}
                         </span>
                       </td>
-                      <td style={{ fontWeight: isBuy ? 600 : 400 }}>
-                        {isBuy ? row.ticker : (row.description || <span className="text-muted">{(row.deposit_method || 'card').toUpperCase()}</span>)}
+                      <td style={{ fontWeight: isTransaction ? 600 : 400 }}>
+                        {isTransaction ? row.ticker : (row.description || <span className="text-muted">{(row.deposit_method || 'card').toUpperCase()}</span>)}
                       </td>
                       <td><span className="tag tag-neutral">{row.account_type}</span></td>
                       <td className="num" style={{ textAlign: 'right' }}>R{amount.toFixed(2)}</td>
                       <td className="num" style={{ textAlign: 'right' }}>
-                        {isBuy ? (
+                        {isTransaction ? (
                           <button onClick={() => toggleRowExpansion(row.id)} className="btn btn-ghost num">
                             R{fees.toFixed(2)}{isExpanded ? ' ▼' : ' ▶'}
                           </button>
@@ -262,10 +268,18 @@ export default function TransactionsPage() {
                       </td>
                     </tr>
 
-                    {isExpanded && isBuy && (
+                    {isExpanded && isTransaction && (
                       <tr>
                         <td colSpan={7} style={{ background: 'var(--color-surface)' }}>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', padding: 'var(--space-2) 0' }}>
+                            {realizedGain !== undefined && (
+                              <div>
+                                <span className="text-muted">Realized {realizedGain >= 0 ? 'gain' : 'loss'}: </span>
+                                <span className="num" style={{ fontWeight: 600, color: realizedGain >= 0 ? 'var(--color-gain)' : 'var(--color-loss)' }}>
+                                  {realizedGain >= 0 ? '+' : ''}R{realizedGain.toFixed(2)}
+                                </span>
+                              </div>
+                            )}
                             <div>
                               <h5 style={{ marginBottom: 8 }}>Fee Breakdown</h5>
                               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 'var(--space-3)', fontSize: 13 }}>
@@ -273,7 +287,9 @@ export default function TransactionsPage() {
                                 <div><span className="text-muted">Settlement & admin: </span><span className="num">R{(row.settlement_admin_fee || 0).toFixed(2)}</span></div>
                                 <div><span className="text-muted">Investor protection levy: </span><span className="num">R{(row.ipl_admin_fee || 0).toFixed(2)}</span></div>
                                 <div><span className="text-muted">VAT: </span><span className="num">R{(row.vat_fee || 0).toFixed(2)}</span></div>
-                                <div><span className="text-muted">Securities transfer tax: </span><span className="num">R{(row.securities_transfer_tax_fee || 0).toFixed(2)}</span></div>
+                                {row.kind === 'buy' && (
+                                  <div><span className="text-muted">Securities transfer tax: </span><span className="num">R{(row.securities_transfer_tax_fee || 0).toFixed(2)}</span></div>
+                                )}
                                 <div><span className="text-muted">FX Fee: </span><span className="num">R{(row.fx_fee || 0).toFixed(2)}</span></div>
                                 <div><span className="text-muted">Other: </span><span className="num">R{(row.other_fees || 0).toFixed(2)}</span></div>
                               </div>
