@@ -8,6 +8,7 @@ import { fetchQuote, getTickerName } from '@portfolio-tracker/api-client'
 import Link from 'next/link'
 import { Card } from '@/components/Card'
 import { SortableTh, type SortDir } from '@/components/SortableTh'
+import LandingPage from '@/components/LandingPage'
 
 const HOLDING_SORT_ACCESSORS: Record<string, (h: any) => number | string> = {
   ticker: (h) => h.ticker,
@@ -58,6 +59,7 @@ export default function PortfolioLandingPage() {
   const [totalDeposits, setTotalDeposits] = useState(0) // Total cash deposited
   const [totalDepositFees, setTotalDepositFees] = useState(0) // Fees charged on deposits (informational, not part of P/L)
   const [uninvestedCapital, setUninvestedCapital] = useState(0) // Cash not yet invested
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
 
   useEffect(() => {
     loadPortfolio()
@@ -70,7 +72,15 @@ export default function PortfolioLandingPage() {
     try {
       // Get user email
       const { data: { user } } = await supabase.auth.getUser()
-      if (user) setUserEmail(user.email || '')
+      if (!user) {
+        // Reachable while logged out — middleware allows '/' through so the landing
+        // page can render here (see lib/supabase/middleware.ts). No data to fetch.
+        setIsAuthenticated(false)
+        setLoading(false)
+        return
+      }
+      setIsAuthenticated(true)
+      setUserEmail(user.email || '')
 
       // 1. Fetch all transactions for the current user
       let query = supabase
@@ -311,6 +321,10 @@ export default function PortfolioLandingPage() {
     }
   }
 
+  if (isAuthenticated === false) {
+    return <LandingPage />
+  }
+
   if (loading) {
     return <div style={{ padding: 'var(--space-8)', textAlign: 'center' }}><p className="text-muted">Loading portfolio...</p></div>
   }
@@ -542,7 +556,7 @@ export default function PortfolioLandingPage() {
                 <SortableTh label="Avg cost" sortKey="avgCost" align="right" active={sortKey === 'avgCost'} dir={sortDir} onSort={handleSort} />
                 <SortableTh label="Price" sortKey="price" align="right" active={sortKey === 'price'} dir={sortDir} onSort={handleSort} />
                 <SortableTh label="Value" sortKey="value" align="right" active={sortKey === 'value'} dir={sortDir} onSort={handleSort} />
-                <SortableTh label="P/L" sortKey="pl" align="right" active={sortKey === 'pl'} dir={sortDir} onSort={handleSort} />
+                <SortableTh label="P/L" tooltip="Profit or loss after all trading fees are deducted" sortKey="pl" align="right" active={sortKey === 'pl'} dir={sortDir} onSort={handleSort} />
                 <SortableTh label="Weight vs target" sortKey="weight" width={150} active={sortKey === 'weight'} dir={sortDir} onSort={handleSort} />
               </tr>
             </thead>
