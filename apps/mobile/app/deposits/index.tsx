@@ -1,10 +1,10 @@
-// File: apps/mobile/app/deposits.tsx
+// File: apps/mobile/app/deposits/index.tsx
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { View, Text, FlatList, StyleSheet, ActivityIndicator, Pressable, RefreshControl } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Stack } from 'expo-router'
-import { supabase } from '../lib/supabase'
-import { colors } from '../lib/theme'
+import { Stack, useRouter } from 'expo-router'
+import { supabase } from '../../lib/supabase'
+import { colors } from '../../lib/theme'
 
 type AccountFilter = 'all' | 'ZAR' | 'USD'
 
@@ -19,6 +19,7 @@ interface DepositRow {
 }
 
 export default function DepositsScreen() {
+  const router = useRouter()
   const [deposits, setDeposits] = useState<DepositRow[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -56,6 +57,10 @@ export default function DepositsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ headerShown: true, title: 'Deposits' }} />
+
+      <Pressable style={styles.addBtn} onPress={() => router.push('/deposits/new')}>
+        <Text style={styles.addBtnText}>+ Add Deposit</Text>
+      </Pressable>
 
       {error && <Text style={styles.error}>{error}</Text>}
 
@@ -108,6 +113,8 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg, padding: 16, gap: 12 },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   error: { color: colors.loss, fontSize: 13 },
+  addBtn: { backgroundColor: colors.accent, padding: 12, alignItems: 'center' },
+  addBtnText: { color: '#fff', fontWeight: '600', fontSize: 14 },
   muted: { fontSize: 12, color: colors.textMuted },
   segRow: { flexDirection: 'row', gap: 8 },
   segOpt: { paddingVertical: 6, paddingHorizontal: 14, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },

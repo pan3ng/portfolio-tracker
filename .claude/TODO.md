@@ -412,6 +412,47 @@ risk) of native input forms.
   the "Industry" blueprint design-system port (screens remain plainly styled); charts
   (donut, weight bars) on Targets/Overview — same "coming soon" as web already has.
 
+### Native Expo mobile app — Milestone 3 (Add Transaction, Add Deposit, Edit Targets forms) (2026-08-16, COMPLETED ✅)
+
+Closed the gap Milestone 2 deliberately left open: every screen now has a way to create/edit
+the thing it displays, not just view it.
+
+- **`packages/api-client/src/fee-calc.ts`** (new): extracted the statutory fee formulas
+  (settlement & admin, IPL, VAT, securities transfer tax, commission, FX) out of web's
+  `FeeBreakdown` component into a shared `calculateStatutoryFees()` function, so mobile's
+  Add Transaction form computes the exact same numbers instead of re-deriving the rates by
+  hand. Web's `FeeBreakdown.tsx` was left as-is (its manual-override/edit-rates state is
+  tightly coupled to the component and already shipped) — only mobile consumes the new
+  shared function for now.
+- **`app/transactions/new.tsx`**: Buy-only form matching web's current scope (Sell is still
+  "coming soon" everywhere). Currency toggle, ticker input with a live autocomplete dropdown
+  (`searchJSETickers`, already bundled in `api-client`, so no new ticker data or network call
+  needed), Get Quote, amount, an auto-calculated read-only fee breakdown, total-to-pay
+  summary, notes, and a comma-separated tags field (plain text, not the chip-style `TagInput`
+  web uses — cheaper to build, same end data shape).
+- **`app/deposits/new.tsx`**: amount, account, deposit method (card/EFT), fee
+  auto-calculated from the user's saved `default_card_deposit_pct`/`default_eft_deposit_pct`
+  (editable to override), description. Required moving `app/deposits.tsx` to
+  `app/deposits/index.tsx` so `deposits/new` could nest under it (a file route and a
+  directory route of the same name can't coexist in expo-router, same constraint as Next.js).
+- **`app/targets/edit.tsx`**: full list editor (add/remove ticker rows, live sum-to-100%
+  validation via the already-shared `validateTargetsSumTo100`) using the same
+  delete-all-then-insert-all save pattern as web's targets page. Reachable via a new "Edit
+  Targets" button on the Targets tab.
+- **No native date picker** — deposit date and (implicitly) transaction date stay plain
+  text/auto-today rather than adding `@react-native-community/datetimepicker`, which would
+  require a native module and therefore a new EAS build. Revisit once another change needs
+  a rebuild anyway, and batch it in then rather than spending a build on this alone.
+- **Verification performed**: `tsc --noEmit` clean, `npx expo export --platform android`
+  compiled clean (1337 modules, up from 1333). No new native dependencies, so the existing
+  installed EAS development build picks this up over a Metro reload — restarted Metro fresh
+  after adding the new route files to make sure expo-router's route manifest picked up
+  `transactions/new`, `deposits/new`, and `targets/edit`.
+- **Not built**: Sell/Withdrawal transactions (blocked on the same web-side prerequisite as
+  the web transactions redesign); editing/deleting existing transactions or deposits from
+  mobile (add-only for now — edits still need the web app); the chip-style tag input; a
+  native date picker.
+
 ### Mobile: move off Expo Go onto a development build (2026-08-16, COMPLETED ✅ — root cause confirmed)
 
 Discovered while trying to test Milestone 1 on a physical Android device: scanning the QR

@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { View, Text, FlatList, StyleSheet, ActivityIndicator, Pressable, RefreshControl } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { useRouter } from 'expo-router'
 import { supabase } from '../../lib/supabase'
 import { colors } from '../../lib/theme'
 
@@ -31,6 +32,7 @@ function totalFees(tx: TransactionRow): number {
 }
 
 export default function TransactionsScreen() {
+  const router = useRouter()
   const [transactions, setTransactions] = useState<TransactionRow[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -82,7 +84,12 @@ export default function TransactionsScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Transactions</Text>
+      <View style={styles.headerRow}>
+        <Text style={styles.title}>Transactions</Text>
+        <Pressable style={styles.addBtn} onPress={() => router.push('/transactions/new')}>
+          <Text style={styles.addBtnText}>+ Add</Text>
+        </Pressable>
+      </View>
 
       {error && <Text style={styles.error}>{error}</Text>}
 
@@ -157,6 +164,9 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg, padding: 16, gap: 12 },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   title: { fontSize: 22, fontWeight: '700' },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  addBtn: { backgroundColor: colors.accent, paddingVertical: 8, paddingHorizontal: 14 },
+  addBtnText: { color: '#fff', fontWeight: '600', fontSize: 13 },
   error: { color: colors.loss, fontSize: 13 },
   muted: { fontSize: 12, color: colors.textMuted },
   segRow: { flexDirection: 'row', gap: 8 },

@@ -1,12 +1,14 @@
 // File: apps/mobile/app/(tabs)/targets.tsx
 import { useCallback, useEffect, useState } from 'react'
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native'
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, RefreshControl, Pressable } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { useRouter } from 'expo-router'
 import { fetchQuote, calculatePortfolio, getActiveTickers, type HoldingCalc } from '@portfolio-tracker/api-client'
 import { supabase } from '../../lib/supabase'
 import { colors } from '../../lib/theme'
 
 export default function TargetsScreen() {
+  const router = useRouter()
   const [holdings, setHoldings] = useState<HoldingCalc[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -60,8 +62,13 @@ export default function TargetsScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Targets</Text>
-      <Text style={styles.muted}>How far current holdings have drifted from plan. Set targets from the web app.</Text>
+      <View style={styles.headerRow}>
+        <Text style={styles.title}>Targets</Text>
+        <Pressable style={styles.editBtn} onPress={() => router.push('/targets/edit')}>
+          <Text style={styles.editBtnText}>Edit Targets</Text>
+        </Pressable>
+      </View>
+      <Text style={styles.muted}>How far current holdings have drifted from plan.</Text>
 
       {holdings.length === 0 ? (
         <View style={styles.centered}>
@@ -106,6 +113,9 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg, padding: 16, gap: 12 },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   title: { fontSize: 22, fontWeight: '700' },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  editBtn: { backgroundColor: colors.accent, paddingVertical: 8, paddingHorizontal: 14 },
+  editBtnText: { color: '#fff', fontWeight: '600', fontSize: 13 },
   muted: { fontSize: 12, color: colors.textMuted },
   card: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, padding: 12, marginBottom: 8, gap: 8 },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
