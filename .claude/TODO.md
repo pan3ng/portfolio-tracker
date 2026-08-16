@@ -329,6 +329,47 @@ was considered (much less work) but explicitly rejected in favor of a real nativ
   charts (donut, weight bars) — same "coming soon" treatment web already has, once mobile
   gets there.
 
+### Mobile: move off Expo Go onto a development build (2026-08-16, blocking device testing, not started)
+
+Discovered while trying to test Milestone 1 on a physical Android device: scanning the QR
+code failed with "project is incompatible with this version of Expo Go," and the Play
+Store had no update available. Root cause (confirmed against Expo's own May 2026
+changelog, not a project misconfiguration): Expo changed Expo Go distribution — the
+app-store build is no longer guaranteed to track new SDK releases, and this project is on
+SDK 57. Worked around for now with a sideloaded SDK-57 Expo Go APK
+(`expo.dev/go?device=true&platform=android&sdkVersion=57`), but that's a stopgap — the
+real fix, and the thing to do before going much further on mobile, is switching to a
+**development build** (the app compiled as its own binary, with `expo-dev-client` for the
+same hot-reload/dev-tools Expo Go gives, but not dependent on Expo's separately-versioned
+shared client). This also fixes the *other* problem hit at the same time: OAuth/magic-link
+redirects currently need Supabase's Redirect URLs to contain a network-dependent
+`exp://<LAN-IP>:8081` entry that breaks every time the dev machine's IP changes — a
+development build uses the stable `portfoliotracker://` custom scheme instead, registered
+once, permanently.
+
+**What it takes, when this gets picked up:**
+
+- `npx expo install expo-dev-client`; `npm install -g eas-cli`; `eas login` (free Expo
+  account); `eas init` (adds a `projectId` to `app.json`); `eas build:configure`
+  (generates `eas.json` with a `development` profile, `developmentClient: true`,
+  `distribution: "internal"`).
+- `app.json` needs bundle identifiers it doesn't have yet — `android.package` and
+  `ios.bundleIdentifier` (e.g. `com.<name>.portfoliotracker`). Not needed for Expo Go,
+  required for any real build.
+- **Build path choice**: `eas build --profile development --platform android` (cloud,
+  needs an EAS account, EAS manages Android signing) vs. `npx expo run:android` (local,
+  free, needs Android Studio installed). iOS needs an Apple Developer Program account
+  ($99/year) for anything beyond a 7-day local-device install via Xcode + a free Apple ID
+  — a real cost/effort decision to make explicitly, not default into.
+- EAS cloud builds don't see the local `.env` — `EXPO_PUBLIC_SUPABASE_URL`/
+  `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` need to be set as EAS Secrets (or in `eas.json`)
+  for cloud builds specifically; local builds are unaffected.
+- Once built and installed once, add `portfoliotracker://**` to Supabase's Redirect URLs
+  (replacing the fragile `exp://` entry) — permanent, one-time.
+- A dev build only needs rebuilding when *native* dependencies change (new native
+  packages, Expo SDK upgrades) — everyday JS/screen changes still hot-reload through
+  Metro exactly like Expo Go does today.
+
 ### Near-term (after multi-account support)
 - [x] Uninvested capital tracking (COMPLETED ✅)
       - Created deposits table with RLS policies (supabase/migrations/0004_deposits_table.sql)
