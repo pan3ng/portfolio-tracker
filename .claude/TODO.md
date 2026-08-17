@@ -1523,6 +1523,40 @@ preference (new `user_settings` column or its own table) and conditional renderi
 existing cards. Lower priority than the charts themselves; only worth doing once there
 are enough cards/charts on Overview that customization is actually useful.
 
+## Future: Responsive web app for mobile browsers (2026-08-17, not built)
+
+`apps/web` has **zero `@media` queries anywhere** in `globals.css` — confirmed by grep,
+not an assumption. Every page uses fixed-cap-width containers (`maxWidth: 620/720/1000/
+1160`, which do shrink on narrow viewports since they're a *cap* not a fixed width) built
+around layouts that don't reflow at small widths: multi-column CSS grids with a hardcoded
+column count (Overview's hero row, LandingPage's feature grid, Settings' fee-defaults
+grid), wide `<table>` elements with many columns (Holdings, Activity — currently only
+escape via `overflow-x: auto`, i.e. horizontal scrolling, not a real mobile layout), and
+`Nav.tsx`'s horizontal link row with no collapse-to-menu behavior at all.
+
+**Worth separating into two different priorities, not one blob of work:**
+
+- **The public landing page (`/`, `components/LandingPage.tsx`)** — genuinely worth fixing
+  regardless of the native app's existence. Anyone can land here from a phone browser
+  (a shared link, a search result) before ever deciding whether to install anything, and
+  a broken-looking landing page on the device most people browse from undermines the
+  first impression the whole page exists to make. Low risk, contained to one file.
+- **The authenticated app pages** (Overview, Holdings, Activity, Add Transaction, Plan,
+  Settings) — lower priority now that the native mobile app covers this exact need for
+  anyone actually using the product day-to-day on a phone. Worth doing eventually for
+  completeness (someone might prefer the web app even on mobile, or not have the native
+  build installed), but not urgent the way the landing page is, and it's real,
+  page-by-page work — every fixed grid, the Nav, and both wide tables need their own
+  responsive treatment, not a single global fix.
+
+**When picked up**: add real breakpoints to `globals.css` (a small set of shared
+`@media` rules, not per-page one-offs), collapse `Nav.tsx` to a hamburger/menu pattern
+below some width, turn the Holdings/Activity tables into a stacked-card layout below that
+same breakpoint (matching the pattern the native mobile app's Activity screen already
+uses — card-per-row instead of table columns — so there's a proven layout to copy rather
+than designing one from scratch), and make every hardcoded `repeat(N, 1fr)` grid
+single-column below the breakpoint.
+
 ## v1.1: landing page, data deletion, tooltips (2026-08-16, COMPLETED ✅)
 
 - **Public landing page at `/`**: `/` is dual-purpose now rather than moved to a new URL —
