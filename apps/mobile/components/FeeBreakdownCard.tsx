@@ -14,6 +14,7 @@ interface FeeBreakdownCardProps {
   initialFees?: Partial<FeeBreakdownData>
   onChange: (fees: FeeBreakdownData) => void
   hideTotalSummary?: boolean
+  transactionType?: 'buy' | 'sell'
 }
 
 type FeeField = 'commissionFee' | 'settlementAdminFee' | 'iplAdminFee' | 'securitiesTransferTaxFee' | 'vatFee' | 'fxFee' | 'otherFees'
@@ -30,16 +31,34 @@ const FIELD_TO_OVERRIDE: Partial<Record<FeeField, OverrideKey>> = {
 
 /** Mirrors apps/web/components/FeeBreakdown.tsx — auto-calculated statutory fees, each individually overridable via "Edit rates". */
 export default function FeeBreakdownCard({
-  investmentAmount, accountType, commissionPct, fxPct, initialFees, onChange, hideTotalSummary,
+  investmentAmount, accountType, commissionPct, fxPct, initialFees, onChange, hideTotalSummary, transactionType = 'buy',
 }: FeeBreakdownCardProps) {
   const { colors } = useTheme()
   const [isEditingRates, setIsEditingRates] = useState(false)
   const [otherFees, setOtherFees] = useState(initialFees?.otherFees ?? 0)
-  const [overrides, setOverrides] = useState<Record<OverrideKey, number | null>>({
-    commission: null, settlementAdmin: null, iplAdmin: null, securitiesTransferTax: null, vat: null, fx: null,
+  // If a stored fee (initialFees, e.g. loading an existing transaction to edit)
+  // doesn't match what auto-calc would produce for it, treat it as manually
+  // overridden from the start — otherwise every field but otherFees would get
+  // silently recalculated from current rates on open, discarding any real
+  // manual override the original entry had.
+  const [overrides, setOverrides] = useState<Record<OverrideKey, number | null>>(() => {
+    if (!initialFees || investmentAmount <= 0) {
+      return { commission: null, settlementAdmin: null, iplAdmin: null, securitiesTransferTax: null, vat: null, fx: null }
+    }
+    const autoInitial = calculateStatutoryFees(investmentAmount, accountType, commissionPct, fxPct, 0, transactionType)
+    const differs = (a: number, b: number) => Math.abs(a - b) > 0.005 // half-cent tolerance for rounding
+
+    return {
+      commission: differs(initialFees.commissionFee ?? 0, autoInitial.commissionFee) ? initialFees.commissionFee ?? 0 : null,
+      settlementAdmin: differs(initialFees.settlementAdminFee ?? 0, autoInitial.settlementAdminFee) ? initialFees.settlementAdminFee ?? 0 : null,
+      iplAdmin: differs(initialFees.iplAdminFee ?? 0, autoInitial.iplAdminFee) ? initialFees.iplAdminFee ?? 0 : null,
+      securitiesTransferTax: differs(initialFees.securitiesTransferTaxFee ?? 0, autoInitial.securitiesTransferTaxFee) ? initialFees.securitiesTransferTaxFee ?? 0 : null,
+      vat: differs(initialFees.vatFee ?? 0, autoInitial.vatFee) ? initialFees.vatFee ?? 0 : null,
+      fx: differs(initialFees.fxFee ?? 0, autoInitial.fxFee) ? initialFees.fxFee ?? 0 : null,
+    }
   })
 
-  const auto = calculateStatutoryFees(investmentAmount, accountType, commissionPct, fxPct, otherFees)
+  const auto = calculateStatutoryFees(investmentAmount, accountType, commissionPct, fxPct, otherFees, transactionType)
   const fees: FeeBreakdownData = {
     commissionFee: overrides.commission ?? auto.commissionFee,
     settlementAdminFee: overrides.settlementAdmin ?? auto.settlementAdminFee,
@@ -91,7 +110,9 @@ export default function FeeBreakdownCard({
       <FeeRow label={`Settlement & admin ${SETTLEMENT_ADMIN_PCT}%`} field="settlementAdminFee" value={fees.settlementAdminFee} editing={isEditingRates} onChangeText={handleFieldChange} colors={colors} symbol={currencySymbol} />
       <FeeRow label={`Investor protection levy ${IPL_PCT}%`} field="iplAdminFee" value={fees.iplAdminFee} editing={isEditingRates} onChangeText={handleFieldChange} colors={colors} symbol={currencySymbol} />
       <FeeRow label={`VAT ${VAT_PCT}%`} field="vatFee" value={fees.vatFee} editing={isEditingRates} onChangeText={handleFieldChange} colors={colors} symbol={currencySymbol} />
-      <FeeRow label={`Securities transfer tax ${SECURITIES_TRANSFER_TAX_PCT}%`} field="securitiesTransferTaxFee" value={fees.securitiesTransferTaxFee} editing={isEditingRates} onChangeText={handleFieldChange} colors={colors} symbol={currencySymbol} />
+      {transactionType === 'buy' && (
+        <FeeRow label={`Securities transfer tax ${SECURITIES_TRANSFER_TAX_PCT}%`} field="securitiesTransferTaxFee" value={fees.securitiesTransferTaxFee} editing={isEditingRates} onChangeText={handleFieldChange} colors={colors} symbol={currencySymbol} />
+      )}
       {accountType === 'USD' && (
         <FeeRow label={`Foreign exchange ${fxPct}%`} field="fxFee" value={fees.fxFee} editing={isEditingRates} onChangeText={handleFieldChange} colors={colors} symbol={currencySymbol} />
       )}

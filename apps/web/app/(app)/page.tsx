@@ -59,6 +59,7 @@ export default function PortfolioLandingPage() {
   const [totalDeposits, setTotalDeposits] = useState(0) // Total cash deposited
   const [totalDepositFees, setTotalDepositFees] = useState(0) // Fees charged on deposits (informational, not part of P/L)
   const [uninvestedCapital, setUninvestedCapital] = useState(0) // Cash not yet invested
+  const [totalRealizedGain, setTotalRealizedGain] = useState(0) // Banked gains/losses from sells, independent of unrealized P&L
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
 
   useEffect(() => {
@@ -156,6 +157,7 @@ export default function PortfolioLandingPage() {
       setTotalDeposits(result.totalDeposits)
       setTotalDepositFees(result.totalDepositFees)
       setUninvestedCapital(result.uninvestedCapital)
+      setTotalRealizedGain(result.totalRealizedGain)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load portfolio')
     } finally {
@@ -279,6 +281,11 @@ export default function PortfolioLandingPage() {
           {(totalFeesPaid > 0 || totalDepositFees > 0) && (
             <div className="text-muted" style={{ fontSize: 11, marginTop: 4 }}>
               Investing: R{totalFeesPaid.toFixed(2)} · Deposits: R{totalDepositFees.toFixed(2)}
+            </div>
+          )}
+          {totalRealizedGain !== 0 && (
+            <div className="num" style={{ fontSize: 11, marginTop: 2, color: totalRealizedGain >= 0 ? 'var(--color-gain)' : 'var(--color-loss)' }}>
+              Realized from sells: {totalRealizedGain >= 0 ? '+' : ''}R{totalRealizedGain.toFixed(2)}
             </div>
           )}
         </Card>

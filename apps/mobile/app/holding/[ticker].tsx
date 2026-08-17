@@ -185,7 +185,7 @@ export default function HoldingDetailScreen() {
 
       {holding && (
         <View style={[styles.footer, { borderTopColor: colors.divider }]}>
-          <Button label="Sell" variant="secondary" onPress={() => {}} disabled style={{ flex: 1 }} />
+          <Button label="Sell" variant="secondary" onPress={() => router.push(`/transactions/new?kind=sell&ticker=${ticker}&account=${holding.account_type}`)} style={{ flex: 1 }} />
           <Button label="Buy more" variant="primary" onPress={() => router.push(`/transactions/new?ticker=${ticker}`)} style={{ flex: 2 }} />
         </View>
       )}

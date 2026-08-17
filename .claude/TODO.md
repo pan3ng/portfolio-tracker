@@ -1373,6 +1373,67 @@ not started.
   show realized gain per sale in the Activity row. A portfolio-wide realized-gains summary
   on Overview is a candidate fast-follow, not required to ship Sell itself.
 
+## Sell + Withdrawal, Sub-phase B: Sell is live on both platforms (2026-08-16, COMPLETED ✅)
+
+Closes out the "biggest functional gap" — positions can now be closed, not just opened.
+
+- **`packages/api-client/src/portfolio-calc.ts`** rewritten around a new
+  `calculateTickerPosition()`: replays one ticker's transactions in date order, average-cost
+  method — a sell reduces shares and cost basis proportionally to the running average cost
+  per share at that point in the history (`shareValueRemoved`/`feesRemoved` scaled by
+  `sellShares / shares`), never a specific lot. Verified against a hand-computed scenario
+  (two buys at different prices, one partial sell) before wiring it into anything —
+  numbers matched exactly. `calculatePortfolio()` now groups transactions by ticker and
+  calls this once per ticker instead of a flat sum; `getActiveTickers()` subtracts sell
+  shares instead of just summing (with a 1e-6 epsilon so float dust from a fully-closed
+  position can't keep it "active"). New `calculateRealizedGains(transactions)` — no prices
+  needed, since a sale's gain is fully determined by historical data — lets Activity
+  screens show a per-sale figure without fetching quotes. Realized gain is **computed
+  fresh every time, never stored on the transaction row**: it depends on the full
+  chronological history up to that sale, so if an earlier buy is later edited or deleted,
+  a stored figure would silently go stale. Same principle this file already used for
+  weight%/drift%/P&L.
+- **`packages/api-client/src/fee-calc.ts`**: `calculateStatutoryFees()` gained a
+  `transactionType` parameter (defaults `'buy'`, so every existing call site is
+  unaffected) — a sell zeroes out Securities Transfer Tax. SA's Securities Transfer Tax
+  Act charges this on purchases; brokers (EasyEquities included) don't charge it on
+  sells. VAT is unaffected either way since it's charged on the brokerage service fee
+  itself, not the trade direction. Both web's `FeeBreakdown.tsx` (which has its own
+  inline fee logic, doesn't call the shared function) and mobile's `FeeBreakdownCard.tsx`
+  got the same `transactionType` prop, hiding the STT row entirely for sells rather than
+  just showing R0.00.
+- **Sell enabled in the unified Add screen**, both platforms: picking Sell shows a list
+  of currently-held tickers (computed via `calculateTickerPosition`, not a free-text
+  search like Buy — you can only sell what you actually hold), shares-to-sell bounded by
+  shares owned with a "Sell all" shortcut, the same Get Quote flow as Buy, a
+  sell-mode fee breakdown, and a live realized-gain preview (green/red) before saving.
+- **Every previously-stubbed Sell affordance is now wired**: Holding detail's Sell button
+  (both platforms) links to `/transactions/new?kind=sell&ticker=X&account=Y`;
+  `AddActionSheet`'s Sell row; the unified form's segmented control no longer blocks
+  selecting Sell.
+- **Both Activity ledgers** (web's merged `/transactions` table, mobile's
+  `(tabs)/activity.tsx`) show Sell as its own tagged type (loss-tinted, distinct from
+  Buy), and the expanded fee-breakdown row for a sell now shows its realized gain/loss
+  and omits the Securities Transfer Tax line instead of showing it as R0.00.
+- **Both transaction edit pages** (`/transactions/[id]/edit` on web,
+  `transactions/[id]/edit.tsx` on mobile) now load `transaction_type` and pass it through
+  to the fee-breakdown component and field labels ("Amount to invest" → "Amount received",
+  "Shares to purchase" → "Shares sold") — previously editing an existing sell would have
+  silently shown/recalculated Securities Transfer Tax on it, since the edit forms
+  predated Sell entirely and always assumed a buy. Caught this while wiring up "Edit"
+  from the Activity ledger onto sell rows, not something that shipped broken.
+- **Verification performed**: the calc engine change was checked against a hand-computed
+  scenario in an isolated script before being wired into any UI (see above). `tsc
+  --noEmit` clean on both apps after each step. `npx expo export --platform android`
+  compiled clean; Metro restarted fresh. Web routes smoke-tested via `curl` (redirects to
+  `/login`, no server errors) — full manual click-through on both platforms is the next
+  step before this gets merged to `main`.
+- **Not built**: a portfolio-wide realized-gains summary on Overview (each platform's
+  Overview still only shows unrealized P&L — `totalRealizedGain` is computed and
+  available on `PortfolioCalcResult` but not yet surfaced there); FIFO/lot-level cost
+  basis (average cost was the explicit decision, see the scoping plan above); CSV import
+  support for Sell rows.
+
 ## Future: Configurable statutory fee defaults (per user, maybe per account)
 
 The four statutory fee rates added above (settlement & admin, IPL & admin, VAT, securities
@@ -1398,6 +1459,69 @@ is real), surface them on the Settings page next to commission/FX, and have
   here rather than bolted on. Natural to build alongside the "unified Add Transaction"
   work above, since Sell will need the same weight-impact math (shares going down
   instead of up).
+
+## Future: Charts + interactivity (2026-08-16, not built — recommendation below)
+
+Every "coming soon" placeholder left in the app is a chart, all blocked on the same missing
+piece: historical price data. Full current inventory:
+
+- Web Overview (`app/(app)/page.tsx:326-334`): value-over-time and drift-over-time charts
+- Web Holdings (`app/(app)/portfolio/page.tsx:298-308`): portfolio growth sparkline
+- Web Holding detail (`app/(app)/portfolio/[ticker]/page.tsx:256`): price since first buy
+- Web Overview (`app/(app)/page.tsx:391`): "pick which cards/charts appear" dashboard
+  customization — a related but separate interactivity feature, not blocked on price
+  history
+- Mobile Overview (`(tabs)/index.tsx:255`) and Holding detail (`holding/[ticker].tsx:158`):
+  same two chart types, same blocker
+
+**Recommendation: this is more buildable than it looks, and web/mobile should be scoped
+very differently.**
+
+The "needs price history" blocker turns out to be smaller than a from-scratch data
+pipeline. `supabase/functions/get-quote/index.ts` already calls Yahoo Finance's
+`/v8/finance/chart/{ticker}.JO` endpoint — the *same* unofficial endpoint (per its
+well-known public shape) also accepts `range`/`interval` query params
+(e.g. `range=1y&interval=1d`) and returns a full historical close-price series, not just
+the latest tick. `get-quote` only reads `result.meta.regularMarketPrice` today and
+ignores the rest of the payload. This means real historical prices are very likely
+available with no new data source, no accumulation table, and no backfill problem — just
+a new Edge Function (`get-price-history`, kept separate from `get-quote` rather than
+overloading its contract, per the architecture doc's "isolate the price-fetch call" — read
+architecture doc §3 rationale) requesting a range instead of the current tick. **Worth a
+short spike to confirm the range params actually return what's expected for `.JO` tickers
+specifically before committing to this as the real plan** — the unofficial endpoint's
+behavior for JSE-listed instruments hasn't been verified for this query shape the way the
+current-price shape was (see architecture doc §3's validation script).
+
+**Web**: build now, once the spike above confirms the data is real. No new dependency
+needed for basic line/area charts — either a lightweight lib (e.g. `recharts`, `visx`) or
+hand-rolled SVG sparklines (web has no native-build constraint, so this is a much lower-
+stakes choice than on mobile). Sequencing: portfolio value-over-time on Overview first
+(highest value, one chart covers the whole portfolio), then per-holding price-since-
+first-buy on Holding detail, then drift-over-time and the Holdings growth sparkline.
+Interactivity: standard hover tooltips showing the value/date at a point — cheap with any
+of the above libraries.
+
+**Mobile: defer.** Any real line/area chart needs SVG or Skia rendering — this project
+deliberately has no `react-native-svg` (Milestone 4's tab icons are plain `View`s
+specifically to avoid a native module that would force an EAS rebuild). Adding real
+charts means finally spending that rebuild. Recommendation: **batch it with the other
+already-deferred native addition** (a real date picker, `@react-native-community/
+datetimepicker`, logged in Milestone 3) rather than burning a second rebuild — pick a
+charting library that needs `react-native-svg` (e.g. `victory-native` or `react-native-
+svg-charts`) and add both native deps in one EAS build. Until that rebuild happens, the
+mobile allocation breakdown on Overview already shows one viable non-SVG pattern (a plain
+`View`-based horizontal stacked bar) — the same trick could stretch to a very simple
+bar-per-period "value over time" view without SVG at all, if a stopgap is wanted before
+the rebuild is worth spending. Interactivity on mobile once charts exist: tap-to-reveal a
+value/date label (not hover — no cursor on touch), same pattern already used for
+Activity's tap-to-expand fee rows.
+
+**Dashboard customization** ("pick which cards/charts appear," web Overview only) is
+scoped separately since it's not blocked on price history — needs a per-user layout
+preference (new `user_settings` column or its own table) and conditional rendering of the
+existing cards. Lower priority than the charts themselves; only worth doing once there
+are enough cards/charts on Overview that customization is actually useful.
 
 ## v1.1: landing page, data deletion, tooltips (2026-08-16, COMPLETED ✅)
 

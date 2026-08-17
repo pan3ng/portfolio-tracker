@@ -7,6 +7,7 @@ import {
   fetchQuote,
   getTickerName,
   searchJSETickers,
+  calculateTickerPosition,
   type Quote,
   type FeeBreakdownData,
 } from '@portfolio-tracker/api-client'
@@ -27,6 +28,13 @@ type AccountType = 'ZAR' | 'USD'
 type TxKind = 'buy' | 'sell' | 'deposit' | 'withdrawal'
 type DepositMethod = 'card' | 'eft'
 
+interface HeldPosition {
+  ticker: string
+  shares: number
+  avgCostPerShare: number
+  accountType: AccountType
+}
+
 function todayIso(): string {
   return new Date().toISOString().split('T')[0] as string
 }
@@ -36,11 +44,12 @@ export default function NewTransactionScreen() {
   const { colors } = useTheme()
   const params = useLocalSearchParams<{ ticker?: string; kind?: string }>()
 
-  const initialKind: TxKind = params.kind === 'deposit' || params.kind === 'withdrawal' ? params.kind : 'buy'
+  const initialKind: TxKind =
+    params.kind === 'deposit' || params.kind === 'withdrawal' || params.kind === 'sell' ? params.kind : 'buy'
   const [kind, setKind] = useState<TxKind>(initialKind)
   const [accountType, setAccountType] = useState<AccountType>('ZAR')
 
-  // Buy fields
+  // Buy/Sell fields
   const [ticker, setTicker] = useState(params.ticker?.toUpperCase() || '')
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [quote, setQuote] = useState<Quote | null>(null)
@@ -48,6 +57,11 @@ export default function NewTransactionScreen() {
   const [notes, setNotes] = useState('')
   const [tagsInput, setTagsInput] = useState('')
   const [fees, setFees] = useState<FeeBreakdownData>(EMPTY_FEES)
+
+  // Sell-only fields
+  const [heldPositions, setHeldPositions] = useState<HeldPosition[]>([])
+  const [loadingPositions, setLoadingPositions] = useState(false)
+  const [sellShares, setSellShares] = useState('')
 
   // Deposit/Withdrawal fields
   const [movementAmount, setMovementAmount] = useState('')
@@ -85,6 +99,51 @@ export default function NewTransactionScreen() {
     const pct = depositMethod === 'card' ? cardPct : eftPct
     setMovementFee((amountNum * pct) / 100)
   }, [kind, movementAmount, depositMethod, cardPct, eftPct, feeManuallySet])
+
+  useEffect(() => {
+    if (kind === 'sell' && heldPositions.length === 0 && !loadingPositions) {
+      loadHeldPositions()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [kind])
+
+  const loadHeldPositions = async () => {
+    setLoadingPositions(true)
+    try {
+      const { data, error: fetchError } = await supabase.from('transactions').select('*')
+      if (fetchError) throw fetchError
+
+      const byTicker = new Map<string, any[]>()
+      ;(data || []).forEach((tx: any) => {
+        if (!byTicker.has(tx.ticker)) byTicker.set(tx.ticker, [])
+        byTicker.get(tx.ticker)!.push(tx)
+      })
+
+      const positions: HeldPosition[] = []
+      byTicker.forEach((txs, tickerSymbol) => {
+        const position = calculateTickerPosition(txs)
+        if (position.shares > 0.000001) {
+          positions.push({
+            ticker: tickerSymbol,
+            shares: position.shares,
+            avgCostPerShare: position.avgCostPerShare,
+            accountType: (position.accountType as AccountType) || 'ZAR',
+          })
+        }
+      })
+      positions.sort((a, b) => a.ticker.localeCompare(b.ticker))
+      setHeldPositions(positions)
+
+      if (params.ticker) {
+        const match = positions.find((p) => p.ticker === params.ticker?.toUpperCase())
+        if (match) setAccountType(match.accountType)
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load your holdings')
+    } finally {
+      setLoadingPositions(false)
+    }
+  }
 
   const handleFetchQuote = async () => {
     const trimmed = ticker.trim().toUpperCase()
@@ -142,6 +201,42 @@ export default function NewTransactionScreen() {
     if (insertError) throw insertError
   }
 
+  const handleSaveSell = async () => {
+    const heldPosition = heldPositions.find((p) => p.ticker === ticker)
+    if (!heldPosition) throw new Error('Select a holding to sell')
+    if (!quote) throw new Error('Please fetch a quote first')
+
+    const sharesNum = parseFloat(sellShares)
+    if (isNaN(sharesNum) || sharesNum <= 0) throw new Error('Please enter a valid number of shares')
+    if (sharesNum > heldPosition.shares) throw new Error(`You only hold ${heldPosition.shares.toFixed(6)} shares`)
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Not authenticated')
+
+    const tags = tagsInput.split(',').map((t) => t.trim()).filter(Boolean)
+
+    const { error: insertError } = await supabase.from('transactions').insert({
+      user_id: user.id,
+      ticker,
+      date: new Date().toISOString(),
+      shares: sharesNum,
+      price_at_transaction: quote.price_zar,
+      account_type: heldPosition.accountType,
+      transaction_type: 'sell',
+      commission_fee: fees.commissionFee,
+      settlement_admin_fee: fees.settlementAdminFee,
+      ipl_admin_fee: fees.iplAdminFee,
+      securities_transfer_tax_fee: fees.securitiesTransferTaxFee,
+      vat_fee: fees.vatFee,
+      fx_fee: fees.fxFee,
+      other_fees: fees.otherFees,
+      total_fees: fees.totalFees,
+      notes: notes.trim() || null,
+      tags: tags.length > 0 ? tags : null,
+    })
+    if (insertError) throw insertError
+  }
+
   const handleSaveMovement = async () => {
     const amountNum = parseFloat(movementAmount)
     if (isNaN(amountNum) || amountNum <= 0) throw new Error('Please enter a valid amount')
@@ -169,6 +264,8 @@ export default function NewTransactionScreen() {
     try {
       if (kind === 'buy') {
         await handleSaveBuy()
+      } else if (kind === 'sell') {
+        await handleSaveSell()
       } else if (kind === 'deposit' || kind === 'withdrawal') {
         await handleSaveMovement()
       }
@@ -180,7 +277,7 @@ export default function NewTransactionScreen() {
     }
   }
 
-  const canSave = kind === 'buy' ? !!quote && !!amount : !!movementAmount
+  const canSave = kind === 'buy' ? !!quote && !!amount : kind === 'sell' ? !!quote && !!sellShares : !!movementAmount
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]}>
@@ -202,9 +299,8 @@ export default function NewTransactionScreen() {
             { value: 'withdrawal', label: 'Withdrawal' },
           ]}
           value={kind}
-          onChange={(v) => v !== 'sell' && setKind(v as TxKind)}
+          onChange={(v) => setKind(v as TxKind)}
         />
-        {kind === 'sell' && <Text style={{ color: colors.textMuted, fontSize: 11.5 }}>Coming soon</Text>}
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
@@ -321,6 +417,132 @@ export default function NewTransactionScreen() {
           </>
         )}
 
+        {kind === 'sell' && (() => {
+          const heldPosition = heldPositions.find((p) => p.ticker === ticker)
+          const sellSharesNum = parseFloat(sellShares) || 0
+          const grossProceeds = quote && sellSharesNum > 0 ? sellSharesNum * quote.price_zar : 0
+          const netProceeds = grossProceeds - fees.totalFees
+          const costBasisRemoved = heldPosition ? heldPosition.avgCostPerShare * sellSharesNum : 0
+          const realizedGain = grossProceeds > 0 ? netProceeds - costBasisRemoved : 0
+
+          return (
+            <>
+              {loadingPositions ? (
+                <Text style={{ color: colors.textMuted, fontSize: 13 }}>Loading your holdings...</Text>
+              ) : heldPositions.length === 0 ? (
+                <BlueprintCard dashed>
+                  <Text style={{ color: colors.textMuted, fontSize: 13 }}>You don't hold anything to sell yet.</Text>
+                </BlueprintCard>
+              ) : (
+                <>
+                  <View style={styles.field}>
+                    <Text style={[styles.label, { color: colors.text }]}>Which holding?</Text>
+                    <View style={[styles.suggestions, { borderColor: colors.divider, backgroundColor: colors.surface }]}>
+                      {heldPositions.map((p) => (
+                        <Pressable
+                          key={p.ticker}
+                          style={[
+                            styles.suggestionRow,
+                            { borderBottomColor: colors.divider },
+                            ticker === p.ticker && { backgroundColor: colors.accentWash },
+                          ]}
+                          onPress={() => { setTicker(p.ticker); setQuote(null); setSellShares(''); setAccountType(p.accountType) }}
+                        >
+                          <Text style={{ color: colors.text, fontFamily: fonts.heading, fontSize: 14 }}>{p.ticker}</Text>
+                          <Text style={{ color: colors.textMuted, fontSize: 12 }}>{p.shares.toFixed(6)} shares ({p.accountType})</Text>
+                        </Pressable>
+                      ))}
+                    </View>
+                  </View>
+
+                  {heldPosition && (
+                    <>
+                      <Button label={fetchingQuote ? '' : 'Get Quote'} loading={fetchingQuote} onPress={handleFetchQuote} disabled={saving} variant="primary" />
+
+                      {quote && (
+                        <View style={[styles.quoteCard, { borderColor: colors.accent, backgroundColor: colors.surface }]}>
+                          <View>
+                            <Text style={{ color: colors.text, fontFamily: fonts.heading, fontSize: 16 }}>{quote.ticker}</Text>
+                            <Text style={{ color: colors.textMuted, fontSize: 11.5 }}>Fetched {new Date(quote.fetched_at).toLocaleTimeString()}</Text>
+                          </View>
+                          <View style={{ alignItems: 'flex-end' }}>
+                            <Text style={{ color: colors.text, fontFamily: fonts.heading, fontSize: 22 }}>R {quote.price_zar.toFixed(2)}</Text>
+                            <Text style={{ color: colors.textMuted, fontSize: 11.5 }}>per share</Text>
+                          </View>
+                        </View>
+                      )}
+
+                      <View style={styles.field}>
+                        <Text style={[styles.label, { color: colors.text }]}>Shares to sell (you hold {heldPosition.shares.toFixed(6)})</Text>
+                        <View style={{ flexDirection: 'row', gap: 8 }}>
+                          <TextInput
+                            style={[styles.input, { flex: 1, borderColor: colors.divider, backgroundColor: colors.surface, color: colors.text }]}
+                            value={sellShares}
+                            onChangeText={setSellShares}
+                            keyboardType="decimal-pad"
+                            placeholder="0.000000"
+                            placeholderTextColor={colors.textMuted}
+                            editable={!saving && !!quote}
+                          />
+                          <Button label="Sell all" variant="secondary" onPress={() => setSellShares(heldPosition.shares.toString())} disabled={!quote || saving} />
+                        </View>
+                        {!quote && <Text style={{ color: colors.textMuted, fontSize: 12 }}>Please fetch a quote first</Text>}
+                      </View>
+
+                      {grossProceeds > 0 && (
+                        <FeeBreakdownCard
+                          investmentAmount={grossProceeds}
+                          accountType={accountType}
+                          commissionPct={commissionPct}
+                          fxPct={fxPct}
+                          onChange={setFees}
+                          hideTotalSummary
+                          transactionType="sell"
+                        />
+                      )}
+
+                      {grossProceeds > 0 && (
+                        <BlueprintCard wash>
+                          <Text style={[styles.kicker, { color: colors.accent700 }]}>You'll receive</Text>
+                          <Text style={[styles.totalValue, { color: colors.text, fontFamily: fonts.heading }]}>{currencySymbol}{netProceeds.toFixed(2)}</Text>
+                          <Text style={{ color: realizedGain >= 0 ? colors.gain : colors.loss, fontSize: 13, fontFamily: fonts.bodyMedium }}>
+                            Realized {realizedGain >= 0 ? 'gain' : 'loss'}: {realizedGain >= 0 ? '+' : ''}{currencySymbol}{realizedGain.toFixed(2)}
+                          </Text>
+                        </BlueprintCard>
+                      )}
+
+                      <View style={styles.field}>
+                        <Text style={[styles.label, { color: colors.text }]}>Notes</Text>
+                        <TextInput
+                          style={[styles.input, { height: 70, textAlignVertical: 'top', borderColor: colors.divider, backgroundColor: colors.surface, color: colors.text }]}
+                          value={notes}
+                          onChangeText={setNotes}
+                          multiline
+                          placeholder="e.g., Rebalancing, taking profit"
+                          placeholderTextColor={colors.textMuted}
+                          editable={!saving}
+                        />
+                      </View>
+
+                      <View style={styles.field}>
+                        <Text style={[styles.label, { color: colors.text }]}>Tags (comma separated)</Text>
+                        <TextInput
+                          style={[styles.input, { borderColor: colors.divider, backgroundColor: colors.surface, color: colors.text }]}
+                          value={tagsInput}
+                          onChangeText={setTagsInput}
+                          placeholder="e.g., core, monthly"
+                          placeholderTextColor={colors.textMuted}
+                          editable={!saving}
+                        />
+                      </View>
+                    </>
+                  )}
+                </>
+              )}
+            </>
+          )
+        })()}
+
         {(kind === 'deposit' || kind === 'withdrawal') && (
           <>
             <View style={styles.field}>
@@ -401,7 +623,7 @@ export default function NewTransactionScreen() {
       <View style={[styles.footer, { borderTopColor: colors.divider }]}>
         <Button label="Cancel" variant="secondary" onPress={() => router.back()} disabled={saving} style={{ flex: 1 }} />
         <Button
-          label={kind === 'buy' ? 'Save transaction' : kind === 'deposit' ? 'Save deposit' : 'Save withdrawal'}
+          label={kind === 'buy' ? 'Save transaction' : kind === 'sell' ? 'Save this sale' : kind === 'deposit' ? 'Save deposit' : 'Save withdrawal'}
           variant="primary"
           onPress={handleSave}
           disabled={!canSave || saving}

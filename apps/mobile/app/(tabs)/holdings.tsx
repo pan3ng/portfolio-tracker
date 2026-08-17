@@ -22,7 +22,7 @@ import Button from '../../components/Button'
 const EMPTY_RESULT: PortfolioCalcResult = {
   holdings: [], totalValue: 0, totalShareInvestment: 0, totalFeesPaid: 0, totalCostBasis: 0,
   totalMarketProfit: 0, totalMarketProfitPct: 0, totalProfitLoss: 0, totalProfitLossPct: 0,
-  totalDeposits: 0, totalDepositFees: 0, uninvestedCapital: 0,
+  totalDeposits: 0, totalDepositFees: 0, uninvestedCapital: 0, totalRealizedGain: 0,
 }
 
 type AccountFilter = 'All' | 'ZAR' | 'USD'

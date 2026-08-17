@@ -395,3 +395,8 @@ textarea.input { min-height: 90px; resize: vertical; }
 .imgDark { display: none; }
 html.dark .imgLight { display: none; }
 html.dark .imgDark { display: unset; }
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

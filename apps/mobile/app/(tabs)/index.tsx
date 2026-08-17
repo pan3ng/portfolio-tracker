@@ -20,7 +20,7 @@ import WeightBar from '../../components/WeightBar'
 const EMPTY_RESULT: PortfolioCalcResult = {
   holdings: [], totalValue: 0, totalShareInvestment: 0, totalFeesPaid: 0, totalCostBasis: 0,
   totalMarketProfit: 0, totalMarketProfitPct: 0, totalProfitLoss: 0, totalProfitLossPct: 0,
-  totalDeposits: 0, totalDepositFees: 0, uninvestedCapital: 0,
+  totalDeposits: 0, totalDepositFees: 0, uninvestedCapital: 0, totalRealizedGain: 0,
 }
 
 type AccountFilter = 'All' | 'ZAR' | 'USD'
@@ -189,6 +189,11 @@ export default function OverviewScreen() {
             <Text style={[styles.mono, { color: result.totalProfitLoss >= 0 ? colors.gain : colors.loss }]}>
               {result.totalProfitLossPct >= 0 ? '+' : ''}{result.totalProfitLossPct.toFixed(2)}%
             </Text>
+            {result.totalRealizedGain !== 0 && (
+              <Text style={[styles.sub, { color: result.totalRealizedGain >= 0 ? colors.gain : colors.loss, marginTop: 2 }]}>
+                Realized from sells: {result.totalRealizedGain >= 0 ? '+' : ''}R {result.totalRealizedGain.toFixed(2)}
+              </Text>
+            )}
           </BlueprintCard>
         </View>
 

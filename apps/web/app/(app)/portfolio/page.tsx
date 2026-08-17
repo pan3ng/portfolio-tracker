@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { fetchQuote, getTickerName, type Transaction, type Target, type Holding } from '@portfolio-tracker/api-client'
+import { fetchQuote, getTickerName, calculatePortfolio, getActiveTickers } from '@portfolio-tracker/api-client'
 import Link from 'next/link'
 import { Card } from '@/components/Card'
 import { SortableTh, type SortDir } from '@/components/SortableTh'
@@ -44,6 +44,7 @@ export default function PortfolioPage() {
   }
   const [holdings, setHoldings] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [totalValue, setTotalValue] = useState(0)
   const [totalShareInvestment, setTotalShareInvestment] = useState(0) // NEW: Share value only
@@ -56,202 +57,65 @@ export default function PortfolioPage() {
 
   useEffect(() => {
     loadPortfolio()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountFilter])
 
-  const loadPortfolio = async () => {
-    setLoading(true)
+  // Uses the shared calculatePortfolio() (packages/api-client) rather than a
+  // hand-rolled aggregation — this page used to have its own copy of this
+  // math, which silently fell out of sync with Sell support (it summed every
+  // transaction's shares regardless of transaction_type, so a sold position
+  // still showed as fully held). One calculation, reused everywhere.
+  const loadPortfolio = async (isRefresh = false) => {
+    if (isRefresh) {
+      setRefreshing(true)
+    } else {
+      setLoading(true)
+    }
     setError(null)
 
     try {
-      // 1. Fetch all transactions for the current user
-      let txQuery = supabase
-        .from('transactions')
-        .select('*')
-        .order('date', { ascending: false })
-
-      if (accountFilter !== 'all') {
-        txQuery = txQuery.eq('account_type', accountFilter)
-      }
-
+      let txQuery = supabase.from('transactions').select('*').order('date', { ascending: false })
+      if (accountFilter !== 'all') txQuery = txQuery.eq('account_type', accountFilter)
       const { data: transactions, error: txError } = await txQuery
-
       if (txError) throw txError
 
-      if (!transactions || transactions.length === 0) {
-        setHoldings([])
-        setLoading(false)
-        return
-      }
-
-      // 2. Calculate total shares, share value, fees, AND cost basis per ticker from transactions
-      const sharesByTicker = new Map<string, number>()
-      const shareValueByTicker = new Map<string, number>() // NEW: shares × price only
-      const feesByTicker = new Map<string, number>() // NEW: total fees per ticker
-      const costBasisByTicker = new Map<string, number>()
-      const accountByTicker = new Map<string, string>()
-
-      transactions.forEach((tx: any) => {
-        const currentShares = sharesByTicker.get(tx.ticker) || 0
-        const currentShareValue = shareValueByTicker.get(tx.ticker) || 0
-        const currentFees = feesByTicker.get(tx.ticker) || 0
-        const currentCostBasis = costBasisByTicker.get(tx.ticker) || 0
-
-        sharesByTicker.set(tx.ticker, currentShares + tx.shares)
-        accountByTicker.set(tx.ticker, tx.account_type || 'ZAR')
-
-        // Share value = shares × price_at_transaction (excluding fees)
-        const investmentCost = tx.shares * tx.price_at_transaction
-        shareValueByTicker.set(tx.ticker, currentShareValue + investmentCost)
-
-        // Calculate total fees for this transaction
-        const commissionFee = tx.commission_fee || 0
-        const depositFee = tx.deposit_fee || 0
-        const settlementAdminFee = tx.settlement_admin_fee || 0
-        const iplAdminFee = tx.ipl_admin_fee || 0
-        const securitiesTransferTaxFee = tx.securities_transfer_tax_fee || 0
-        const vatFee = tx.vat_fee || 0
-        const fxFee = tx.fx_fee || 0
-        const otherFees = tx.other_fees || 0
-        const totalFees = commissionFee + depositFee + settlementAdminFee + iplAdminFee
-          + securitiesTransferTaxFee + vatFee + fxFee + otherFees
-        feesByTicker.set(tx.ticker, currentFees + totalFees)
-
-        // Cost basis = shares × price_at_transaction + ALL fees
-        const totalCost = investmentCost + totalFees
-        costBasisByTicker.set(tx.ticker, currentCostBasis + totalCost)
-      })
-
-      // Filter out tickers with zero or negative shares (shouldn't happen with current schema)
-      const activeTickers = Array.from(sharesByTicker.entries())
-        .filter(([_, shares]) => shares > 0)
-        .map(([ticker]) => ticker)
-
-      if (activeTickers.length === 0) {
-        setHoldings([])
-        setLoading(false)
-        return
-      }
-
-      // 3. Fetch current prices for all active tickers
-      const pricePromises = activeTickers.map(async (ticker) => {
-        try {
-          const quote = await fetchQuote(supabase, ticker)
-          return { ticker, price: quote.price_zar }
-        } catch (err) {
-          console.error(`Failed to fetch quote for ${ticker}:`, err)
-          // Return null for failed quotes - we'll handle this below
-          return null
-        }
-      })
-
-      const priceResults = await Promise.all(pricePromises)
-      const prices = new Map<string, number>()
-      priceResults.forEach((result) => {
-        if (result) {
-          prices.set(result.ticker, result.price)
-        }
-      })
-
-      // 4. Fetch target weights
       let targetQuery = supabase.from('targets').select('*')
-      if (accountFilter !== 'all') {
-        targetQuery = targetQuery.eq('account_type', accountFilter)
-      }
+      if (accountFilter !== 'all') targetQuery = targetQuery.eq('account_type', accountFilter)
       const { data: targets, error: targetError } = await targetQuery
-
       if (targetError) throw targetError
 
-      const targetsByTicker = new Map<string, number>()
-      if (targets) {
-        targets.forEach((target: Target) => {
-          targetsByTicker.set(target.ticker, target.target_weight_pct)
-        })
-      }
+      const tickers = getActiveTickers(transactions || [])
 
-      // 5. Calculate total portfolio value
-      let portfolioValue = 0
-      activeTickers.forEach((ticker) => {
-        const shares = sharesByTicker.get(ticker) || 0
-        const price = prices.get(ticker)
-        if (price) {
-          portfolioValue += shares * price
-        }
-      })
-
-      setTotalValue(portfolioValue)
-
-      // 6. Build holdings array with weights, drift, and profit/loss
-      const holdingsData = activeTickers
-        .map((ticker) => {
-          const shares = sharesByTicker.get(ticker) || 0
-          const currentPrice = prices.get(ticker)
-          const shareValue = shareValueByTicker.get(ticker) || 0  // NEW
-          const fees = feesByTicker.get(ticker) || 0  // NEW
-          const purchaseValue = costBasisByTicker.get(ticker) || 0
-          const account = accountByTicker.get(ticker) || 'ZAR'
-
-          // Skip tickers where we couldn't fetch a price
-          if (!currentPrice) {
+      const priceResults = await Promise.all(
+        tickers.map(async (ticker) => {
+          try {
+            const quote = await fetchQuote(supabase, ticker)
+            return { ticker, price: quote.price_zar }
+          } catch (err) {
+            console.error(`Failed to fetch quote for ${ticker}:`, err)
             return null
           }
-
-          const currentValue = shares * currentPrice
-          const marketProfitLoss = currentValue - shareValue  // NEW: Market movement only
-          const marketProfitLossPct = shareValue > 0 ? (marketProfitLoss / shareValue) * 100 : 0  // NEW
-          const totalProfitLoss = currentValue - purchaseValue  // Total return (after fees)
-          const totalProfitLossPct = purchaseValue > 0 ? (totalProfitLoss / purchaseValue) * 100 : 0
-          const currentWeightPct = portfolioValue > 0 ? (currentValue / portfolioValue) * 100 : 0
-          const targetWeightPct = targetsByTicker.get(ticker) || 0
-          const driftPct = currentWeightPct - targetWeightPct
-
-          return {
-            ticker,
-            shares,
-            share_value: shareValue,  // NEW
-            fees: fees,  // NEW
-            purchase_value: purchaseValue,  // Total cost (share value + fees)
-            current_price: currentPrice,
-            current_value: currentValue,
-            market_profit_loss: marketProfitLoss,  // NEW
-            market_profit_loss_pct: marketProfitLossPct,  // NEW
-            profit_loss: totalProfitLoss,  // Renamed conceptually to total_profit_loss
-            profit_loss_pct: totalProfitLossPct,
-            current_weight_pct: currentWeightPct,
-            target_weight_pct: targetWeightPct,
-            drift_pct: driftPct,
-            account_type: account,
-          }
         })
-        .filter((h): h is any => h !== null)
-        .sort((a, b) => b.current_value - a.current_value) // Sort by value descending
+      )
+      const prices = new Map<string, number>()
+      priceResults.forEach((result) => { if (result) prices.set(result.ticker, result.price) })
 
-      // Calculate totals: share investment, fees, cost basis, and profit/loss
-      let totalShareInvestment = 0  // NEW: Total share value only
-      let totalFeesPaid = 0  // NEW: Total fees
-      let totalCost = 0  // Total cost basis (shares + fees)
-      let totalMarketProfit = 0  // NEW: Market gain/loss only
-      let totalProfit = 0  // Total return (after fees)
+      const result = calculatePortfolio(transactions || [], [], targets || [], prices)
 
-      holdingsData.forEach((holding) => {
-        totalShareInvestment += holding.share_value
-        totalFeesPaid += holding.fees
-        totalCost += holding.purchase_value
-        totalMarketProfit += holding.market_profit_loss
-        totalProfit += holding.profit_loss
-      })
-
-      setTotalShareInvestment(totalShareInvestment)
-      setTotalFeesPaid(totalFeesPaid)
-      setTotalCostBasis(totalCost)
-      setTotalMarketProfit(totalMarketProfit)
-      setTotalMarketProfitPct(totalShareInvestment > 0 ? (totalMarketProfit / totalShareInvestment) * 100 : 0)
-      setTotalProfitLoss(totalProfit)
-      setTotalProfitLossPct(totalCost > 0 ? (totalProfit / totalCost) * 100 : 0)
-      setHoldings(holdingsData)
+      setTotalValue(result.totalValue)
+      setTotalShareInvestment(result.totalShareInvestment)
+      setTotalFeesPaid(result.totalFeesPaid)
+      setTotalCostBasis(result.totalCostBasis)
+      setTotalMarketProfit(result.totalMarketProfit)
+      setTotalMarketProfitPct(result.totalMarketProfitPct)
+      setTotalProfitLoss(result.totalProfitLoss)
+      setTotalProfitLossPct(result.totalProfitLossPct)
+      setHoldings(result.holdings)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load portfolio')
     } finally {
       setLoading(false)
+      setRefreshing(false)
     }
   }
 
@@ -364,7 +228,17 @@ export default function PortfolioPage() {
             <span className={`seg-opt${accountFilter === 'ZAR' ? ' is-active' : ''}`} onClick={() => setAccountFilter('ZAR')}>ZAR</span>
             <span className={`seg-opt${accountFilter === 'USD' ? ' is-active' : ''}`} onClick={() => setAccountFilter('USD')}>USD</span>
           </span>
-          <button onClick={() => setShowDetails(!showDetails)} className="btn btn-ghost" style={{ marginLeft: 'auto' }}>
+          <button
+            onClick={() => loadPortfolio(true)}
+            disabled={refreshing}
+            className="btn btn-ghost"
+            title="Refresh prices"
+            aria-label="Refresh prices"
+            style={{ marginLeft: 'auto', fontSize: 15, lineHeight: 1, padding: '6px 10px' }}
+          >
+            <span style={{ display: 'inline-block', animation: refreshing ? 'spin 0.8s linear infinite' : undefined }}>↻</span>
+          </button>
+          <button onClick={() => setShowDetails(!showDetails)} className="btn btn-ghost">
             {showDetails ? 'Hide details' : 'Show details'}
           </button>
         </div>
