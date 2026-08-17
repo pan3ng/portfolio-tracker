@@ -583,35 +583,35 @@ function NewTransactionPageContent() {
                   <>
                     <div className="field">
                       <label htmlFor="sellTicker">Which holding?</label>
-                      <select
-                        id="sellTicker" className="input"
-                        value={ticker}
-                        onChange={(e) => {
-                          const selected = heldPositions.find((p) => p.ticker === e.target.value)
-                          setTicker(e.target.value)
-                          setQuote(null)
-                          setSellShares('')
-                          if (selected) setAccountType(selected.accountType)
-                        }}
-                        disabled={loading}
-                      >
-                        <option value="">Select a ticker...</option>
-                        {heldPositions.map((p) => (
-                          <option key={p.ticker} value={p.ticker}>
-                            {p.ticker} — {p.shares.toFixed(6)} shares ({p.accountType})
-                          </option>
-                        ))}
-                      </select>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <select
+                          id="sellTicker" className="input"
+                          value={ticker}
+                          onChange={(e) => {
+                            const selected = heldPositions.find((p) => p.ticker === e.target.value)
+                            setTicker(e.target.value)
+                            setQuote(null)
+                            setSellShares('')
+                            if (selected) setAccountType(selected.accountType)
+                          }}
+                          disabled={loading}
+                          style={{ flex: 1 }}
+                        >
+                          <option value="">Select a ticker...</option>
+                          {heldPositions.map((p) => (
+                            <option key={p.ticker} value={p.ticker}>
+                              {p.ticker} — {p.shares.toFixed(6)} shares ({p.accountType})
+                            </option>
+                          ))}
+                        </select>
+                        <button type="button" onClick={handleFetchQuote} disabled={fetchingQuote || loading || !ticker} className="btn btn-primary" style={{ flexShrink: 0 }}>
+                          {fetchingQuote ? 'Fetching...' : 'Get Quote'}
+                        </button>
+                      </div>
                     </div>
 
                     {heldPosition && (
                       <>
-                        <div style={{ display: 'flex', gap: 8 }}>
-                          <button type="button" onClick={handleFetchQuote} disabled={fetchingQuote || loading} className="btn btn-primary" style={{ flex: 1 }}>
-                            {fetchingQuote ? 'Fetching...' : 'Get Quote'}
-                          </button>
-                        </div>
-
                         {quote && (
                           <Card style={{ borderColor: 'var(--color-accent)' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
